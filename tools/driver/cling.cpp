@@ -10,6 +10,7 @@
 #include "cling/Interpreter/Interpreter.h"
 #include "cling/MetaProcessor/MetaProcessor.h"
 #include "cling/UserInterface/UserInterface.h"
+#include "cling/CtagsExtension/Callback.h"
 
 #include "clang/Basic/LangOptions.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -60,6 +61,7 @@ int main( int argc, char **argv ) {
     }
   }
   else {
+    interp.setCallbacks(new cling::CtagsInterpreterCallback(&interp));
     ui.runInteractively(interp.getOptions().NoLogo);
   }
 

@@ -9,7 +9,8 @@
 add_cling_library(clingCtagsExtension
   Wrapper.cpp
   Callback.cpp
-
+  readtags.c
+  
   LINK_LIBS
   clangBasic
   )

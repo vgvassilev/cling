@@ -1,14 +1,14 @@
 #ifndef CLING_CTAGS_WRAPPER_H
 #define CLING_CTAGS_WRAPPER_H
-
-
-#include "readtags.h"
+// #include "readtags.h"
 #include<vector>
 #include<cstdlib>
 #include<map>
 #include<string>
 
 namespace cling {
+  struct TagFileInternals;
+  
   class TagFileWrapper{
   public:
     TagFileWrapper(std::string path);
@@ -22,11 +22,12 @@ namespace cling {
     
     //returns a map that maps headers to lookup results 
     std::map<std::string,LookupResult> match(std::string name, bool partialMatch=false);
-private:
+  private:
     void generate(const std::vector<std::string>& cmd,int arglimit=50);
     bool read();
-    tagFile* tf;
-    tagFileInfo tfi;
+//     tagFile* tf;
+//     tagFileInfo* tfi;
+    TagFileInternals* tf;
     std::string tagfilename;
       
   };

@@ -1,12 +1,20 @@
 #include "cling/CtagsExtension/Wrapper.h"
+#include "readtags.h"
 #include <ftw.h>
 #include <fnmatch.h>
 #include <unistd.h>
+
 namespace cling {
+  struct TagFileInternals{
+    tagFile* tf;
+    tagFileInfo tfi;  
+  };
+  
   TagFileWrapper::TagFileWrapper(const std::vector<std::string>& file_list)
   {
-      generate(file_list);
-      read();
+    tf=new TagFileInternals();
+    generate(file_list);
+    read();
   }
   
   static const char *headertypes[] = 
@@ -39,6 +47,7 @@ namespace cling {
   
   TagFileWrapper::TagFileWrapper(std::string path)
   {
+    tf=new TagFileInternals();
     ftw(path.c_str(),callback,maxfd);
     generate(FilePaths);
     read();
@@ -53,7 +62,7 @@ namespace cling {
     tagEntry entry;
     int options=TAG_OBSERVECASE | (partialMatch?TAG_PARTIALMATCH:TAG_FULLMATCH);
     
-    tagResult result = tagsFind(tf, &entry, name.c_str(),options);
+    tagResult result = tagsFind(tf->tf, &entry, name.c_str(),options);
     
     while(result==TagSuccess)
     {
@@ -61,7 +70,7 @@ namespace cling {
       r.name=entry.name;
       r.kind=entry.kind;
       map[entry.file]=r;
-      result=tagsFindNext(tf,&entry);
+      result=tagsFindNext(tf->tf,&entry);
     }
     
     return map;
@@ -94,8 +103,8 @@ namespace cling {
   
   bool TagFileWrapper::read()
   {
-    tf=tagsOpen(tagfilename.c_str(),&tfi);
-    if(tfi.status.opened == false)
+    tf->tf=tagsOpen(tagfilename.c_str(),&(tf->tfi));
+    if(tf->tfi.status.opened == false)
     {
         //throw a std::runtime_error ?
 //          std::cerr<<"Failed to open tag file.\n";

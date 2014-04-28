@@ -3,6 +3,7 @@
 
 #include "cling/Interpreter/Interpreter.h"
 #include "cling/Interpreter/InterpreterCallbacks.h"
+#include "cling/CtagsExtension/Wrapper.h"
 #include "clang/Sema/Lookup.h"
 #include <string>
 #include <map>
@@ -12,12 +13,19 @@ namespace cling{
   
   class CtagsInterpreterCallback : public cling::InterpreterCallbacks{
   public:
-    CtagsInterpreterCallback(cling::Interpreter* interp) :
-    InterpreterCallbacks(interp,true),ip(interp){}
+    CtagsInterpreterCallback(cling::Interpreter* interp,std::string path=".") :
+      InterpreterCallbacks(interp,true),
+      ip(interp),
+      tags(path)
+      {}
+    
     virtual bool LookupObject (clang::LookupResult &R, clang::Scope *);
-    private:
+    
+  
+  private:
     std::map<std::string,LookupInfo> table;
     cling::Interpreter* ip;
+    TagFileWrapper tags;
   };
 }
 

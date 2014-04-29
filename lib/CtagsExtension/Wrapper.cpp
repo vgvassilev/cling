@@ -93,7 +93,7 @@ namespace cling {
         std::string sorted=" --sort=yes ";
         std::string append=" -a ";
         std::string cmd="ctags "+append+filename+sorted+concat;
-        std::system(cmd.c_str());
+        std::system(cmd.c_str());//FIXME: Possible security hole ? (MM)
         
         no_of_args=0;
         it++;

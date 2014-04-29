@@ -64,6 +64,11 @@ namespace cling {
     return AR_Failure;
   }
 
+  MetaSema::ActionResult MetaSema::actOnTCommand(llvm::StringRef file) {
+      llvm::outs()<<file<<": directory to be recursively tagged.\n";
+      return AR_Success;
+  }
+
   MetaSema::ActionResult MetaSema::actOnRedirectCommand(llvm::StringRef file,
                          MetaProcessor::RedirectionScope stream,
                          bool append) {

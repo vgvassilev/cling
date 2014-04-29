@@ -6,16 +6,22 @@ namespace cling {
     if(in[0]!='_' && table.find(in)==table.end())
     {
 //       llvm::outs()<<"Missing name:"<<in<<"\n";
-      auto match=tags.match(in,true);
-      for(auto result:match)
+      for(auto& tagfile:tags)
       {
-        llvm::outs()<<result.first
-          <<'\t'<<result.second.name
+        for(auto result:tagfile.match(in,true))
+        {
+          llvm::outs()<<result.first
+            <<'\t'<<result.second.name
             <<'\t'<<result.second.kind
-              <<'\n';
+            <<'\n';
+        }
       }
       table[in]=LookupInfo();
     }
     return false;
+  }
+  void CtagsInterpreterCallback::AddTagFile(llvm::StringRef path) {
+    llvm::outs()<<"Tagfile generated from: "<<path<<"\n";
+    tags.push_back(TagFileWrapper(path));
   }
 }

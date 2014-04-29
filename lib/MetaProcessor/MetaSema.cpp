@@ -15,6 +15,7 @@
 #include "cling/Interpreter/Interpreter.h"
 #include "cling/Interpreter/Value.h"
 #include "cling/MetaProcessor/MetaProcessor.h"
+#include "cling/CtagsExtension/Callback.h"
 
 #include "clang/AST/ASTContext.h"
 #include "clang/Basic/SourceManager.h"
@@ -25,6 +26,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/Support/Casting.h"
 
 
 #include "clang/Lex/Preprocessor.h"
@@ -65,7 +67,10 @@ namespace cling {
   }
 
   MetaSema::ActionResult MetaSema::actOnTCommand(llvm::StringRef file) {
-      llvm::outs()<<file<<": directory to be recursively tagged.\n";
+      //llvm::outs()<<file<<": directory to be recursively tagged.\n";
+      CtagsInterpreterCallback *ctic= (CtagsInterpreterCallback *)m_Interpreter.getCallbacks();
+      ctic->AddTagFile(file);
+
       return AR_Success;
   }
 

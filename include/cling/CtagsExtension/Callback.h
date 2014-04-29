@@ -7,25 +7,25 @@
 #include "clang/Sema/Lookup.h"
 #include <string>
 #include <map>
-
+#include <vector>
 namespace cling{
-  class LookupInfo{};
+  class LookupInfo{};//TODO: Would contain info regarding previous lookups; get rid of the map in LookupObject
   
   class CtagsInterpreterCallback : public cling::InterpreterCallbacks{
   public:
-    CtagsInterpreterCallback(cling::Interpreter* interp,std::string path=".") :
+    CtagsInterpreterCallback(cling::Interpreter* interp) :
       InterpreterCallbacks(interp,true),
-      ip(interp),
-      tags(path)
+      ip(interp)
       {}
     
-    virtual bool LookupObject (clang::LookupResult &R, clang::Scope *);
+    bool LookupObject (clang::LookupResult &R, clang::Scope *);
     
+    void AddTagFile(llvm::StringRef path);
   
   private:
     std::map<std::string,LookupInfo> table;
     cling::Interpreter* ip;
-    TagFileWrapper tags;
+    std::vector<TagFileWrapper> tags;
   };
 }
 

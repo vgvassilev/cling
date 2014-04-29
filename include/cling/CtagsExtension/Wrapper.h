@@ -13,7 +13,7 @@ namespace cling {
   public:
     TagFileWrapper(std::string path);
     TagFileWrapper(const std::vector<std::string>& file_list);
-    
+    ~TagFileWrapper();
     struct LookupResult
     {
         std::string name;
@@ -29,7 +29,7 @@ namespace cling {
 //     tagFileInfo* tfi;
     TagFileInternals* tf;
     std::string tagfilename;
-      
+    static int counter;
   };
 }
 #endif

@@ -3,27 +3,32 @@
 #include <ftw.h>
 #include <fnmatch.h>
 #include <unistd.h>
-
+#include <iostream>
 namespace cling {
   struct TagFileInternals{
     tagFile* tf;
     tagFileInfo tfi;  
   };
   
+  int TagFileWrapper::counter=0;
+
   TagFileWrapper::TagFileWrapper(const std::vector<std::string>& file_list)
   {
     tf=new TagFileInternals();
     generate(file_list);
     read();
   }
-  
+  TagFileWrapper::~TagFileWrapper()
+  {
+      //Define copy or move constructors and then delete and remove here
+  }
   static const char *headertypes[] = 
   {
      "*.hh", "*.hpp", "*.h"
   };
   static std::vector<std::string> FilePaths; ///TODO:Find a way to do this without globals
   static const int maxfd=512;
-  
+
   static int callback(const char *fpath, const struct stat *sb, int typeflag)
   {
     /* if it's a file */
@@ -81,7 +86,7 @@ namespace cling {
     auto it=paths.begin();
     int no_of_args=0;
     std::string concat;
-    tagfilename="tags";
+    tagfilename="tags"+std::to_string(TagFileWrapper::counter++);
     std::remove(tagfilename.c_str());
     while(it!=paths.end())
     {
@@ -104,10 +109,11 @@ namespace cling {
   bool TagFileWrapper::read()
   {
     tf->tf=tagsOpen(tagfilename.c_str(),&(tf->tfi));
+    //std::cout<<"File "<<tagfilename<<" read.\n";
     if(tf->tfi.status.opened == false)
     {
         //throw a std::runtime_error ?
-//          std::cerr<<"Failed to open tag file.\n";
+//          std::cerr<<"Failed to open tag file.\n";//TODO
         return false;
     }
     return true;

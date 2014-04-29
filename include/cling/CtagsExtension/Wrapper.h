@@ -22,14 +22,17 @@ namespace cling {
     
     //returns a map that maps headers to lookup results 
     std::map<std::string,LookupResult> match(std::string name, bool partialMatch=false);
+    bool emptyFile(){return !generated;}
   private:
-    void generate(const std::vector<std::string>& cmd,int arglimit=50);
+    bool generate(const std::vector<std::string>& cmd, std::string tagfile="adhoc", int arglimit=50);
     bool read();
 //     tagFile* tf;
 //     tagFileInfo* tfi;
     TagFileInternals* tf;
     std::string tagfilename;
+    std::string tagpath;
     static int counter;
+    bool generated;
   };
 }
 #endif

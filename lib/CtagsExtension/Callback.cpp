@@ -21,7 +21,25 @@ namespace cling {
     return false;
   }
   void CtagsInterpreterCallback::AddTagFile(llvm::StringRef path) {
-    llvm::outs()<<"Tagfile generated from: "<<path<<"\n";
-    tags.push_back(TagFileWrapper(path));
+    //llvm::outs()<<"Tagfile generated from: "<<path<<"\n";
+    TagFileWrapper tf(path);
+    if(!tf.emptyFile())
+        tags.push_back(tf);
   }
+
+  CtagsInterpreterCallback::CtagsInterpreterCallback
+  (cling::Interpreter* interp) :
+    InterpreterCallbacks(interp,true),
+    ip(interp){
+      llvm::SmallVector<std::string,10> paths;
+      interp->GetIncludePaths(paths,true,false);
+      for(auto p:paths)
+      {
+          //llvm::outs()<<p<<"\n";
+          //Takes too long
+      }
+      //AddTagFile("/usr/include/c++/");
+
+  }
+
 }

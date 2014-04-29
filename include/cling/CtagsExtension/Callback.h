@@ -13,10 +13,7 @@ namespace cling{
   
   class CtagsInterpreterCallback : public cling::InterpreterCallbacks{
   public:
-    CtagsInterpreterCallback(cling::Interpreter* interp) :
-      InterpreterCallbacks(interp,true),
-      ip(interp)
-      {}
+      CtagsInterpreterCallback(cling::Interpreter* interp);
     
     bool LookupObject (clang::LookupResult &R, clang::Scope *);
     

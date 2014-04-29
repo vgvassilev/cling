@@ -3,6 +3,9 @@
 #include <ftw.h>
 #include <fnmatch.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <cstdlib>
 #include <iostream>
 namespace cling {
   struct TagFileInternals{
@@ -22,12 +25,44 @@ namespace cling {
   {
       //Define copy or move constructors and then delete and remove here
   }
+  std::string path_to_file_name(std::string path)
+  {
+      for(auto& c:path)
+      {
+          if(c=='/')
+              c='_';
+      }
+      return path;
+  }
+
+  //Now existense based, will be timestamp based if feasible
+  bool need_to_generate(std::string tagpath,std::string filename,std::string dirpath)
+  {
+      if( access( (tagpath+filename).c_str(), F_OK ) != -1 ) {
+          return false;
+      }
+      else {
+          //std::cout<<"File doesn't exist";
+          return true;
+      }
+  }
+
+  std::string generate_tag_path()
+  {
+    std::string homedir=std::getenv("HOME");
+    std::string tagdir="/.cling/";
+    std::string result=homedir+tagdir;
+    mkdir(result.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    return result;
+  }
+
   static const char *headertypes[] = 
   {
      "*.hh", "*.hpp", "*.h"
   };
   static std::vector<std::string> FilePaths; ///TODO:Find a way to do this without globals
   static const int maxfd=512;
+
 
   static int callback(const char *fpath, const struct stat *sb, int typeflag)
   {
@@ -54,8 +89,12 @@ namespace cling {
   {
     tf=new TagFileInternals();
     ftw(path.c_str(),callback,maxfd);
-    generate(FilePaths);
-    read();
+    if(generate(FilePaths,path))
+        read();
+    else
+    {
+        generated=true;
+    }
   }
   
   
@@ -81,20 +120,26 @@ namespace cling {
     return map;
   }
   //no more than `arglimit` arguments in a single invocation
-  void TagFileWrapper::generate(const std::vector<std::string>& paths,int arglimit)
+  bool TagFileWrapper::generate(const std::vector<std::string>& paths,std::string dirpath,int arglimit)
   {
     auto it=paths.begin();
     int no_of_args=0;
     std::string concat;
-    tagfilename="tags"+std::to_string(TagFileWrapper::counter++);
-    std::remove(tagfilename.c_str());
+    tagpath=generate_tag_path();
+    tagfilename=path_to_file_name(dirpath);
+
+    if(!need_to_generate(tagpath,tagfilename,dirpath))
+        return false;
+
+    //std::cout<<"XFile "<<tagpath+tagfilename<<" read.\n";
+
     while(it!=paths.end())
     {
       concat+=(*it+" ");
       no_of_args++;
       if(no_of_args==arglimit)
       {
-        std::string filename=" -f "+tagfilename+" ";
+        std::string filename=" -f "+tagpath+tagfilename+" ";
         std::string sorted=" --sort=yes ";
         std::string append=" -a ";
         std::string cmd="ctags "+append+filename+sorted+concat;
@@ -104,12 +149,13 @@ namespace cling {
         it++;
       }
     }
+    return true;
   }
   
   bool TagFileWrapper::read()
   {
-    tf->tf=tagsOpen(tagfilename.c_str(),&(tf->tfi));
-    //std::cout<<"File "<<tagfilename<<" read.\n";
+    tf->tf=tagsOpen((tagpath+tagfilename).c_str(),&(tf->tfi));
+    //std::cout<<"File "<<tagpath+tagfilename<<" read.\n";
     if(tf->tfi.status.opened == false)
     {
         //throw a std::runtime_error ?

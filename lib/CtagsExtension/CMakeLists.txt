@@ -11,7 +11,7 @@ add_cling_library(clingCtagsExtension
   Callback.cpp
   readtags.cpp
   TagManager.cpp
-  
+  FSUtils.cpp
 
   LINK_LIBS
   clangBasic

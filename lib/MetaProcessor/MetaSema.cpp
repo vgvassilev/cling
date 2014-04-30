@@ -69,7 +69,7 @@ namespace cling {
   MetaSema::ActionResult MetaSema::actOnTCommand(llvm::StringRef file) {
       //llvm::outs()<<file<<": directory to be recursively tagged.\n";
       CtagsInterpreterCallback *ctic= (CtagsInterpreterCallback *)m_Interpreter.getCallbacks();
-      ctic->AddTagFile(file);
+      ctic->getTagManager()->AddTagFile(file);
 
       return AR_Success;
   }

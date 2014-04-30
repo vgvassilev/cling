@@ -4,6 +4,7 @@
 #include "cling/Interpreter/Interpreter.h"
 #include "cling/Interpreter/InterpreterCallbacks.h"
 #include "cling/CtagsExtension/Wrapper.h"
+#include "cling/CtagsExtension/TagManager.h"
 #include "clang/Sema/Lookup.h"
 #include <string>
 #include <map>
@@ -13,16 +14,17 @@ namespace cling{
   
   class CtagsInterpreterCallback : public cling::InterpreterCallbacks{
   public:
-      CtagsInterpreterCallback(cling::Interpreter* interp);
+      CtagsInterpreterCallback(cling::Interpreter* interp,cling::TagManager* t);
     
     bool LookupObject (clang::LookupResult &R, clang::Scope *);
     
-    void AddTagFile(llvm::StringRef path);
-  
+    //void AddTagFile(llvm::StringRef path);
+    cling::TagManager* getTagManager();
   private:
-    std::map<std::string,LookupInfo> table;
+    //std::map<std::string,LookupInfo> table;
     cling::Interpreter* ip;
-    std::vector<TagFileWrapper> tags;
+    //std::vector<TagFileWrapper> tags;
+    cling::TagManager* tags;
   };
 }
 

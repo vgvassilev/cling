@@ -24,6 +24,8 @@ namespace cling {
     std::map<std::string,LookupResult> match(std::string name, bool partialMatch=false);
     bool newFile(){return generated;}
     bool validFile(){return validfile;}
+    bool operator==(const TagFileWrapper& t);
+
   private:
     void generate(const std::vector<std::string>& cmd, std::string tagfile="adhoc", int arglimit=50);
     void read();
@@ -32,7 +34,6 @@ namespace cling {
     TagFileInternals* tf;
     std::string tagfilename;
     std::string tagpath;
-    static int counter;
     bool generated;
     bool validfile;
   };

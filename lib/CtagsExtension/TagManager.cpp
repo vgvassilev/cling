@@ -1,5 +1,6 @@
 #include "cling/CtagsExtension/TagManager.h"
 #include <llvm/Support/raw_ostream.h>
+#include<algorithm>
 namespace cling {
 
   TagManager::TagManager(){}
@@ -11,7 +12,7 @@ namespace cling {
         llvm::errs()<<"Reading Tag File: "<<path<<" failed.\n";
         return;
     }
-    if(tf.newFile())
+    if(std::find(tags.begin(),tags.end(),tf)==tags.end())
       tags.push_back(tf);
   }
 

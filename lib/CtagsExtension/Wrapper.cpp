@@ -9,12 +9,12 @@
 #include <cstdlib>
 #include <iostream>
 namespace cling {
+
   struct TagFileInternals{
     tagFile* tf;
     tagFileInfo tfi;  
   };
-  
-  int TagFileWrapper::counter=0;
+
 
   TagFileWrapper::TagFileWrapper(const std::vector<std::string>& file_list)
   {
@@ -35,11 +35,26 @@ namespace cling {
       }
       return path;
   }
+  bool TagFileWrapper::operator==(const TagFileWrapper& t)
+  {
+      return tagfilename==t.tagfilename;
+  }
 
-  //Now existense based, will be timestamp based if feasible
+  bool file_exists(std::string path)
+  {
+    return access( path.c_str(), F_OK ) != -1;
+  }
+  bool file_is_newer(std::string path,std::string dir)
+  {
+      return true;//TODO Timestamp checks go here
+  }
+
   bool need_to_generate(std::string tagpath,std::string filename,std::string dirpath)
   {
-      if( access( (tagpath+filename).c_str(), F_OK ) != -1 ) {
+      if( file_exists(tagpath+filename)) {
+          return false;
+      }
+      else if (!file_is_newer(tagpath+filename,dirpath)){
           return false;
       }
       else {
@@ -73,20 +88,6 @@ namespace cling {
     /* if it's a file */
     if (typeflag == FTW_F && isHeaderFile(fpath))
     {
-//      int i;
-
-//      /* for each filter, */
-//      for (i = 0; i < sizeof(headertypes) / sizeof(headertypes[0]); i++)
-//      {
-//        /* if the filename matches the filter, */
-//        if (fnmatch(headertypes[i], fpath, FNM_CASEFOLD) == 0)
-//        {
-//          /* do something */
-//
-//          break;
-//        }
-
- //     }
         FilePaths.push_back(fpath);
     }
     return 0;
@@ -125,7 +126,7 @@ namespace cling {
   //no more than `arglimit` arguments in a single invocation
   void TagFileWrapper::generate(const std::vector<std::string>& paths,std::string dirpath,int arglimit)
   {
-    auto it=paths.begin();
+
     int no_of_args=0;
     std::string concat;
     tagpath=generate_tag_path();
@@ -137,8 +138,8 @@ namespace cling {
         return;
     }
     //std::cout<<"XFile "<<tagpath+tagfilename<<" read.\n";
-
-    while(it!=paths.end())
+    auto it=paths.begin(),end=paths.end();
+    while(it!=end)
     {
       concat+=(*it+" ");
       no_of_args++;

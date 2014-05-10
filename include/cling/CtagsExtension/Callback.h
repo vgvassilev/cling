@@ -6,6 +6,21 @@
 #include "cling/CtagsExtension/TagManager.h"
 #include "clang/Sema/Lookup.h"
 
+#if 0
+This feature is disabled by default until stable.
+To enable, execute the following code as runtime input.
+Note that, for now, the T meta command will cause the interpreter to segfault,
+unless these objects are loaded.
+
+.rawInput 0
+#include "cling/CtagsExtension/TagManager.h"
+#include "cling/CtagsExtension/Callback.h"
+cling::TagManager t;
+gCling->setCallbacks(new cling::CtagsInterpreterCallback(gCling,&t));
+.rawInput 1
+
+#endif
+
 namespace cling{
   class LookupInfo{};//TODO: Would contain info regarding previous lookups; get rid of the map in LookupObject
   

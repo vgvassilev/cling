@@ -20,6 +20,35 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/DynamicLibrary.h"
 
+namespace {
+// From boost/detail/sp_counted_base.hpp.
+// JIT cannot handle inline asm, thus compile these symbols and
+// inject them when needed.
+static int boost__detail__atomic_exchange_and_add( int * pw, int dv )
+{
+    // int r = *pw;
+    // *pw += dv;
+    // return r;
+
+#if defined( __GNUC__ ) && ( defined( __i386__ ) || defined( __x86_64__ ) )
+    int r;
+
+    __asm__ __volatile__
+    (
+        "lock\n\t"
+        "xadd %1, %0":
+        "=m"( *pw ), "=r"( r ): // outputs (%0, %1)
+        "m"( *pw ), "1"( dv ): // inputs (%2, %3 == %1)
+        "memory", "cc" // clobbers
+    );
+#else
+    int r = *pw;
+    *pw += dv;
+#endif
+    return r;
+}
+}
+
 using namespace llvm;
 namespace cling {
 
@@ -29,9 +58,27 @@ std::vector<IncrementalExecutor::LazyFunctionCreatorFunc_t>
 
 // Keep in source: OwningPtr<ExecutionEngine> needs #include ExecutionEngine
 IncrementalExecutor::IncrementalExecutor(llvm::Module* m)
-  : m_CxaAtExitRemapped(false) {
+{
   assert(m && "llvm::Module must not be null!");
   m_AtExitFuncs.reserve(256);
+
+  // Rewrire __cxa_atexit to ~Interpreter(), thus also global destruction
+  // coming from the JIT.
+  m_SymbolsToRemap["__cxa_atexit"]
+    = std::make_pair((void*)0, std::string("cling_cxa_atexit"));
+
+  // Helper to cast a function pointer to a void*:
+  typedef int (*p2tfunc_t)();
+  union {
+    p2tfunc_t m_func;
+    void* m_ptr;
+  } p2f;
+
+  // Provide a symbol to common boost functions using inline asm such that the
+  // JIT does not need to compile it (and fail doing it due to inline asm).
+  p2f.m_func = (p2tfunc_t) &boost__detail__atomic_exchange_and_add;
+  m_SymbolsToRemap["_ZN5boost6detail23atomic_exchange_and_addEPii"]
+    = std::make_pair((void*)p2f.m_ptr, std::string());
 
   //
   //  Create an execution engine to use.
@@ -74,22 +121,43 @@ void IncrementalExecutor::shuttingDown() {
   }
 }
 
-void IncrementalExecutor::remapCXAAtExit() {
-  if (m_CxaAtExitRemapped)
-    return;
+void IncrementalExecutor::remapSymbols() {
+  // Note: iteration of ++remapI happens in the body due to invalidation
+  // of the erased iterator!
+  for (auto remapI = std::begin(m_SymbolsToRemap),
+         remapE = std::end(m_SymbolsToRemap);
+       remapI != remapE;) {
+    // The function for which the symbol address will be replaced
+    llvm::Function* origFunc
+      = m_engine->FindFunctionNamed(remapI->first.c_str());
+    if (!origFunc) {
+      // Go to next element.
+      ++remapI;
+      continue;
+    }
 
-  llvm::Function* atExit = m_engine->FindFunctionNamed("__cxa_atexit");
-  if (!atExit)
-    return;
+    // The new symbol address, which might be NULL to signal a symbol
+    // lookup is required
+    void* replaceAddr = remapI->second.first;
+    if (!replaceAddr) {
+      // A symbol lookup is required to find the replacement address.
+      llvm::Function* interpFunc
+        = m_engine->FindFunctionNamed(remapI->second.second.c_str());
+      assert(interpFunc && "replacement function must exist.");
+      // Generate the symbol and get its address
+      replaceAddr = m_engine->getPointerToFunction(interpFunc);
+    }
+    assert(replaceAddr && "cannot find replacement symbol");
+    // Replace the mapping of function symbol to new address
+    m_engine->updateGlobalMapping(origFunc, replaceAddr);
 
-  llvm::Function* clingAtExit
-    = m_engine->FindFunctionNamed("cling_cxa_atexit");
-  assert(clingAtExit && "cling_cxa_atexit must exist.");
-
-  void* clingAtExitAddr = m_engine->getPointerToFunction(clingAtExit);
-  assert(clingAtExitAddr && "cannot find cling_cxa_atexit");
-  m_engine->updateGlobalMapping(atExit, clingAtExitAddr);
-  m_CxaAtExitRemapped = true;
+    // Note that the current entry was successfully remapped.
+    // Save the current so we can erase it *after* the iterator increment
+    // or we would increment an invalid iterator.
+    auto remapErase = remapI;
+    ++remapI;
+    m_SymbolsToRemap.erase(remapErase);
+  }
 }
 
 void IncrementalExecutor::AddAtExitFunc(void (*func) (void*), void* arg,
@@ -168,7 +236,7 @@ IncrementalExecutor::executeFunction(llvm::StringRef funcname,
   // We don't care whether something was unresolved before.
   m_unresolvedSymbols.clear();
 
-  remapCXAAtExit();
+  remapSymbols();
 
   llvm::Function* f = m_engine->FindFunctionNamed(funcname.str().c_str());
   if (!f) {
@@ -258,7 +326,7 @@ IncrementalExecutor::runStaticInitializersOnce(llvm::Module* m) {
 
     // Execute the ctor/dtor function!
     if (llvm::Function *F = llvm::dyn_cast<llvm::Function>(FP)) {
-      remapCXAAtExit();
+      remapSymbols();
       m_engine->getPointerToFunction(F);
       // check if there is any unresolved symbol in the list
       if (!m_unresolvedSymbols.empty()) {
@@ -364,7 +432,7 @@ void* IncrementalExecutor::getAddressOfGlobal(llvm::Module* m,
     if (!gvar)
       return 0;
 
-    remapCXAAtExit();
+    remapSymbols();
     address = m_engine->getPointerToGlobal(gvar);
   }
   return address;
@@ -372,7 +440,7 @@ void* IncrementalExecutor::getAddressOfGlobal(llvm::Module* m,
 
 void*
 IncrementalExecutor::getPointerToGlobalFromJIT(const llvm::GlobalValue& GV) {
-  remapCXAAtExit();
+  remapSymbols();
   if (void* addr = m_engine->getPointerToGlobalIfAvailable(&GV))
     return addr;
 

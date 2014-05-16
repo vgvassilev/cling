@@ -4,6 +4,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <cstdlib>
+#include <llvm/Support/FileSystem.h>
+#include <llvm/Support/Path.h>
+
 namespace cling {
     std::string path_to_file_name(std::string path)
     {
@@ -14,7 +17,7 @@ namespace cling {
     }
     bool file_exists(std::string path)
     {
-      return access( path.c_str(), F_OK ) != -1;
+      return llvm::sys::fs::exists(path);
     }
 
     bool file_is_newer(std::string path,std::string dir)
@@ -35,10 +38,17 @@ namespace cling {
             return true;
         }
     }
+    std::string get_home()
+    {
+        llvm::SmallString<30> result;
+        llvm::sys::path::home_directory(result);
+        return result.c_str();
+    }
 
     std::string generate_tag_path()
     {
-      std::string homedir=std::getenv("HOME");
+      std::string homedir=get_home();
+
       std::string tagdir="/.cling/";
       std::string result=homedir+tagdir;
       mkdir(result.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);

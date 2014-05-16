@@ -1,4 +1,4 @@
-#include "cling/CtagsExtension/Wrapper.h"
+#include "cling/TagsExtension/Wrapper.h"
 #include "llvm/ADT/StringRef.h"
 #include "readtags.h"
 #include "FSUtils.h"

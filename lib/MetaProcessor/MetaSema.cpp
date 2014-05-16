@@ -15,7 +15,7 @@
 #include "cling/Interpreter/Interpreter.h"
 #include "cling/Interpreter/Value.h"
 #include "cling/MetaProcessor/MetaProcessor.h"
-#include "cling/CtagsExtension/Callback.h"
+#include "cling/TagsExtension/Callback.h"
 
 #include "clang/AST/ASTContext.h"
 #include "clang/Basic/SourceManager.h"

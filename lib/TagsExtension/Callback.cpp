@@ -1,4 +1,4 @@
-#include "cling/CtagsExtension/Callback.h"
+#include "cling/TagsExtension/Callback.h"
 
 namespace cling {
   bool CtagsInterpreterCallback::LookupObject (clang::LookupResult &R, clang::Scope *){

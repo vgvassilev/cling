@@ -3,7 +3,7 @@
 #include <vector>
 #include <map>
 #include "cling/Interpreter/Interpreter.h"
-#include "cling/CtagsExtension/Wrapper.h"
+#include "cling/TagsExtension/Wrapper.h"
 namespace cling {
   class TagManager
   {

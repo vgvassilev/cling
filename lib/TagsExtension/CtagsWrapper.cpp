@@ -1,4 +1,4 @@
-#include "cling/TagsExtension/Wrapper.h"
+#include "cling/TagsExtension/CtagsWrapper.h"
 #include "llvm/ADT/StringRef.h"
 #include "readtags.h"
 #include "FSUtils.h"
@@ -12,18 +12,18 @@ namespace cling {
   };
 
 
-  TagFileWrapper::TagFileWrapper(const std::vector<std::string>& file_list)
+  CtagsFileWrapper::CtagsFileWrapper(const std::vector<std::string>& file_list)
   {
     tf=new TagFileInternals();
     generate(file_list);
     read();
   }
-  TagFileWrapper::~TagFileWrapper()
-  {
-      //Define copy or move constructors and then delete and remove here
-  }
+//  CtagsFileWrapper::~CtagsFileWrapper()
+//  {
+//      //Define copy or move constructors and then delete and remove here
+//  }
 
-  bool TagFileWrapper::operator==(const TagFileWrapper& t)
+  bool CtagsFileWrapper::operator==(const CtagsFileWrapper& t)
   {
       return tagfilename==t.tagfilename;
   }
@@ -43,7 +43,7 @@ namespace cling {
     return 0;
   }
   
-  TagFileWrapper::TagFileWrapper(std::string path)
+  CtagsFileWrapper::CtagsFileWrapper(std::string path)
   {
     tf=new TagFileInternals();
     ftw(path.c_str(),callback,maxfd);
@@ -53,8 +53,8 @@ namespace cling {
   
   
   
-  std::map<std::string,TagFileWrapper::LookupResult> 
-  TagFileWrapper::match(std::string name, bool partialMatch)
+  std::map<std::string,TagFileWrapper::LookupResult>
+  CtagsFileWrapper::match(std::string name, bool partialMatch)
   {
     std::map<std::string,LookupResult> map;
     tagEntry entry;
@@ -74,7 +74,7 @@ namespace cling {
     return map;
   }
   //no more than `arglimit` arguments in a single invocation
-  void TagFileWrapper::generate(const std::vector<std::string>& paths,std::string dirpath,int arglimit)
+  void CtagsFileWrapper::generate(const std::vector<std::string>& paths,std::string dirpath,int arglimit)
   {
 
     int no_of_args=0;
@@ -109,7 +109,7 @@ namespace cling {
     generated=true;
   }
   
-  void TagFileWrapper::read()
+  void CtagsFileWrapper::read()
   {
     tf->tf=tagsOpen((tagpath+tagfilename).c_str(),&(tf->tfi));
     //std::cout<<"File "<<tagpath+tagfilename<<" read.\n";

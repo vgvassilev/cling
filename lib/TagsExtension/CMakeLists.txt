@@ -7,7 +7,7 @@
 #------------------------------------------------------------------------------
 
 add_cling_library(clingCtagsExtension
-  Wrapper.cpp
+  CtagsWrapper.cpp
   Callback.cpp
   readtags.cpp
   TagManager.cpp

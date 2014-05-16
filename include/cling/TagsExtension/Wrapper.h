@@ -6,36 +6,20 @@
 #include<map>
 #include<string>
 
-namespace cling {
-  struct TagFileInternals;
-  
+namespace cling{
   class TagFileWrapper{
   public:
-    TagFileWrapper(std::string path);
-    TagFileWrapper(const std::vector<std::string>& file_list);
-    ~TagFileWrapper();
     struct LookupResult
     {
-        std::string name;
-        std::string kind;
+      std::string name;
+      std::string kind;
     };
-    
-    //returns a map that maps headers to lookup results 
-    std::map<std::string,LookupResult> match(std::string name, bool partialMatch=false);
-    bool newFile(){return generated;}
-    bool validFile(){return validfile;}
-    bool operator==(const TagFileWrapper& t);
-
-  private:
-    void generate(const std::vector<std::string>& cmd, std::string tagfile="adhoc", int arglimit=50);
-    void read();
-//     tagFile* tf;
-//     tagFileInfo* tfi;
-    TagFileInternals* tf;
-    std::string tagfilename;
-    std::string tagpath;
-    bool generated;
-    bool validfile;
+    virtual std::map<std::string,LookupResult> match(std::string name, bool partialMatch=false)=0;
+    virtual bool newFile()=0;
+    virtual bool validFile()=0;
+    virtual ~TagFileWrapper(){}
   };
 }
+
+
 #endif

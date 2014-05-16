@@ -1,13 +1,14 @@
 #include "cling/TagsExtension/TagManager.h"
 #include <llvm/Support/raw_ostream.h>
 #include<algorithm>
+#include "cling/TagsExtension/CtagsWrapper.h"
 namespace cling {
 
   TagManager::TagManager(){}
   void TagManager::AddTagFile(llvm::StringRef path)
   {
-    TagFileWrapper tf(path);
-    if(!tf.validFile())
+    auto tf=new CtagsFileWrapper(path);
+    if(!tf->validFile())
     {
         llvm::errs()<<"Reading Tag File: "<<path<<" failed.\n";
         return;
@@ -22,7 +23,7 @@ namespace cling {
       table.erase(name);
       for(auto& t:tags)
       {
-          for(auto match:t.match(name,true))
+          for(auto match:t->match(name,true))
           {
               LookupInfo l(match.first,match.second.name,match.second.kind);
               table.insert({name,l});

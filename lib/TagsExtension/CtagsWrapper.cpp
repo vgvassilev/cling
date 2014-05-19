@@ -16,18 +16,15 @@ namespace cling {
 
   static const int maxfd=512;
 
-  static int callback(const char *fpath, const struct stat *sb, int typeflag)
-  {
+  static int callback(const char *fpath, const struct stat *sb, int typeflag) {
     if (typeflag == FTW_F && isHeaderFile(fpath))
         FilePaths.push_back(fpath);
     return 0;
   }
 
-  CtagsFileWrapper::CtagsFileWrapper(std::string path,bool recurse)
-  {
+  CtagsFileWrapper::CtagsFileWrapper(std::string path,bool recurse) {
     m_tf=new TagFileInternals();
-    if(recurse)
-    {
+    if(recurse) {
         //TODO: Do this without ftw (and get rid of the global in the process)
         //use llvm::recursive_directory_iterator
       ftw(path.c_str(),callback,maxfd);
@@ -35,13 +32,11 @@ namespace cling {
       read();
       FilePaths.clear();
     }
-    else
-    {
+    else{
       llvm::error_code ec;
       llvm::sys::fs::directory_iterator dit(path,ec);
       std::vector<std::string> list;
-      while(dit!=decltype(dit)())// !=end iterator
-      {
+      while(dit!=decltype(dit)()){// !=end iterator
         auto entry=*dit;
         if(llvm::sys::fs::is_regular_file (entry.path()))
           //llvm::outs()<<entry.path()<<"\n";
@@ -54,30 +49,26 @@ namespace cling {
     }
   }
 
-  CtagsFileWrapper::CtagsFileWrapper(const std::vector<std::string>& file_list)
-  {
+  CtagsFileWrapper::CtagsFileWrapper(const std::vector<std::string>& file_list){
     m_tf=new TagFileInternals();
     generate(file_list);
     read();
     FilePaths.clear();
   }
 
-  bool CtagsFileWrapper::operator==(const CtagsFileWrapper& t)
-  {
+  bool CtagsFileWrapper::operator==(const CtagsFileWrapper& t){
     return m_tagfilename==t.m_tagfilename;
   }
 
   std::map<std::string,TagFileWrapper::LookupResult>
-  CtagsFileWrapper::match(std::string name, bool partialMatch)
-  {
+  CtagsFileWrapper::match(std::string name, bool partialMatch){
     std::map<std::string,LookupResult> map;
     tagEntry entry;
     int options=TAG_OBSERVECASE | (partialMatch?TAG_PARTIALMATCH:TAG_FULLMATCH);
     
     tagResult result = tagsFind(m_tf->tf, &entry, name.c_str(),options);
     
-    while(result==TagSuccess)
-    {
+    while(result==TagSuccess){
       LookupResult r;
       r.name=entry.name;
       r.kind=entry.kind;
@@ -88,27 +79,23 @@ namespace cling {
     return map;
   }
   //no more than `arglimit` arguments in a single invocation
-  void CtagsFileWrapper::generate(const std::vector<std::string>& paths,std::string dirpath,int arglimit)
-  {
+  void CtagsFileWrapper::generate(const std::vector<std::string>& paths,std::string dirpath,int arglimit){
 
     int no_of_args=0;
     std::string concat;
     m_tagpath=generate_tag_path();
     m_tagfilename=path_to_file_name(dirpath);
 
-    if(!need_to_generate(m_tagpath,m_tagfilename,dirpath))
-    {
+    if(!need_to_generate(m_tagpath,m_tagfilename,dirpath)){
       m_generated=false;
       return;
     }
     //std::cout<<"XFile "<<tagpath+tagfilename<<" read.\n";
     auto it=paths.begin(),end=paths.end();
-    while(it!=end)
-    {
+    while(it!=end){
       concat+=(*it+" ");
       no_of_args++;
-      if(no_of_args==arglimit)
-      {
+      if(no_of_args==arglimit){
         //TODO: Convert these to twine
         std::string filename=" -f "+m_tagpath+m_tagfilename+" ";
         std::string lang=" --language-force=c++ ";
@@ -125,8 +112,7 @@ namespace cling {
     m_generated=true;
   }
   
-  void CtagsFileWrapper::read()
-  {
+  void CtagsFileWrapper::read() {
     m_tf->tf=tagsOpen((m_tagpath+m_tagfilename).c_str(),&(m_tf->tfi));
     //std::cout<<"File "<<tagpath+tagfilename<<" read.\n";
     if(m_tf->tfi.status.opened == false)

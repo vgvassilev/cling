@@ -31,8 +31,7 @@ namespace cling {
       //Make the second arg true after the preprocessor pathway is implemented
       */
   }
-  TagManager* CtagsInterpreterCallback::getTagManager()
-  {
+  TagManager* CtagsInterpreterCallback::getTagManager() {
     return m_tags;
   }
 

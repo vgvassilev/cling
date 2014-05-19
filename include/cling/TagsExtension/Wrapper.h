@@ -9,8 +9,7 @@
 namespace cling{
   class TagFileWrapper{
   public:
-    struct LookupResult
-    {
+    struct LookupResult{
       std::string name;
       std::string kind;
     };

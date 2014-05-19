@@ -5,8 +5,7 @@
 namespace cling {
 
   TagManager::TagManager(){}
-  void TagManager::AddTagFile(llvm::StringRef path, bool recurse)
-  {
+  void TagManager::AddTagFile(llvm::StringRef path, bool recurse){
     auto tf=new CtagsFileWrapper(path,recurse);
     if(!tf->validFile())
     {
@@ -18,13 +17,10 @@ namespace cling {
   }
 
   TagManager::TableType::iterator
-  TagManager::begin(std::string name)
-  {
+  TagManager::begin(std::string name){
     m_table.erase(name);
-    for(auto& t:m_tags)
-    {
-      for(auto match:t->match(name,true))
-      {
+    for(auto& t:m_tags){
+      for(auto match:t->match(name,true)){
         LookupInfo l(match.first,match.second.name,match.second.kind);
         m_table.insert({name,l});
       }
@@ -33,8 +29,7 @@ namespace cling {
     return r.first;
   }
   TagManager::TableType::iterator
-  TagManager::end(std::string name)
-  {
+  TagManager::end(std::string name){
     auto r=m_table.equal_range(name);
     return r.second;
   }

@@ -6,8 +6,8 @@
 #include<map>
 #include<string>
 
-namespace cling{
-  class TagFileWrapper{
+namespace cling {
+  class TagFileWrapper {
   public:
     struct LookupResult{
       std::string name;
@@ -18,7 +18,7 @@ namespace cling{
     virtual bool validFile()=0;
     virtual ~TagFileWrapper(){}
   };
-}
+} //end namespace cling
 
 
 #endif

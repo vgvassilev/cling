@@ -20,10 +20,10 @@ gCling->setCallbacks(new cling::CtagsInterpreterCallback(gCling,&t));
 
 #endif
 
-namespace cling{
+namespace cling {
   class LookupInfo{};//TODO: Would contain info regarding previous lookups; get rid of the map in LookupObject
   
-  class CtagsInterpreterCallback : public cling::InterpreterCallbacks{
+  class CtagsInterpreterCallback : public cling::InterpreterCallbacks {
   public:
       CtagsInterpreterCallback(cling::Interpreter* interp,cling::TagManager* t);
     
@@ -38,7 +38,7 @@ namespace cling{
     cling::Interpreter* m_ip;
     cling::TagManager* m_tags;
   };
-}
+}// end namespace cling
 
 #endif
 

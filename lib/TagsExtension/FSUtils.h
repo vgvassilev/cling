@@ -11,5 +11,5 @@ namespace cling {
   std::pair<std::string,std::string> splitPath(std::string path);
   void mkdir(std::string path);
   std::string getHome();
-}
+} //end namespace cling
 #endif

@@ -36,4 +36,4 @@ namespace cling {
   TagManager::LookupInfo::LookupInfo(std::string h, std::string n, std::string t):
       header(h),name(n),type(t){}
 
-}
+} //end namespace cling

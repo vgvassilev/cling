@@ -35,4 +35,4 @@ namespace cling {
     return m_tags;
   }
 
-}
+}//end namespace cling//end namespace cling

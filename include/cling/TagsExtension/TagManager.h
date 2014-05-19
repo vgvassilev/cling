@@ -5,8 +5,7 @@
 #include "cling/Interpreter/Interpreter.h"
 #include "cling/TagsExtension/Wrapper.h"
 namespace cling {
-  class TagManager
-  {
+  class TagManager {
   public:
     TagManager();
     
@@ -29,5 +28,5 @@ namespace cling {
     TableType m_table;
     
   };
-}
+}//end namespace cling
 #endif

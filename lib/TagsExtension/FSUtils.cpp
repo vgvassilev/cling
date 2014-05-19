@@ -66,4 +66,4 @@ namespace cling {
             ||str.endswith(".hpp")
             ||str.find("include")!=llvm::StringRef::npos;
   }
-}
+}//end namespace cling

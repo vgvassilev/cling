@@ -2,7 +2,7 @@
 namespace cling {
   struct TagFileInternals;
 
-  class CtagsFileWrapper:public TagFileWrapper{
+  class CtagsFileWrapper:public TagFileWrapper {
   public:
     CtagsFileWrapper(std::string path, bool recurse=true);
     //If recurse is true, the files will be tagged recursively without preprocessing,
@@ -29,4 +29,4 @@ namespace cling {
     bool m_generated;
     bool m_validfile;
   };
-}
+}//end namespace cling

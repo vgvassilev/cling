@@ -4,7 +4,10 @@ namespace cling {
 
   class CtagsFileWrapper:public TagFileWrapper{
   public:
-    CtagsFileWrapper(std::string path);
+    CtagsFileWrapper(std::string path, bool recurse=true);
+    //If recurse is true, the files will be tagged recursively without preprocessing,
+    //else only the files in 'path'(not in its subdirs)
+    //will be tagged (after being preprocessed)
     CtagsFileWrapper(const std::vector<std::string>& file_list);
     ~CtagsFileWrapper(){}
 

@@ -21,7 +21,8 @@ namespace cling {
     InterpreterCallbacks(interp,true),
     ip(interp),
     tags(t) {
-
+      //TODO: get the include path from clang instead of this
+      tags->AddTagFile("/usr/include/c++/4.9.0/",false);
 
   }
   TagManager* CtagsInterpreterCallback::getTagManager()

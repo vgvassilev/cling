@@ -1,13 +1,13 @@
 #include "cling/TagsExtension/TagManager.h"
 #include <llvm/Support/raw_ostream.h>
-#include<algorithm>
+#include <algorithm>
 #include "cling/TagsExtension/CtagsWrapper.h"
 namespace cling {
 
   TagManager::TagManager(){}
-  void TagManager::AddTagFile(llvm::StringRef path)
+  void TagManager::AddTagFile(llvm::StringRef path, bool recurse)
   {
-    auto tf=new CtagsFileWrapper(path);
+    auto tf=new CtagsFileWrapper(path,recurse);
     if(!tf->validFile())
     {
         llvm::errs()<<"Reading Tag File: "<<path<<" failed.\n";

@@ -18,7 +18,7 @@ namespace cling {
       std::string type;
     };
     
-    void AddTagFile(llvm::StringRef path);
+    void AddTagFile(llvm::StringRef path,bool recurse=true);
     typedef std::multimap<std::string,LookupInfo> TableType;
     TableType::iterator begin(std::string name);
     TableType::iterator end(std::string name);

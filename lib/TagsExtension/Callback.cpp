@@ -3,15 +3,14 @@
 
 namespace cling {
   bool CtagsInterpreterCallback::LookupObject (clang::LookupResult &R, clang::Scope *){
-
     std::string in=R.getLookupName().getAsString();
     for(auto it=tags->begin(in);it!=tags->end(in);++it)
     {
-        auto lookup=it->second;
-        llvm::outs()<<lookup.header
-                    <<'\t'<<lookup.name
-                    <<'\t'<<lookup.type
-                    <<'\n';
+      auto lookup=it->second;
+      llvm::outs()<<lookup.header
+                  <<'\t'<<lookup.name
+                  <<'\t'<<lookup.type
+                  <<'\n';
     }
     return false;
   }

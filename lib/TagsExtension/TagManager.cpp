@@ -10,8 +10,8 @@ namespace cling {
     auto tf=new CtagsFileWrapper(path,recurse);
     if(!tf->validFile())
     {
-        llvm::errs()<<"Reading Tag File: "<<path<<" failed.\n";
-        return;
+      llvm::errs()<<"Reading Tag File: "<<path<<" failed.\n";
+      return;
     }
     if(std::find(tags.begin(),tags.end(),tf)==tags.end())
       tags.push_back(tf);
@@ -20,27 +20,25 @@ namespace cling {
   TagManager::TableType::iterator
   TagManager::begin(std::string name)
   {
-      table.erase(name);
-      for(auto& t:tags)
+    table.erase(name);
+    for(auto& t:tags)
+    {
+      for(auto match:t->match(name,true))
       {
-          for(auto match:t->match(name,true))
-          {
-              LookupInfo l(match.first,match.second.name,match.second.kind);
-              table.insert({name,l});
-          }
+        LookupInfo l(match.first,match.second.name,match.second.kind);
+        table.insert({name,l});
       }
-      auto r=table.equal_range(name);
-      return r.first;
+    }
+    auto r=table.equal_range(name);
+    return r.first;
   }
   TagManager::TableType::iterator
   TagManager::end(std::string name)
   {
-      auto r=table.equal_range(name);
-      return r.second;
+    auto r=table.equal_range(name);
+    return r.second;
   }
   TagManager::LookupInfo::LookupInfo(std::string h, std::string n, std::string t):
       header(h),name(n),type(t){}
-
-
 
 }

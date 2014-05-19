@@ -64,7 +64,7 @@ namespace cling {
 
   bool CtagsFileWrapper::operator==(const CtagsFileWrapper& t)
   {
-      return tagfilename==t.tagfilename;
+    return tagfilename==t.tagfilename;
   }
 
   std::map<std::string,TagFileWrapper::LookupResult>
@@ -98,8 +98,8 @@ namespace cling {
 
     if(!need_to_generate(tagpath,tagfilename,dirpath))
     {
-        generated=false;
-        return;
+      generated=false;
+      return;
     }
     //std::cout<<"XFile "<<tagpath+tagfilename<<" read.\n";
     auto it=paths.begin(),end=paths.end();

@@ -1,6 +1,6 @@
 #ifndef CLING_FS_UTILS_H
 #define CLING_FS_UTILS_H
-#include <llvm/ADT/StringRef.h>
+#include "llvm/ADT/StringRef.h"
 namespace cling {
   std::string pathToFileName(std::string path);
   bool fileExists(std::string path);

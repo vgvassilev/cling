@@ -7,10 +7,10 @@ namespace cling {
     for(auto it=m_tags->begin(in);it!=m_tags->end(in);++it)
     {
       auto lookup=it->second;
-      llvm::outs()<<lookup.header
-                  <<'\t'<<lookup.name
-                  <<'\t'<<lookup.type
-                  <<'\n';
+      llvm::outs() << lookup.header
+                  << '\t' << lookup.name
+                  << '\t' <<lookup.type
+                  << '\n';
     }
     return false;
   }

@@ -2,9 +2,8 @@
 #include "llvm/ADT/StringRef.h"
 #include "readtags.h"
 #include "FSUtils.h"
-#include <ftw.h>
-#include <llvm/Support/raw_ostream.h>
-#include <llvm/Support/FileSystem.h>
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FileSystem.h"
 
 namespace cling {
 
@@ -12,25 +11,24 @@ namespace cling {
     tagFile* tf;
     tagFileInfo tfi;  
   };
-  static std::vector<std::string> FilePaths; ///TODO:Find a way to do this without globals
-
-  static const int maxfd=512;
-
-  static int callback(const char *fpath, const struct stat *sb, int typeflag) {
-    if (typeflag == FTW_F && isHeaderFile(fpath))
-        FilePaths.push_back(fpath);
-    return 0;
-  }
 
   CtagsFileWrapper::CtagsFileWrapper(std::string path,bool recurse) {
     m_tf=new TagFileInternals();
     if(recurse) {
-        //TODO: Do this without ftw (and get rid of the global in the process)
-        //use llvm::recursive_directory_iterator
-      ftw(path.c_str(),callback,maxfd);
-      generate(FilePaths,path);
+      std::vector<std::string> list;
+      llvm::error_code ec;
+      llvm::sys::fs::recursive_directory_iterator rdit(path,ec);
+      while(rdit!=decltype(rdit)()) {
+        auto entry=*rdit;
+
+        if(llvm::sys::fs::is_regular_file (entry.path()) && isHeaderFile(entry.path())) {
+          //llvm::outs()<<entry.path()<<"\n";
+          list.push_back(entry.path());
+        }
+        rdit.increment(ec);
+      }
+      generate(list,path);
       read();
-      FilePaths.clear();
     }
     else{
       llvm::error_code ec;
@@ -53,7 +51,6 @@ namespace cling {
     m_tf=new TagFileInternals();
     generate(file_list);
     read();
-    FilePaths.clear();
   }
 
   bool CtagsFileWrapper::operator==(const CtagsFileWrapper& t){

@@ -1,7 +1,8 @@
 #include "cling/TagsExtension/TagManager.h"
-#include <llvm/Support/raw_ostream.h>
-#include <algorithm>
 #include "cling/TagsExtension/CtagsWrapper.h"
+#include "llvm/Support/raw_ostream.h"
+#include <algorithm>
+
 namespace cling {
 
   TagManager::TagManager(){}
@@ -9,7 +10,7 @@ namespace cling {
     auto tf=new CtagsFileWrapper(path,recurse);
     if(!tf->validFile())
     {
-      llvm::errs()<<"Reading Tag File: "<<path<<" failed.\n";
+      llvm::errs() << "Reading Tag File: " << path << " failed.\n";
       return;
     }
     if(std::find(m_tags.begin(),m_tags.end(),tf)==m_tags.end())

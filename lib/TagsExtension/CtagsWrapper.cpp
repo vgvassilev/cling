@@ -47,7 +47,7 @@ namespace cling {
           list.push_back(entry.path());
         dit.increment(ec);
       }
-      //TODO: Run "clang -x c++ -E" over all the files in list and save them to .cling
+      auto pair=splitPath(path);
     }
   }
 

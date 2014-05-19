@@ -1,14 +1,20 @@
 #include "FSUtils.h"
 #include <string>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <cstdlib>
 #include <algorithm>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/Path.h>
 
 namespace cling {
+    void mkdir(std::string path)
+    {
+        /*auto ec=*/llvm::sys::fs::create_directory(path);
+//        if(!ec.success())
+//        {
+//            //TODO show error
+//        }
+    }
+
     std::pair<std::string,std::string> splitPath(std::string path)
     {
         auto it=std::find(path.rbegin(),path.rend(),'/');
@@ -60,7 +66,7 @@ namespace cling {
 
       std::string tagdir="/.cling/";
       std::string result=homedir+tagdir;
-      mkdir(result.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+      mkdir(result.c_str());
       return result;
     }
     bool isHeaderFile(llvm::StringRef str)

@@ -79,14 +79,14 @@ namespace cling {
     return map;
   }
   //no more than `arglimit` arguments in a single invocation
-  void CtagsFileWrapper::generate(const std::vector<std::string>& paths,std::string dirpath,int arglimit){
+  void CtagsFileWrapper::generate(const std::vector<std::string>& paths, std::string dirpath, int argLimit){
 
     int no_of_args=0;
     std::string concat;
-    m_tagpath=generate_tag_path();
-    m_tagfilename=path_to_file_name(dirpath);
+    m_tagpath=generateTagPath();
+    m_tagfilename=pathToFileName(dirpath);
 
-    if(!need_to_generate(m_tagpath,m_tagfilename,dirpath)){
+    if(!needToGenerate(m_tagpath,m_tagfilename,dirpath)){
       m_generated=false;
       return;
     }
@@ -95,7 +95,7 @@ namespace cling {
     while(it!=end){
       concat+=(*it+" ");
       no_of_args++;
-      if(no_of_args==arglimit){
+      if(no_of_args==argLimit){
         //TODO: Convert these to twine
         std::string filename=" -f "+m_tagpath+m_tagfilename+" ";
         std::string lang=" --language-force=c++ ";

@@ -19,7 +19,7 @@ namespace cling {
     bool operator==(const CtagsFileWrapper& t);
 
   private:
-    void generate(const std::vector<std::string>& cmd, std::string tagfile="adhoc", int arglimit=50);
+    void generate(const std::vector<std::string>& cmd, std::string tagfile="adhoc", int argLimit=50);
     void read();
 //     tagFile* tf;
 //     tagFileInfo* tfi;

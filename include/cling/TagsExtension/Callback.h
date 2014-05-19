@@ -35,8 +35,8 @@ namespace cling{
     
     cling::TagManager* getTagManager();
   private:
-    cling::Interpreter* ip;
-    cling::TagManager* tags;
+    cling::Interpreter* m_ip;
+    cling::TagManager* m_tags;
   };
 }
 

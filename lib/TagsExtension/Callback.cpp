@@ -4,7 +4,7 @@
 namespace cling {
   bool CtagsInterpreterCallback::LookupObject (clang::LookupResult &R, clang::Scope *){
     std::string in=R.getLookupName().getAsString();
-    for(auto it=tags->begin(in);it!=tags->end(in);++it)
+    for(auto it=m_tags->begin(in);it!=m_tags->end(in);++it)
     {
       auto lookup=it->second;
       llvm::outs()<<lookup.header
@@ -19,8 +19,8 @@ namespace cling {
   CtagsInterpreterCallback::CtagsInterpreterCallback
   (cling::Interpreter* interp, TagManager *t) :
     InterpreterCallbacks(interp,true),
-    ip(interp),
-    tags(t) {
+    m_ip(interp),
+    m_tags(t) {
 
       /* Doesn't work very well now, so turning off
       llvm::SmallVector<std::string,30> incpaths;
@@ -33,7 +33,7 @@ namespace cling {
   }
   TagManager* CtagsInterpreterCallback::getTagManager()
   {
-    return tags;
+    return m_tags;
   }
 
 }

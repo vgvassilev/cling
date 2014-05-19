@@ -24,9 +24,9 @@ namespace cling {
     TableType::iterator end(std::string name);
 
   private:
-    std::vector<TagFileWrapper*> tags;
+    std::vector<TagFileWrapper*> m_tags;
     //cling::Interpreter* ip;
-    TableType table;
+    TableType m_table;
     
   };
 }

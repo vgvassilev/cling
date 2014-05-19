@@ -25,7 +25,7 @@ namespace cling {
 
   CtagsFileWrapper::CtagsFileWrapper(std::string path,bool recurse)
   {
-    tf=new TagFileInternals();
+    m_tf=new TagFileInternals();
     if(recurse)
     {
         //TODO: Do this without ftw (and get rid of the global in the process)
@@ -56,7 +56,7 @@ namespace cling {
 
   CtagsFileWrapper::CtagsFileWrapper(const std::vector<std::string>& file_list)
   {
-    tf=new TagFileInternals();
+    m_tf=new TagFileInternals();
     generate(file_list);
     read();
     FilePaths.clear();
@@ -64,7 +64,7 @@ namespace cling {
 
   bool CtagsFileWrapper::operator==(const CtagsFileWrapper& t)
   {
-    return tagfilename==t.tagfilename;
+    return m_tagfilename==t.m_tagfilename;
   }
 
   std::map<std::string,TagFileWrapper::LookupResult>
@@ -74,7 +74,7 @@ namespace cling {
     tagEntry entry;
     int options=TAG_OBSERVECASE | (partialMatch?TAG_PARTIALMATCH:TAG_FULLMATCH);
     
-    tagResult result = tagsFind(tf->tf, &entry, name.c_str(),options);
+    tagResult result = tagsFind(m_tf->tf, &entry, name.c_str(),options);
     
     while(result==TagSuccess)
     {
@@ -82,7 +82,7 @@ namespace cling {
       r.name=entry.name;
       r.kind=entry.kind;
       map[entry.file]=r;
-      result=tagsFindNext(tf->tf,&entry);
+      result=tagsFindNext(m_tf->tf,&entry);
     }
     
     return map;
@@ -93,12 +93,12 @@ namespace cling {
 
     int no_of_args=0;
     std::string concat;
-    tagpath=generate_tag_path();
-    tagfilename=path_to_file_name(dirpath);
+    m_tagpath=generate_tag_path();
+    m_tagfilename=path_to_file_name(dirpath);
 
-    if(!need_to_generate(tagpath,tagfilename,dirpath))
+    if(!need_to_generate(m_tagpath,m_tagfilename,dirpath))
     {
-      generated=false;
+      m_generated=false;
       return;
     }
     //std::cout<<"XFile "<<tagpath+tagfilename<<" read.\n";
@@ -110,7 +110,7 @@ namespace cling {
       if(no_of_args==arglimit)
       {
         //TODO: Convert these to twine
-        std::string filename=" -f "+tagpath+tagfilename+" ";
+        std::string filename=" -f "+m_tagpath+m_tagfilename+" ";
         std::string lang=" --language-force=c++ ";
         std::string sorted=" --sort=yes ";
         std::string append=" -a ";
@@ -122,16 +122,16 @@ namespace cling {
         it++;
       }
     }
-    generated=true;
+    m_generated=true;
   }
   
   void CtagsFileWrapper::read()
   {
-    tf->tf=tagsOpen((tagpath+tagfilename).c_str(),&(tf->tfi));
+    m_tf->tf=tagsOpen((m_tagpath+m_tagfilename).c_str(),&(m_tf->tfi));
     //std::cout<<"File "<<tagpath+tagfilename<<" read.\n";
-    if(tf->tfi.status.opened == false)
-        validfile=false;
+    if(m_tf->tfi.status.opened == false)
+        m_validfile=false;
     else
-        validfile=true;
+        m_validfile=true;
   }
 }

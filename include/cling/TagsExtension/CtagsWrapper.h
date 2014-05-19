@@ -14,8 +14,8 @@ namespace cling {
 
     //returns a map that maps headers to lookup results
     std::map<std::string,LookupResult> match(std::string name, bool partialMatch=false);
-    bool newFile(){return generated;}
-    bool validFile(){return validfile;}
+    bool newFile(){return m_generated;}
+    bool validFile(){return m_validfile;}
     bool operator==(const CtagsFileWrapper& t);
 
   private:
@@ -23,10 +23,10 @@ namespace cling {
     void read();
 //     tagFile* tf;
 //     tagFileInfo* tfi;
-    TagFileInternals* tf;
-    std::string tagfilename;
-    std::string tagpath;
-    bool generated;
-    bool validfile;
+    TagFileInternals* m_tf;
+    std::string m_tagfilename;
+    std::string m_tagpath;
+    bool m_generated;
+    bool m_validfile;
   };
 }

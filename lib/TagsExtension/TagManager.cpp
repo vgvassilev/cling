@@ -13,29 +13,29 @@ namespace cling {
       llvm::errs()<<"Reading Tag File: "<<path<<" failed.\n";
       return;
     }
-    if(std::find(tags.begin(),tags.end(),tf)==tags.end())
-      tags.push_back(tf);
+    if(std::find(m_tags.begin(),m_tags.end(),tf)==m_tags.end())
+      m_tags.push_back(tf);
   }
 
   TagManager::TableType::iterator
   TagManager::begin(std::string name)
   {
-    table.erase(name);
-    for(auto& t:tags)
+    m_table.erase(name);
+    for(auto& t:m_tags)
     {
       for(auto match:t->match(name,true))
       {
         LookupInfo l(match.first,match.second.name,match.second.kind);
-        table.insert({name,l});
+        m_table.insert({name,l});
       }
     }
-    auto r=table.equal_range(name);
+    auto r=m_table.equal_range(name);
     return r.first;
   }
   TagManager::TableType::iterator
   TagManager::end(std::string name)
   {
-    auto r=table.equal_range(name);
+    auto r=m_table.equal_range(name);
     return r.second;
   }
   TagManager::LookupInfo::LookupInfo(std::string h, std::string n, std::string t):

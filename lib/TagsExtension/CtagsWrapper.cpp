@@ -33,6 +33,7 @@ namespace cling {
       ftw(path.c_str(),callback,maxfd);
       generate(FilePaths,path);
       read();
+      FilePaths.clear();
     }
     else
     {
@@ -47,7 +48,9 @@ namespace cling {
           list.push_back(entry.path());
         dit.increment(ec);
       }
-      auto pair=splitPath(path);
+      ///auto pair=splitPath(path);
+      ///TODO Preprocess the files in list and generate tags for them
+
     }
   }
 
@@ -56,6 +59,7 @@ namespace cling {
     tf=new TagFileInternals();
     generate(file_list);
     read();
+    FilePaths.clear();
   }
 
   bool CtagsFileWrapper::operator==(const CtagsFileWrapper& t)
@@ -111,7 +115,7 @@ namespace cling {
         std::string sorted=" --sort=yes ";
         std::string append=" -a ";
         std::string cmd="ctags "+append+lang+filename+sorted+concat;
-        std::system(cmd.c_str());//FIXME: Possible security hole ? (MM)
+        std::system(cmd.c_str());
 
         
         no_of_args=0;

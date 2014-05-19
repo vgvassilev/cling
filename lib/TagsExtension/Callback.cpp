@@ -1,4 +1,5 @@
 #include "cling/TagsExtension/Callback.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace cling {
   bool CtagsInterpreterCallback::LookupObject (clang::LookupResult &R, clang::Scope *){
@@ -21,9 +22,15 @@ namespace cling {
     InterpreterCallbacks(interp,true),
     ip(interp),
     tags(t) {
-      //TODO: get the include path from clang instead of this
-      tags->AddTagFile("/usr/include/c++/4.9.0/",false);
 
+      /* Doesn't work very well now, so turning off
+      llvm::SmallVector<std::string,30> incpaths;
+      ip->GetIncludePaths(incpaths,true,false);
+//      for(auto x:incpaths)
+//          llvm::outs()<<x<<'\n';
+      tags->AddTagFile(incpaths[0],true);//[0] seems to contain stl headers
+      //Make the second arg true after the preprocessor pathway is implemented
+      */
   }
   TagManager* CtagsInterpreterCallback::getTagManager()
   {

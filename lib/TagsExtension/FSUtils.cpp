@@ -44,14 +44,11 @@ namespace cling {
       return true;
     }
   }
-  std::string getHome(){
-    llvm::SmallString<30> result;
-    llvm::sys::path::home_directory(result);
-    return result.c_str();
-  }
 
   std::string generateTagPath(){
-    std::string homedir=getHome();
+    llvm::SmallString<30> home_ss;
+    llvm::sys::path::home_directory(home_ss);
+    std::string homedir=home_ss.c_str();
 
     std::string tagdir="/.cling/";
     std::string result=homedir+tagdir;

@@ -12,7 +12,7 @@ namespace cling {
     tagFileInfo tfi;  
   };
 
-  CtagsFileWrapper::CtagsFileWrapper(std::string path,bool recurse) {
+  CtagsFileWrapper::CtagsFileWrapper(std::string path, bool recurse) {
     m_tf=new TagFileInternals();
     if(recurse) {
       std::vector<std::string> list;
@@ -32,7 +32,7 @@ namespace cling {
     }
     else{
       llvm::error_code ec;
-      llvm::sys::fs::directory_iterator dit(path,ec);
+      llvm::sys::fs::directory_iterator dit(path, ec);
       std::vector<std::string> list;
       while(dit!=decltype(dit)()){// !=end iterator
         auto entry=*dit;
@@ -63,14 +63,14 @@ namespace cling {
     tagEntry entry;
     int options=TAG_OBSERVECASE | (partialMatch?TAG_PARTIALMATCH:TAG_FULLMATCH);
     
-    tagResult result = tagsFind(m_tf->tf, &entry, name.c_str(),options);
+    tagResult result = tagsFind(m_tf->tf, &entry, name.c_str(), options);
     
     while(result==TagSuccess){
       LookupResult r;
       r.name=entry.name;
       r.kind=entry.kind;
       map[entry.file]=r;
-      result=tagsFindNext(m_tf->tf,&entry);
+      result=tagsFindNext(m_tf->tf, &entry);
     }
     
     return map;
@@ -83,7 +83,7 @@ namespace cling {
     m_tagpath=generateTagPath();
     m_tagfilename=pathToFileName(dirpath);
 
-    if(!needToGenerate(m_tagpath,m_tagfilename,dirpath)){
+    if(!needToGenerate(m_tagpath,m_tagfilename, dirpath)){
       m_generated=false;
       return;
     }
@@ -110,7 +110,7 @@ namespace cling {
   }
   
   void CtagsFileWrapper::read() {
-    m_tf->tf=tagsOpen((m_tagpath+m_tagfilename).c_str(),&(m_tf->tfi));
+    m_tf->tf=tagsOpen((m_tagpath+m_tagfilename).c_str(), &(m_tf->tfi));
     //std::cout<<"File "<<tagpath+tagfilename<<" read.\n";
     if(m_tf->tfi.status.opened == false)
         m_validfile=false;

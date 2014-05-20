@@ -25,7 +25,7 @@ namespace cling {
   
   class AutoloadCallback : public cling::InterpreterCallbacks {
   public:
-      AutoloadCallback(cling::Interpreter* interp,cling::TagManager* t);
+      AutoloadCallback(cling::Interpreter* interp, cling::TagManager* t);
     
     using cling::InterpreterCallbacks::LookupObject;
       //^to get rid of bogus warning : "-Woverloaded-virtual"

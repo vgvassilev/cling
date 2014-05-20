@@ -35,7 +35,7 @@ namespace cling {
     return true;//TODO Timestamp checks go here
   }
 
-  bool needToGenerate(std::string tagpath,std::string filename,std::string dirpath){
+  bool needToGenerate(std::string tagpath,std::string filename, std::string dirpath){
     if( fileExists(tagpath+filename)) {
       return false;
     }

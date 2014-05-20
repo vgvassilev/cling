@@ -2,7 +2,7 @@
 #include "llvm/ADT/SmallVector.h"
 
 namespace cling {
-  bool CtagsInterpreterCallback::LookupObject (clang::LookupResult &R, clang::Scope *){
+  bool AutoloadCallback::LookupObject (clang::LookupResult &R, clang::Scope *){
     std::string in=R.getLookupName().getAsString();
     for(auto it=m_tags->begin(in);it!=m_tags->end(in);++it)
     {
@@ -16,7 +16,7 @@ namespace cling {
   }
 
 
-  CtagsInterpreterCallback::CtagsInterpreterCallback
+  AutoloadCallback::AutoloadCallback
   (cling::Interpreter* interp, TagManager *t) :
     InterpreterCallbacks(interp,true),
     m_ip(interp),
@@ -31,7 +31,7 @@ namespace cling {
       //Make the second arg true after the preprocessor pathway is implemented
       */
   }
-  TagManager* CtagsInterpreterCallback::getTagManager() {
+  TagManager* AutoloadCallback::getTagManager() {
     return m_tags;
   }
 

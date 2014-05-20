@@ -69,7 +69,8 @@ namespace cling {
   MetaSema::ActionResult MetaSema::actOnTCommand(llvm::StringRef file) {
       //llvm::outs()<<file<<": directory to be recursively tagged.\n";
       CtagsInterpreterCallback *ctic= static_cast<CtagsInterpreterCallback*>(m_Interpreter.getCallbacks());
-      ///^ FIXME: Will cause a segfault if .T is used when the CTags callback is not set
+      ///^ FIXME: Temporary Implementation
+      /// May cause a segfault if .T is used when the CTags callback is not set
       /// This will require modifying Interpreter to 'know' about the extension
       if(ctic){
         ctic->getTagManager()->AddTagFile(file);

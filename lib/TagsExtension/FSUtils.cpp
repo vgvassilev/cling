@@ -15,10 +15,10 @@ namespace cling {
   }
 
   std::pair<std::string,std::string> splitPath(std::string path){
-    auto it=std::find(path.rbegin(),path.rend(),'/');
-    auto idx=std::distance(path.rend(),it);
-    idx=-idx;
-    return {path.substr(0,idx),path.substr(idx,path.length())};
+    auto filename=llvm::sys::path::filename(path);
+    llvm::SmallString<128> p(path.begin(),path.end());
+    llvm::sys::path::remove_filename(p);
+    return {p.c_str(),filename};
   }
 
   std::string pathToFileName(std::string path){

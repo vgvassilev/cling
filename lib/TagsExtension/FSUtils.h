@@ -8,6 +8,5 @@ namespace cling {
   std::string generateTagPath();
   bool isHeaderFile(llvm::StringRef str);
   std::pair<std::string,std::string> splitPath(std::string path);
-  void mkdir(std::string path);
 } //end namespace cling
 #endif

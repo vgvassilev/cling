@@ -6,13 +6,6 @@
 #include "llvm/Support/Path.h"
 
 namespace cling {
-  void mkdir(std::string path){
-      /*auto ec=*/llvm::sys::fs::create_directory(path);
-//        if(!ec.success())
-//        {
-//            //TODO show error
-//        }
-  }
 
   std::pair<std::string,std::string> splitPath(std::string path){
     auto filename=llvm::sys::path::filename(path);
@@ -52,7 +45,7 @@ namespace cling {
 
     std::string tagdir="/.cling/";
     std::string result=homedir+tagdir;
-    mkdir(result.c_str());
+    llvm::sys::fs::create_directory(result);
     return result;
   }
   bool isHeaderFile(llvm::StringRef str){

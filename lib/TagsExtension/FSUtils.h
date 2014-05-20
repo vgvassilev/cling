@@ -3,7 +3,6 @@
 #include "llvm/ADT/StringRef.h"
 namespace cling {
   std::string pathToFileName(std::string path);
-  bool fileExists(std::string path);
   bool fileIsNewer(std::string path, std::string dir);
   bool needToGenerate(std::string tagpath, std::string filename, std::string dirpath);
   std::string generateTagPath();

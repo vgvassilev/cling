@@ -27,16 +27,13 @@ namespace cling {
         c='_';
     return path;
   }
-  bool fileExists(std::string path){
-    return llvm::sys::fs::exists(path);
-  }
 
   bool fileIsNewer(std::string path,std::string dir){
     return true;//TODO Timestamp checks go here
   }
 
   bool needToGenerate(std::string tagpath,std::string filename, std::string dirpath){
-    if( fileExists(tagpath+filename)) {
+    if( llvm::sys::fs::exists(tagpath+filename)) {
       return false;
     }
     else if (!fileIsNewer(tagpath+filename,dirpath)){

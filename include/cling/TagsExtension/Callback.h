@@ -16,7 +16,7 @@ unless these objects are loaded.
 #include "cling/TagsExtension/TagManager.h"
 #include "cling/TagsExtension/Callback.h"
 cling::TagManager t;
-gCling->setCallbacks(new cling::CtagsInterpreterCallback(gCling,&t));
+gCling->setCallbacks(new cling::AutoloadCallback(gCling,&t));
 
 #endif
 

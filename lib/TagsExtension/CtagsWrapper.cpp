@@ -12,7 +12,8 @@ namespace cling {
     tagFileInfo tfi;  
   };
 
-  CtagsFileWrapper::CtagsFileWrapper(std::string path, bool recurse) {
+  CtagsFileWrapper::CtagsFileWrapper(std::string path, bool recurse)
+      :TagFileWrapper(path) {
     m_Tagfile=new TagFileInternals();
     if (recurse) {
       std::vector<std::string> list;
@@ -48,15 +49,12 @@ namespace cling {
     }
   }
 
-  CtagsFileWrapper::CtagsFileWrapper(const std::vector<std::string>& file_list){
-    m_Tagfile=new TagFileInternals();
-    generate(file_list);
-    read();
-  }
+//  CtagsFileWrapper::CtagsFileWrapper(const std::vector<std::string>& file_list){
+//    m_Tagfile=new TagFileInternals();
+//    generate(file_list);
+//    read();
+//  }
 
-  bool CtagsFileWrapper::operator==(const CtagsFileWrapper& t){
-    return m_Tagfilename==t.m_Tagfilename;
-  }
 
   std::map<std::string,TagFileWrapper::LookupResult>
   CtagsFileWrapper::match(std::string name, bool partialMatch){

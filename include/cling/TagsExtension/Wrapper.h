@@ -12,6 +12,8 @@ namespace cling {
   /// which may be generated from multiple header/source files
   class TagFileWrapper {
   public:
+    TagFileWrapper(std::string Path):m_Path(Path){}
+
     struct LookupResult{
       std::string name;
       std::string kind;
@@ -29,6 +31,10 @@ namespace cling {
     virtual bool validFile()=0;
 
     virtual ~TagFileWrapper(){}
+
+    bool operator==(const TagFileWrapper& t) {return m_Path==t.m_Path;}
+  private:
+    std::string m_Path;
   };
 } //end namespace cling
 

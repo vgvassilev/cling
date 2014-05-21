@@ -19,13 +19,29 @@ namespace cling {
         path=str.c_str();
     }
 
-    auto tf=new CtagsFileWrapper(path,recurse);
+    TagFileWrapper* tf=new CtagsFileWrapper(path,recurse);
     if (!tf->validFile()) {
       llvm::errs() << "Reading Tag File: " << path << " failed.\n";
       return;
     }
-    if (std::find(m_Tags.begin(), m_Tags.end(), tf)==m_Tags.end())
+//    if (std::find(m_Tags.begin(), m_Tags.end(), tf)==m_Tags.end()) {
+//      llvm::outs()<<"pushing\n";
+//      m_Tags.push_back(tf);
+//    }
+    bool eq=false;
+    for (auto& t:m_Tags) {
+      if (*t == *tf ) {
+        eq=true;
+        break;
+      }
+    }
+    if (!eq) {
+      llvm::outs()<<"pushing\n";
       m_Tags.push_back(tf);
+    }
+
+
+
   }
 
   TagManager::TableType::iterator

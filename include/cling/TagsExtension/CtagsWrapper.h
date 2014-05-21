@@ -6,7 +6,7 @@ namespace cling {
   public:
     CtagsFileWrapper(std::string path, bool recurse=true);
 
-    CtagsFileWrapper(const std::vector<std::string>& file_list);
+    //CtagsFileWrapper(const std::vector<std::string>& file_list);
     ~CtagsFileWrapper(){}
 
     std::map<std::string,LookupResult> match
@@ -16,8 +16,7 @@ namespace cling {
 
     bool validFile(){return m_Validfile;}
 
-    bool operator==(const CtagsFileWrapper& t);
-
+//    bool operator==(const CtagsFileWrapper& t);
   private:
     void generate(const std::vector<std::string>& cmd,
                   std::string tagfile="adhoc", int argLimit=50);

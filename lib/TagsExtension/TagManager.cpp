@@ -1,15 +1,26 @@
 #include "cling/TagsExtension/TagManager.h"
 #include "cling/TagsExtension/CtagsWrapper.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Path.h"
+#include "llvm/Support/FileSystem.h"
 #include <algorithm>
 
 namespace cling {
 
   TagManager::TagManager(){}
   void TagManager::AddTagFile(llvm::StringRef path, bool recurse){
+
+    if (llvm::sys::path::is_relative(path)) {
+      llvm::SmallString<100> str(path.data());
+      llvm::error_code ec=llvm::sys::fs::make_absolute(str);
+      if (ec!=llvm::errc::success)
+        llvm::errs()<<"Can't deduce absolute path.\n";
+      else
+        path=str.c_str();
+    }
+
     auto tf=new CtagsFileWrapper(path,recurse);
-    if (!tf->validFile())
-    {
+    if (!tf->validFile()) {
       llvm::errs() << "Reading Tag File: " << path << " failed.\n";
       return;
     }

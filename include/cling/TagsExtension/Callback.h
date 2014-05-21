@@ -21,7 +21,9 @@ gCling->setCallbacks(new cling::AutoloadCallback(gCling,&t));
 #endif
 
 namespace cling {
-  class LookupInfo{};//TODO: Would contain info regarding previous lookups; get rid of the map in LookupObject
+  class LookupInfo{};
+  //TODO: Would contain info regarding previous lookups;
+  //TODO: get rid of the map in LookupObject
   
   class AutoloadCallback : public cling::InterpreterCallbacks {
   public:
@@ -35,8 +37,8 @@ namespace cling {
     
     cling::TagManager* getTagManager();
   private:
-    cling::Interpreter* m_ip;
-    cling::TagManager* m_tags;
+    cling::Interpreter* m_Interpreter;
+    cling::TagManager* m_Tags;
   };
 }// end namespace cling
 

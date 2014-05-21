@@ -9,18 +9,25 @@ namespace cling {
     CtagsFileWrapper(const std::vector<std::string>& file_list);
     ~CtagsFileWrapper(){}
 
-    std::map<std::string,LookupResult> match(std::string name, bool partialMatch=false);
-    bool newFile(){return m_generated;}
-    bool validFile(){return m_validfile;}
+    std::map<std::string,LookupResult> match
+        (std::string name, bool partialMatch=false);
+
+    bool newFile(){return m_Generated;}
+
+    bool validFile(){return m_Validfile;}
+
     bool operator==(const CtagsFileWrapper& t);
 
   private:
-    void generate(const std::vector<std::string>& cmd, std::string tagfile="adhoc", int argLimit=50);
+    void generate(const std::vector<std::string>& cmd,
+                  std::string tagfile="adhoc", int argLimit=50);
+
     void read();
-    TagFileInternals* m_tf;
-    std::string m_tagfilename;
-    std::string m_tagpath;
-    bool m_generated;
-    bool m_validfile;
+
+    TagFileInternals* m_Tagfile;
+    std::string m_Tagfilename;
+    std::string m_Tagpath;
+    bool m_Generated;
+    bool m_Validfile;
   };
 }//end namespace cling

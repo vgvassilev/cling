@@ -20,18 +20,17 @@ namespace cling {
       std::string type;
     };
     ///\brief Add a new path from which a single tag file is generated
-    /// If recurse is true, the path is recursively scanned but not preprocessed
-    /// else, only the files directly in path are preprocessed and tagged
+    /// If recurse is true, path is recursively scanned but not preprocessed
+    /// else only the files directly in path are preprocessed and tagged
     void AddTagFile(llvm::StringRef path,bool recurse=true);
-
 
     typedef std::multimap<std::string,LookupInfo> TableType;
     TableType::iterator begin(std::string name);
     TableType::iterator end(std::string name);
 
   private:
-    std::vector<TagFileWrapper*> m_tags;
-    TableType m_table;
+    std::vector<TagFileWrapper*> m_Tags;
+    TableType m_Table;
     
   };
 }//end namespace cling

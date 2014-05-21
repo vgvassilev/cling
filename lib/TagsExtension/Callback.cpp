@@ -8,19 +8,31 @@ namespace cling {
 
   bool AutoloadCallback::LookupObject (clang::LookupResult &R, clang::Scope *){
     std::string in=R.getLookupName().getAsString();
-    const char fmt[]="Note: '%0' can be found in %1";
-    const char note[]="Type : %0 , Full Path: %1";
-    auto id=m_ip->getSema().getDiagnostics().getCustomDiagID(clang::DiagnosticsEngine::Level::Warning,fmt);
-    auto idn=m_ip->getSema().getDiagnostics().getCustomDiagID(clang::DiagnosticsEngine::Level::Note,note);
-    for(auto it=m_tags->begin(in);it!=m_tags->end(in);++it)
+    auto & sema= m_Interpreter->getSema();
+//    const char fmt[]="Note: '%0' can be found in %1";
+//    const char note[]="Type : %0 , Full Path: %1";
+
+    auto id=sema.getDiagnostics().getCustomDiagID
+            (clang::DiagnosticsEngine::Level::Warning,
+                "Note: '%0' can be found in %1");
+    auto idn=sema.getDiagnostics().getCustomDiagID
+            (clang::DiagnosticsEngine::Level::Note,
+                "Type : %0 , Full Path: %1");
+
+    for (auto it=m_Tags->begin(in); it!=m_Tags->end(in); ++it)
     {
       auto lookup=it->second;
 //      llvm::outs() << lookup.header
 //                  << '\t' << lookup.name
 //                  << '\t' <<lookup.type
 //                  << '\n';
-      m_ip->getSema().Diags.Report(id) << lookup.name << llvm::sys::path::filename(lookup.header);
-      m_ip->getSema().Diags.Report(idn) << lookup.type << lookup.header;
+      sema.Diags.Report(id)
+              << lookup.name
+              << llvm::sys::path::filename(lookup.header);
+
+      sema.Diags.Report(idn)
+              << lookup.type
+              << lookup.header;
 
     }
 
@@ -31,8 +43,8 @@ namespace cling {
   AutoloadCallback::AutoloadCallback
   (cling::Interpreter* interp, TagManager *t) :
     InterpreterCallbacks(interp,true),
-    m_ip(interp),
-    m_tags(t) {
+    m_Interpreter(interp),
+    m_Tags(t) {
 
       /* Doesn't work very well now, so turning off
       llvm::SmallVector<std::string,30> incpaths;
@@ -44,7 +56,7 @@ namespace cling {
       */
   }
   TagManager* AutoloadCallback::getTagManager() {
-    return m_tags;
+    return m_Tags;
   }
 
 }//end namespace cling//end namespace cling

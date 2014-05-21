@@ -9,8 +9,6 @@ namespace cling {
   bool AutoloadCallback::LookupObject (clang::LookupResult &R, clang::Scope *){
     std::string in=R.getLookupName().getAsString();
     auto & sema= m_Interpreter->getSema();
-//    const char fmt[]="Note: '%0' can be found in %1";
-//    const char note[]="Type : %0 , Full Path: %1";
 
     auto id=sema.getDiagnostics().getCustomDiagID
             (clang::DiagnosticsEngine::Level::Warning,
@@ -22,10 +20,6 @@ namespace cling {
     for (auto it=m_Tags->begin(in); it!=m_Tags->end(in); ++it)
     {
       auto lookup=it->second;
-//      llvm::outs() << lookup.header
-//                  << '\t' << lookup.name
-//                  << '\t' <<lookup.type
-//                  << '\n';
       sema.Diags.Report(id)
               << lookup.name
               << llvm::sys::path::filename(lookup.header);
@@ -45,15 +39,7 @@ namespace cling {
     InterpreterCallbacks(interp,true),
     m_Interpreter(interp),
     m_Tags(t) {
-
-      /* Doesn't work very well now, so turning off
-      llvm::SmallVector<std::string,30> incpaths;
-      ip->GetIncludePaths(incpaths,true,false);
-//      for(auto x:incpaths)
-//          llvm::outs()<<x<<'\n';
-      tags->AddTagFile(incpaths[0],true);//[0] seems to contain stl headers
-      //Make the second arg true after the preprocessor pathway is implemented
-      */
+      //TODO : Invoke stdandard c++ tagging here
   }
   TagManager* AutoloadCallback::getTagManager() {
     return m_Tags;

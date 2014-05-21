@@ -24,6 +24,8 @@ namespace cling {
     /// else only the files directly in path are preprocessed and tagged
     void AddTagFile(llvm::StringRef path,bool recurse=true);
 
+    std::size_t size() { return m_Tags.size(); }
+
     typedef std::multimap<std::string,LookupInfo> TableType;
     TableType::iterator begin(std::string name);
     TableType::iterator end(std::string name);

@@ -49,13 +49,6 @@ namespace cling {
     }
   }
 
-//  CtagsFileWrapper::CtagsFileWrapper(const std::vector<std::string>& file_list){
-//    m_Tagfile=new TagFileInternals();
-//    generate(file_list);
-//    read();
-//  }
-
-
   std::map<std::string,TagFileWrapper::LookupResult>
   CtagsFileWrapper::match(std::string name, bool partialMatch){
     std::map<std::string,LookupResult> map;

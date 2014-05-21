@@ -10,24 +10,20 @@ namespace cling {
   TagManager::TagManager(){}
   void TagManager::AddTagFile(llvm::StringRef path, bool recurse){
 
-    if (llvm::sys::path::is_relative(path)) {
-      llvm::SmallString<100> str(path.data());
-      llvm::error_code ec=llvm::sys::fs::make_absolute(str);
-      if (ec!=llvm::errc::success)
-        llvm::errs()<<"Can't deduce absolute path.\n";
-      else
-        path=str.c_str();
-    }
+//    if (llvm::sys::path::is_relative(path)) {
+//      llvm::SmallString<100> str(path.data());
+//      llvm::error_code ec=llvm::sys::fs::make_absolute(str);
+//      if (ec!=llvm::errc::success)
+//        llvm::errs()<<"Can't deduce absolute path.\n";
+//      else
+//        path=str.c_str();
+//    }
 
     TagFileWrapper* tf=new CtagsFileWrapper(path,recurse);
     if (!tf->validFile()) {
       llvm::errs() << "Reading Tag File: " << path << " failed.\n";
       return;
     }
-//    if (std::find(m_Tags.begin(), m_Tags.end(), tf)==m_Tags.end()) {
-//      llvm::outs()<<"pushing\n";
-//      m_Tags.push_back(tf);
-//    }
     bool eq=false;
     for (auto& t:m_Tags) {
       if (*t == *tf ) {
@@ -36,7 +32,6 @@ namespace cling {
       }
     }
     if (!eq) {
-      llvm::outs()<<"pushing\n";
       m_Tags.push_back(tf);
     }
 

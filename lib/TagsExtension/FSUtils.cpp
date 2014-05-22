@@ -39,12 +39,24 @@ namespace cling {
     }
   }
 
+  //FIXME: Replace when this is available in llvm::sys::path
+  std::string get_separator() {
+  #ifdef LLVM_ON_WIN32
+   const char preferred_separator = '\\';
+  #else
+   const char preferred_separator = '/';
+  #endif
+   return {preferred_separator};
+  }
+
   std::string generateTagPath(){
     llvm::SmallString<30> home_ss;
     llvm::sys::path::home_directory(home_ss);
     std::string homedir=home_ss.c_str();
+    if (homedir=="")
+        homedir=".";
 
-    std::string tagdir="/.cling/";
+    std::string tagdir=get_separator() +".cling/";
     std::string result=homedir+tagdir;
     llvm::sys::fs::create_directory(result);
     return result;

@@ -14,10 +14,10 @@ namespace cling {
 
   CtagsFileWrapper::CtagsFileWrapper(std::string path, bool recurse, bool fileP)
       :TagFileWrapper(path) {
+//      llvm::errs()<<path<<'\n';
     m_Tagfile=new TagFileInternals();
     if (fileP) {
-      std::vector<std::string> list={path};
-      generate(list,path);
+      generate(path);
       read();
       return;
     }
@@ -72,12 +72,26 @@ namespace cling {
     }
     
     return map;
+
   }
+
+  void CtagsFileWrapper::generate(std::string file) {
+    m_Tagpath=generateTagPath();
+    m_Tagfilename=pathToFileName(file);
+
+    if (!needToGenerate(m_Tagpath,m_Tagfilename, file)){
+      m_Generated=false;
+      return;
+    }
+    std::string cmd="ctags --language-force=c++ -f "+m_Tagpath+m_Tagfilename+" "+file;
+    llvm::errs()<<cmd<<"\n";
+    system(cmd.c_str());
+  }
+
   //no more than `arglimit` arguments in a single invocation
   void CtagsFileWrapper::generate
-    (const std::vector<std::string>& paths, std::string dirpath, int argLimit){
+    (const std::vector<std::string>& paths, std::string dirpath){
 
-    int no_of_args=0;
     std::string concat;
     m_Tagpath=generateTagPath();
     m_Tagfilename=pathToFileName(dirpath);
@@ -86,25 +100,21 @@ namespace cling {
       m_Generated=false;
       return;
     }
-    //std::cout<<"XFile "<<tagpath+tagfilename<<" read.\n";
     auto it=paths.begin(),end=paths.end();
     while (it!=end){
       concat+=(*it+" ");
-      no_of_args++;
-      if (no_of_args==argLimit){
-        //TODO: Convert these to twine
-        std::string filename=" -f "+m_Tagpath+m_Tagfilename+" ";
-        std::string lang=" --language-force=c++ ";
-        std::string sorted=" --sort=yes ";
-        std::string append=" -a ";
-        std::string cmd="ctags "+append+lang+filename+sorted+concat;
-        std::system(cmd.c_str());
-
-        
-        no_of_args=0;
-        it++;
-      }
+      it++;
     }
+    //TODO: Convert these to twine
+    std::string filename=" -f "+m_Tagpath+m_Tagfilename+" ";
+    std::string lang=" --language-force=c++ ";
+    std::string sorted=" --sort=yes ";
+    std::string append=" -a ";
+    std::string cmd="ctags "+append+lang+filename+sorted+concat;
+
+//        llvm::errs()<<cmd<<"\n";
+
+    std::system(cmd.c_str());
     m_Generated=true;
   }
   

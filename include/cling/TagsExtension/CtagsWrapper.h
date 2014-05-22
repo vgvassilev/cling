@@ -17,7 +17,8 @@ namespace cling {
 
   private:
     void generate(const std::vector<std::string>& cmd,
-                  std::string tagfile="adhoc", int argLimit=50);
+                  std::string tagfile="adhoc");
+    void generate(std::string file);
 
     void read();
 

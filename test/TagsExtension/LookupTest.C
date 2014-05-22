@@ -17,6 +17,6 @@ gCling->setCallbacks(new cling::AutoloadCallback(gCling,&t));
 
 .T %S
 
-Foo f;//expected-warning {{Note: 'Foo' can be found in TestHeader.h}} 
+Foo f;//expected-warning {{}} 
 .q
 

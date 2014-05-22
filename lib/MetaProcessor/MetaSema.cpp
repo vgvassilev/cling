@@ -73,6 +73,9 @@ namespace cling {
       // May cause a segfault if .T is used when the CTags callback is not set
       // This will require modifying Interpreter to 'know' about the extension
       if (ctic){
+        auto path=m_Interpreter.lookupFileOrLibrary(file);
+        if(path!="")
+            file=path;
         ctic->getTagManager()->AddTagFile(file);
         return AR_Success;
       }

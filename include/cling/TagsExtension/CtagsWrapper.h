@@ -4,7 +4,7 @@ namespace cling {
   ///\brief Implements tag operations for Ctags
   class CtagsFileWrapper:public TagFileWrapper {
   public:
-    CtagsFileWrapper(std::string path, bool recurse=true);
+    CtagsFileWrapper(std::string path, bool recurse=true,bool fileP=false);
 
     ~CtagsFileWrapper(){}
 

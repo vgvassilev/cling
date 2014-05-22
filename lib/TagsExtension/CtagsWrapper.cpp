@@ -12,9 +12,15 @@ namespace cling {
     tagFileInfo tfi;  
   };
 
-  CtagsFileWrapper::CtagsFileWrapper(std::string path, bool recurse)
+  CtagsFileWrapper::CtagsFileWrapper(std::string path, bool recurse, bool fileP)
       :TagFileWrapper(path) {
     m_Tagfile=new TagFileInternals();
+    if (fileP) {
+      std::vector<std::string> list={path};
+      generate(list,path);
+      read();
+      return;
+    }
     if (recurse) {
       std::vector<std::string> list;
       llvm::error_code ec;

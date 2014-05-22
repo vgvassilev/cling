@@ -22,7 +22,7 @@ namespace cling {
     ///\brief Add a new path from which a single tag file is generated
     /// If recurse is true, path is recursively scanned but not preprocessed
     /// else only the files directly in path are preprocessed and tagged
-    void AddTagFile(llvm::StringRef path,bool recurse=true);
+    void AddTagFile(std::string path, bool recurse=true);
 
     std::size_t size() { return m_Tags.size(); }
 

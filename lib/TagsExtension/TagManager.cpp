@@ -8,18 +8,21 @@
 namespace cling {
 
   TagManager::TagManager(){}
-  void TagManager::AddTagFile(llvm::StringRef path, bool recurse){
+  void TagManager::AddTagFile(std::string path, bool recurse){
+    bool fileP=false;
+    if (llvm::sys::fs::is_regular_file(path)) {
+      fileP=true;
+    }
+    if (llvm::sys::path::is_relative(path)) {
+      llvm::SmallString<100> str(path.data());
+      llvm::error_code ec=llvm::sys::fs::make_absolute(str);
+      if (ec!=llvm::errc::success)
+        llvm::errs()<<"Can't deduce absolute path.\n";
+      else
+        path=str.c_str();
+    }
 
-//    if (llvm::sys::path::is_relative(path)) {
-//      llvm::SmallString<100> str(path.data());
-//      llvm::error_code ec=llvm::sys::fs::make_absolute(str);
-//      if (ec!=llvm::errc::success)
-//        llvm::errs()<<"Can't deduce absolute path.\n";
-//      else
-//        path=str.c_str();
-//    }
-
-    TagFileWrapper* tf=new CtagsFileWrapper(path,recurse);
+    TagFileWrapper* tf=new CtagsFileWrapper(path,recurse,fileP);
     if (!tf->validFile()) {
       llvm::errs() << "Reading Tag File: " << path << " failed.\n";
       return;

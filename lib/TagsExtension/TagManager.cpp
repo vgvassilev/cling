@@ -63,4 +63,8 @@ namespace cling {
     (std::string h, std::string n, std::string t):
       header(h), name(n), type(t){}
 
+  TagManager::~TagManager() {
+    for (auto& tag : m_Tags )
+      delete tag;
+  }
 } //end namespace cling

@@ -30,6 +30,7 @@ namespace cling {
     TableType::iterator begin(std::string name);
     TableType::iterator end(std::string name);
 
+    ~TagManager();
   private:
     std::vector<TagFileWrapper*> m_Tags;
     TableType m_Table;

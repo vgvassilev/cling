@@ -1,6 +1,6 @@
 #include "Wrapper.h"
+#include "readtags.h"
 namespace cling {
-  struct TagFileInternals;
   ///\brief Implements tag operations for Ctags
   class CtagsFileWrapper:public TagFileWrapper {
   public:
@@ -22,7 +22,12 @@ namespace cling {
 
     void read();
 
-    TagFileInternals* m_Tagfile;
+    struct TagFileInternals{
+      tagFile* tf;
+      tagFileInfo tfi;
+    };
+
+    TagFileInternals m_Tagfile;
     std::string m_Tagfilename;
     std::string m_Tagpath;
     bool m_Generated;

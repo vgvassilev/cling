@@ -1,21 +1,14 @@
 #include "cling/TagsExtension/CtagsWrapper.h"
 #include "llvm/ADT/StringRef.h"
-#include "readtags.h"
 #include "FSUtils.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/FileSystem.h"
 
 namespace cling {
-
-  struct TagFileInternals{
-    tagFile* tf;
-    tagFileInfo tfi;  
-  };
-
   CtagsFileWrapper::CtagsFileWrapper(std::string path, bool recurse, bool fileP)
       :TagFileWrapper(path) {
 //      llvm::errs()<<path<<'\n';
-    m_Tagfile = new TagFileInternals();
+//    m_Tagfile = new TagFileInternals();
     if (fileP) {
       generate(path);
       read();
@@ -61,14 +54,14 @@ namespace cling {
     tagEntry entry;
     int options = TAG_OBSERVECASE | (partialMatch?TAG_PARTIALMATCH:TAG_FULLMATCH);
     
-    tagResult result = tagsFind(m_Tagfile->tf, &entry, name.c_str(), options);
+    tagResult result = tagsFind(m_Tagfile.tf, &entry, name.c_str(), options);
     
     while (result==TagSuccess){
       LookupResult r;
       r.name = entry.name;
       r.kind = entry.kind;
       map[entry.file] = r;
-      result=tagsFindNext(m_Tagfile->tf, &entry);
+      result=tagsFindNext(m_Tagfile.tf, &entry);
     }
     
     return map;
@@ -119,11 +112,11 @@ namespace cling {
   }
   
   void CtagsFileWrapper::read() {
-    m_Tagfile->tf = tagsOpen
-            ((m_Tagpath+m_Tagfilename).c_str(), &(m_Tagfile->tfi));
+    m_Tagfile.tf = tagsOpen
+            ((m_Tagpath+m_Tagfilename).c_str(), &(m_Tagfile.tfi));
 
     //std::cout<<"File "<<tagpath+tagfilename<<" read.\n";
-    if (m_Tagfile->tfi.status.opened == false)
+    if (m_Tagfile.tfi.status.opened == false)
         m_Validfile = false;
     else
         m_Validfile = true;

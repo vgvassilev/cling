@@ -6,17 +6,20 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling 2>&1
+// RUN: cat %s | %cling -I %S -Xclang -verify
 // Test LookupTest
 
-.rawInput 0
 #include "cling/TagsExtension/TagManager.h"
 #include "cling/TagsExtension/Callback.h"
 cling::TagManager t;
 gCling->setCallbacks(new cling::AutoloadCallback(gCling,&t));
 
-.T %S
+.T TestHeader.h
 
-Foo f;//expected-warning {{}} 
+TestClass t;
+//expected-warning + {{}}
+//expected-note + {{}}
+//expected-error {{}}
+
 .q
 

@@ -20,16 +20,20 @@ namespace cling {
     for (auto it=m_Tags->begin(in); it!=m_Tags->end(in); ++it)
     {
       auto lookup=it->second;
-      sema.Diags.Report(id)
+      auto loc=R.getNameLoc();
+
+      if (loc.isInvalid())
+          continue;
+
+      sema.Diags.Report(R.getNameLoc(),id)
               << lookup.name
               << llvm::sys::path::filename(lookup.header);
 
-      sema.Diags.Report(idn)
+      sema.Diags.Report(R.getNameLoc(),idn)
               << lookup.type
               << lookup.header;
 
     }
-
     return false;
   }
 
@@ -45,4 +49,4 @@ namespace cling {
     return m_Tags;
   }
 
-}//end namespace cling//end namespace cling
+}//end namespace cling

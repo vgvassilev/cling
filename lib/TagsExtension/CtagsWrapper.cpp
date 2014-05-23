@@ -84,7 +84,7 @@ namespace cling {
       return;
     }
     std::string cmd="ctags --language-force=c++ -f "+m_Tagpath+m_Tagfilename+" "+file;
-    llvm::errs()<<cmd<<"\n";
+//    llvm::errs()<<cmd<<"\n";
     system(cmd.c_str());
   }
 

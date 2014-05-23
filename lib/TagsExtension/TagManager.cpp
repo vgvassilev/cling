@@ -9,25 +9,25 @@ namespace cling {
 
   TagManager::TagManager(){}
   void TagManager::AddTagFile(std::string path, bool recurse){
-    bool fileP=false;
+    bool fileP = false;
     if (llvm::sys::fs::is_regular_file(path)) {
-      fileP=true;
+      fileP = true;
     }
     if (llvm::sys::path::is_relative(path)) {
       llvm::SmallString<100> str(path.data());
-      llvm::error_code ec=llvm::sys::fs::make_absolute(str);
-      if (ec!=llvm::errc::success)
+      llvm::error_code ec = llvm::sys::fs::make_absolute(str);
+      if (ec != llvm::errc::success)
         llvm::errs()<<"Can't deduce absolute path.\n";
       else
-        path=str.c_str();
+        path = str.c_str();
     }
 
-    TagFileWrapper* tf=new CtagsFileWrapper(path,recurse,fileP);
+    TagFileWrapper* tf = new CtagsFileWrapper(path,recurse,fileP);
     if (!tf->validFile()) {
       llvm::errs() << "Reading Tag File: " << path << " failed.\n";
       return;
     }
-    bool eq=false;
+    bool eq = false;
     for (auto& t:m_Tags) {
       if (*t == *tf ) {
         eq=true;
@@ -51,12 +51,12 @@ namespace cling {
         m_Table.insert({name, l});
       }
     }
-    auto r=m_Table.equal_range(name);
+    auto r = m_Table.equal_range(name);
     return r.first;
   }
   TagManager::TableType::iterator
   TagManager::end(std::string name){
-    auto r=m_Table.equal_range(name);
+    auto r = m_Table.equal_range(name);
     return r.second;
   }
   TagManager::LookupInfo::LookupInfo

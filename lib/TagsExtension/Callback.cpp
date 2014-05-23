@@ -8,19 +8,19 @@ namespace cling {
 
   bool AutoloadCallback::LookupObject (clang::LookupResult &R, clang::Scope *){
     std::string in=R.getLookupName().getAsString();
-    auto & sema= m_Interpreter->getSema();
+    clang::Sema& sema= m_Interpreter->getSema();
 
-    auto id=sema.getDiagnostics().getCustomDiagID
+    unsigned id = sema.getDiagnostics().getCustomDiagID
             (clang::DiagnosticsEngine::Level::Warning,
                 "Note: '%0' can be found in %1");
-    auto idn=sema.getDiagnostics().getCustomDiagID
+    unsigned idn = sema.getDiagnostics().getCustomDiagID
             (clang::DiagnosticsEngine::Level::Note,
                 "Type : %0 , Full Path: %1");
 
-    for (auto it=m_Tags->begin(in); it!=m_Tags->end(in); ++it)
+    for (auto it = m_Tags->begin(in); it != m_Tags->end(in); ++it)
     {
-      auto lookup=it->second;
-      auto loc=R.getNameLoc();
+      auto lookup = it->second;
+      clang::SourceLocation loc = R.getNameLoc();
 
       if (loc.isInvalid())
           continue;

@@ -16,8 +16,8 @@ namespace cling {
 
   std::string pathToFileName(std::string path){
     for(auto& c:path)
-      if(c=='/')
-        c='_';
+      if(c == '/')
+        c = '_';
     return path;
   }
 
@@ -53,8 +53,8 @@ namespace cling {
     llvm::SmallString<30> home_ss;
     llvm::sys::path::home_directory(home_ss);
     std::string homedir=home_ss.c_str();
-    if (homedir=="")
-        homedir=".";
+    if (homedir == "")
+        homedir = ".";
 
     std::string tagdir=get_separator() +".cling/";
     std::string result=homedir+tagdir;

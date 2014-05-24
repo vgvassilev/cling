@@ -6,9 +6,14 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-extern "C" int printf(const char* fmt, ...);
-
-struct MyClass {
-  MyClass() { printf("MyClass ctor called!\n"); }
-  ~MyClass() { printf("MyClass dtor called!\n"); }
+// RUN: cat %s | %cling | FileCheck %s
+template<int n> struct F{
+  enum {RET=F<n-1>::RET*n} ;
 };
+template<> struct F<0> {
+  enum {RET = 1};
+};
+F<7>::RET
+//CHECK: (F<7>::<anonymous>) (F<7>::::RET) : (int) 5040
+
+.q

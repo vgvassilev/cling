@@ -11,7 +11,6 @@
 
 #include "cling/Interpreter/Interpreter.h"
 #include "cling/Interpreter/Transaction.h"
-#include "cling/Interpreter/ValuePrinter.h"
 #include "cling/Utils/AST.h"
 
 #include "clang/AST/ASTContext.h"
@@ -19,6 +18,7 @@
 #include "clang/AST/Type.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
 
 #include "llvm/Support/raw_os_ostream.h"
@@ -104,163 +104,214 @@ namespace {
 
 namespace cling {
 
-Value::Value(const Value& other):
-  m_Storage(other.m_Storage), m_Type(other.m_Type),
-  m_Interpreter(other.m_Interpreter) {
-  if (needsManagedAllocation())
-    AllocatedValue::getFromPayload(m_Storage.m_Ptr)->Retain();
-}
-
-Value::Value(Value&& other):
-  m_Storage(other.m_Storage), m_Type(other.m_Type),
-  m_Interpreter(other.m_Interpreter) {
-  // Invalidate other so it will not release.
-  other.m_Type = 0;
-}
-
-Value::Value(clang::QualType clangTy, Interpreter& Interp):
-  m_Type(clangTy.getAsOpaquePtr()), m_Interpreter(&Interp) {
-  if (needsManagedAllocation())
-    ManagedAllocate();
-}
-
-Value& Value::operator =(const Value& other) {
-  // Release old value.
-  if (needsManagedAllocation())
-    AllocatedValue::getFromPayload(m_Storage.m_Ptr)->Release();
-
-  // Retain new one.
-  m_Type = other.m_Type;
-  m_Storage = other.m_Storage;
-  m_Interpreter = other.m_Interpreter;
-  if (needsManagedAllocation())
-    AllocatedValue::getFromPayload(m_Storage.m_Ptr)->Retain();
-  return *this;
-}
-
-Value& Value::operator =(Value&& other) {
-  // Release old value.
-  if (needsManagedAllocation())
-    AllocatedValue::getFromPayload(m_Storage.m_Ptr)->Release();
-
-  // Move new one.
-  m_Type = other.m_Type;
-  m_Storage = other.m_Storage;
-  m_Interpreter = other.m_Interpreter;
-  // Invalidate other so it will not release.
-  other.m_Type = 0;
-
-  return *this;
-}
-
-Value::~Value() {
-  if (needsManagedAllocation())
-    AllocatedValue::getFromPayload(m_Storage.m_Ptr)->Release();
-}
-
-clang::QualType Value::getType() const {
-  return clang::QualType::getFromOpaquePtr(m_Type);
-}
-
-clang::ASTContext& Value::getASTContext() const {
-  return m_Interpreter->getCI()->getASTContext();
-}
-
-
-bool Value::isValid() const { return !getType().isNull(); }
-
-bool Value::isVoid() const {
-  const clang::ASTContext& Ctx = getASTContext();
-  return isValid() && Ctx.hasSameType(getType(), Ctx.VoidTy);
-}
-
-unsigned long Value::GetNumberOfElements() const {
-  if (const clang::ConstantArrayType* ArrTy
-      = llvm::dyn_cast<clang::ConstantArrayType>(getType())) {
-    llvm::APInt arrSize(sizeof(unsigned long)*8, 1);
-    do {
-      arrSize *= ArrTy->getSize();
-      ArrTy = llvm::dyn_cast<clang::ConstantArrayType>(ArrTy->getElementType()
-                                                       .getTypePtr());
-    } while (ArrTy);
-    return (unsigned long)arrSize.getZExtValue();
-  }
-  return 1;
-}
-
-Value::EStorageType Value::getStorageType() const {
-  const clang::Type* desugCanon = getType()->getUnqualifiedDesugaredType();
-  desugCanon = desugCanon->getCanonicalTypeUnqualified()->getTypePtr()
-    ->getUnqualifiedDesugaredType();
-  if (desugCanon->isSignedIntegerOrEnumerationType())
-    return kSignedIntegerOrEnumerationType;
-  else if (desugCanon->isUnsignedIntegerOrEnumerationType())
-    return kUnsignedIntegerOrEnumerationType;
-  else if (desugCanon->isRealFloatingType()) {
-    const clang::BuiltinType* BT = desugCanon->getAs<clang::BuiltinType>();
-    if (BT->getKind() == clang::BuiltinType::Double)
-      return kDoubleType;
-    else if (BT->getKind() == clang::BuiltinType::Float)
-      return kFloatType;
-    else if (BT->getKind() == clang::BuiltinType::LongDouble)
-      return kLongDoubleType;
-  } else if (desugCanon->isPointerType() || desugCanon->isObjectType()
-             || desugCanon->isReferenceType())
-    return kPointerType;
-  return kUnsupportedType;
-}
-
-bool Value::needsManagedAllocation() const {
-  if (!isValid()) return false;
-  const clang::Type* UnqDes = getType()->getUnqualifiedDesugaredType();
-  return UnqDes->isRecordType() || UnqDes->isConstantArrayType()
-    || UnqDes->isMemberPointerType();
-}
-
-void Value::ManagedAllocate() {
-  void* dtorFunc = 0;
-  clang::QualType DtorType = getType();
-  // For arrays we destruct the elements.
-  if (const clang::ConstantArrayType* ArrTy
-      = llvm::dyn_cast<clang::ConstantArrayType>(DtorType.getTypePtr())) {
-    DtorType = ArrTy->getElementType();
-  }
-  if (const clang::RecordType* RTy = DtorType->getAs<clang::RecordType>())
-    dtorFunc = GetDtorWrapperPtr(RTy->getDecl());
-
-  const clang::ASTContext& ctx = getASTContext();
-  unsigned payloadSize = ctx.getTypeSizeInChars(getType()).getQuantity();
-  char* alloc = new char[AllocatedValue::getPayloadOffset() + payloadSize];
-  AllocatedValue* allocVal = new (alloc) AllocatedValue(dtorFunc, payloadSize,
-                                                        GetNumberOfElements());
-  m_Storage.m_Ptr = allocVal->getPayload();
-}
-
-void Value::AssertOnUnsupportedTypeCast() const {
-  assert("unsupported type in Value, cannot cast simplistically!" && 0);
-}
-
-/// \brief Get the function address of the wrapper of the destructor.
-void* Value::GetDtorWrapperPtr(const clang::RecordDecl* RD) const {
-  std::string funcname;
-  {
-    llvm::raw_string_ostream namestr(funcname);
-    namestr << "__cling_StoredValue_Destruct_" << RD;
+  Value::Value(const Value& other):
+    m_Storage(other.m_Storage), m_Type(other.m_Type),
+    m_Interpreter(other.m_Interpreter) {
+    if (needsManagedAllocation())
+      AllocatedValue::getFromPayload(m_Storage.m_Ptr)->Retain();
   }
 
-  std::string code("extern \"C\" void ");
-  {
-    clang::QualType RDQT(RD->getTypeForDecl(), 0);
-    std::string typeName
-      = utils::TypeName::GetFullyQualifiedName(RDQT, RD->getASTContext());
-    std::string dtorName = RD->getNameAsString();
-    code += funcname + "(void* obj){((" + typeName + "*)obj)->~"
-      + dtorName + "();}";
+  Value::Value(Value&& other):
+    m_Storage(other.m_Storage), m_Type(other.m_Type),
+    m_Interpreter(other.m_Interpreter) {
+    // Invalidate other so it will not release.
+    other.m_Type = 0;
   }
 
-  return m_Interpreter->compileFunction(funcname, code, true /*ifUniq*/,
-                                        false /*withAccessControl*/);
-}
+  Value::Value(clang::QualType clangTy, Interpreter& Interp):
+    m_Type(clangTy.getAsOpaquePtr()), m_Interpreter(&Interp) {
+    if (needsManagedAllocation())
+      ManagedAllocate();
+  }
+
+  Value& Value::operator =(const Value& other) {
+    // Release old value.
+    if (needsManagedAllocation())
+      AllocatedValue::getFromPayload(m_Storage.m_Ptr)->Release();
+
+    // Retain new one.
+    m_Type = other.m_Type;
+    m_Storage = other.m_Storage;
+    m_Interpreter = other.m_Interpreter;
+    if (needsManagedAllocation())
+      AllocatedValue::getFromPayload(m_Storage.m_Ptr)->Retain();
+    return *this;
+  }
+
+  Value& Value::operator =(Value&& other) {
+    // Release old value.
+    if (needsManagedAllocation())
+      AllocatedValue::getFromPayload(m_Storage.m_Ptr)->Release();
+
+    // Move new one.
+    m_Type = other.m_Type;
+    m_Storage = other.m_Storage;
+    m_Interpreter = other.m_Interpreter;
+    // Invalidate other so it will not release.
+    other.m_Type = 0;
+
+    return *this;
+  }
+
+  Value::~Value() {
+    if (needsManagedAllocation())
+      AllocatedValue::getFromPayload(m_Storage.m_Ptr)->Release();
+  }
+
+  clang::QualType Value::getType() const {
+    return clang::QualType::getFromOpaquePtr(m_Type);
+  }
+
+  clang::ASTContext& Value::getASTContext() const {
+    return m_Interpreter->getCI()->getASTContext();
+  }
+
+  bool Value::isValid() const { return !getType().isNull(); }
+
+  bool Value::isVoid() const {
+    const clang::ASTContext& Ctx = getASTContext();
+    return isValid() && Ctx.hasSameType(getType(), Ctx.VoidTy);
+  }
+
+  unsigned long Value::GetNumberOfElements() const {
+    if (const clang::ConstantArrayType* ArrTy
+        = llvm::dyn_cast<clang::ConstantArrayType>(getType())) {
+      llvm::APInt arrSize(sizeof(unsigned long)*8, 1);
+      do {
+        arrSize *= ArrTy->getSize();
+        ArrTy = llvm::dyn_cast<clang::ConstantArrayType>(ArrTy->getElementType()
+                                                         .getTypePtr());
+      } while (ArrTy);
+      return (unsigned long)arrSize.getZExtValue();
+    }
+    return 1;
+  }
+
+  Value::EStorageType Value::getStorageType() const {
+    const clang::Type* desugCanon = getType()->getUnqualifiedDesugaredType();
+    desugCanon = desugCanon->getCanonicalTypeUnqualified()->getTypePtr()
+      ->getUnqualifiedDesugaredType();
+    if (desugCanon->isSignedIntegerOrEnumerationType())
+      return kSignedIntegerOrEnumerationType;
+    else if (desugCanon->isUnsignedIntegerOrEnumerationType())
+      return kUnsignedIntegerOrEnumerationType;
+    else if (desugCanon->isRealFloatingType()) {
+      const clang::BuiltinType* BT = desugCanon->getAs<clang::BuiltinType>();
+      if (BT->getKind() == clang::BuiltinType::Double)
+        return kDoubleType;
+      else if (BT->getKind() == clang::BuiltinType::Float)
+        return kFloatType;
+      else if (BT->getKind() == clang::BuiltinType::LongDouble)
+        return kLongDoubleType;
+    } else if (desugCanon->isPointerType() || desugCanon->isObjectType()
+               || desugCanon->isReferenceType())
+      return kPointerType;
+    return kUnsupportedType;
+  }
+
+  bool Value::needsManagedAllocation() const {
+    if (!isValid()) return false;
+    const clang::Type* UnqDes = getType()->getUnqualifiedDesugaredType();
+    return UnqDes->isRecordType() || UnqDes->isConstantArrayType()
+      || UnqDes->isMemberPointerType();
+  }
+
+  void Value::ManagedAllocate() {
+    void* dtorFunc = 0;
+    clang::QualType DtorType = getType();
+    // For arrays we destruct the elements.
+    if (const clang::ConstantArrayType* ArrTy
+        = llvm::dyn_cast<clang::ConstantArrayType>(DtorType.getTypePtr())) {
+      DtorType = ArrTy->getElementType();
+    }
+    if (const clang::RecordType* RTy = DtorType->getAs<clang::RecordType>())
+      dtorFunc = GetDtorWrapperPtr(RTy->getDecl());
+
+    const clang::ASTContext& ctx = getASTContext();
+    unsigned payloadSize = ctx.getTypeSizeInChars(getType()).getQuantity();
+    char* alloc = new char[AllocatedValue::getPayloadOffset() + payloadSize];
+    AllocatedValue* allocVal = new (alloc) AllocatedValue(dtorFunc, payloadSize,
+                                                          GetNumberOfElements());
+    m_Storage.m_Ptr = allocVal->getPayload();
+  }
+
+  void Value::AssertOnUnsupportedTypeCast() const {
+    assert("unsupported type in Value, cannot cast simplistically!" && 0);
+  }
+
+  /// \brief Get the function address of the wrapper of the destructor.
+  void* Value::GetDtorWrapperPtr(const clang::RecordDecl* RD) const {
+    std::string funcname;
+    {
+      llvm::raw_string_ostream namestr(funcname);
+      namestr << "__cling_StoredValue_Destruct_" << RD;
+    }
+
+    std::string code("extern \"C\" void ");
+    {
+      clang::QualType RDQT(RD->getTypeForDecl(), 0);
+      std::string typeName
+        = utils::TypeName::GetFullyQualifiedName(RDQT, RD->getASTContext());
+      std::string dtorName = RD->getNameAsString();
+      code += funcname + "(void* obj){((" + typeName + "*)obj)->~"
+        + dtorName + "();}";
+    }
+
+    return m_Interpreter->compileFunction(funcname, code, true /*ifUniq*/,
+                                          false /*withAccessControl*/);
+  }
+
+  static bool hasViableCandidateToCall(clang::LookupResult& R,
+                                       const cling::Value& V) {
+    if (R.empty())
+      return false;
+    using namespace clang;
+    ASTContext& C = V.getASTContext();
+    Sema& SemaR = R.getSema();
+    OverloadCandidateSet overloads((SourceLocation()));
+    QualType Ty = V.getType().getNonReferenceType();
+    if (!Ty->isPointerType())
+      Ty = C.getPointerType(Ty);
+
+    NamespaceDecl* ClingNSD = utils::Lookup::Namespace(&SemaR, "cling");
+    RecordDecl* ClingValueDecl
+      = dyn_cast<RecordDecl>(utils::Lookup::Named(&SemaR, "Value",
+                                                  ClingNSD));
+    assert(ClingValueDecl && "Declaration must be found!");
+    QualType ClingValueTy = C.getTypeDeclType(ClingValueDecl);
+
+    // The OverloadCandidateSet requires a QualType to be passed in through an
+    // Expr* as part of Args. We know that we won't be using any node generated.
+    // We need only an answer whether there is an overload taking these argument
+    // types. We cannot afford to create useless Expr* on the AST for this
+    // utility function which may be called thousands of times. Instead, we
+    // create them on the stack and pretend they are on the heap. We get our
+    // answer and forget about doing anything wrong.
+    llvm::SmallVector<Expr, 4> exprsOnStack;
+    SourceLocation noLoc;
+    exprsOnStack.push_back(CXXNullPtrLiteralExpr(Ty, noLoc));
+    exprsOnStack.push_back(CXXNullPtrLiteralExpr(Ty, noLoc));
+    exprsOnStack.push_back(CXXNullPtrLiteralExpr(ClingValueTy, noLoc));
+    llvm::SmallVector<Expr*, 4> exprsFakedOnHeap;
+    exprsFakedOnHeap.push_back(&exprsOnStack[0]);
+    exprsFakedOnHeap.push_back(&exprsOnStack[1]);
+    exprsFakedOnHeap.push_back(&exprsOnStack[2]);
+    llvm::ArrayRef<Expr*> Args = llvm::makeArrayRef(exprsFakedOnHeap.data(),
+                                                    exprsFakedOnHeap.size());
+    // Could trigger deserialization of decls.
+    cling::Interpreter::PushTransactionRAII RAII(V.getInterpreter());
+    SemaR.AddFunctionCandidates(R.asUnresolvedSet(), Args, overloads);
+
+    OverloadCandidateSet::iterator Best;
+    OverloadingResult OR = overloads.BestViableFunction(SemaR,
+                                                        SourceLocation(), Best);
+    return OR == OR_Success;
+  }
+
+  namespace valuePrinterInternal {
+    void printValue_Default(llvm::raw_ostream& o, const Value& V);
+    void printType_Default(llvm::raw_ostream& o, const Value& V);
+  } // end namespace valuePrinterInternal
 
   void Value::print(llvm::raw_ostream& Out) const {
     // Try to find user defined printing functions:
@@ -283,27 +334,15 @@ void* Value::GetDtorWrapperPtr(const clang::RecordDecl* RD) const {
       // We commit here because the possibly deserialized decls from the lookup
       // will be needed by evaluate.
     }
-    QualType ValueTy = this->getType();
+    QualType ValueTy = this->getType().getNonReferenceType();
+    if (!ValueTy->isPointerType())
+      ValueTy = C.getPointerType(ValueTy);
+
     std::string ValueTyStr = ValueTy.getAsString();
     std::string typeStr;
     std::string valueStr;
 
-    bool hasViablePrintTypeCandidate = false;
-    if (!R.empty() && ValueTy->isPointerType()) {
-      // Check if among the candidates there are functions with the same type:
-      const UnresolvedSetImpl& unresolved = R.asUnresolvedSet();
-      // FIXME: Find a way to use the 'proper' overload checks.
-      for (UnresolvedSetImpl::const_iterator I = unresolved.begin(),
-             E = unresolved.end(); I < E; ++I) {
-        if (FunctionDecl* FD = dyn_cast<FunctionDecl>(*I))
-          if (C.hasSameUnqualifiedType(FD->getParamDecl(0)->getType(), ValueTy)){
-              hasViablePrintTypeCandidate = true;
-              break;
-          }
-      }
-    }
-
-    if (hasViablePrintTypeCandidate) {
+    if (hasViableCandidateToCall(R, *this)) {
       // There is such a routine call it:
       std::stringstream printTypeSS;
       printTypeSS << "cling::printType(";
@@ -357,21 +396,7 @@ void* Value::GetDtorWrapperPtr(const clang::RecordDecl* RD) const {
       // will be needed by evaluate.
     }
 
-    bool hasViablePrintValueCandidate = false;
-    if (!R.empty() && ValueTy->isPointerType()) {
-      // Check if among the candidates there are functions with the same type:
-      const UnresolvedSetImpl& unresolved = R.asUnresolvedSet();
-      // FIXME: Find a way to use the 'proper' overload checks.
-      for (UnresolvedSetImpl::const_iterator I = unresolved.begin(),
-             E = unresolved.end(); I < E; ++I) {
-        if (FunctionDecl* FD = dyn_cast<FunctionDecl>(*I))
-          if (C.hasSameUnqualifiedType(FD->getParamDecl(0)->getType(), ValueTy)){
-              hasViablePrintValueCandidate = true;
-              break;
-          }
-      }
-    }
-    if (hasViablePrintValueCandidate) {
+    if (hasViableCandidateToCall(R, *this)) {
       // There is such a routine call it:
       std::stringstream printValueSS;
       printValueSS << "cling::printValue(";
@@ -402,4 +427,4 @@ void* Value::GetDtorWrapperPtr(const clang::RecordDecl* RD) const {
     Out.reset(new llvm::raw_os_ostream(std::cout));
     print(*Out.get());
   }
-} // namespace cling
+} // end namespace cling

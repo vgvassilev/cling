@@ -173,8 +173,8 @@ namespace cling {
 
   Interpreter::CompilationResult
   MetaProcessor::readInputFromFile(llvm::StringRef filename,
-                                 Value* result,
-                                 bool ignoreOutmostBlock /*=false*/) {
+                                   Value* result,
+                                   bool ignoreOutmostBlock /*=false*/) {
 
     {
       // check that it's not binary:
@@ -270,6 +270,7 @@ namespace cling {
       m_TopExecutingFile = m_CurrentlyExecutingFile;
     Interpreter::CompilationResult ret;
     // We don't want to value print the results of a unnamed macro.
+    content = "#line 2 \"" + filename.str() + "\" \n" + content;
     if (process((content + ";").c_str(), ret, result)) {
       // Input file has to be complete.
        llvm::errs()

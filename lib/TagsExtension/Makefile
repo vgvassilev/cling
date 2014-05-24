@@ -1,4 +1,4 @@
-##===- cling/lib/MetaProcessor/Makefile---------------------*- Makefile -*-===##
+##===- cling/lib/TagsExtension/Makefile---------------------*- Makefile -*-===##
 # 
 #                     The Cling Interpreter
 #

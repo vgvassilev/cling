@@ -235,8 +235,8 @@ namespace cling {
         IntegerLiteral* ZeroLit
           = IntegerLiteral::Create(*m_Context, ZeroInt, m_Context->IntTy,
                                    SourceLocation());
-        Stmts.push_back(m_Sema->ActOnReturnStmt(ZeroLit->getExprLoc(), 
-                                                ZeroLit).take());
+        Stmts.push_back(m_Sema->ActOnReturnStmt(ZeroLit->getExprLoc(),
+                                                ZeroLit, /*Scope*/0).get());
       }
 
       // Wrap Stmts into a function body.
@@ -258,9 +258,9 @@ namespace cling {
       R.addDecl(FD);
       CXXScopeSpec CSS;
       Expr* UnresolvedLookup
-        = m_Sema->BuildDeclarationNameExpr(CSS, R, /*ADL*/ false).take();
-      Expr* TheCall = m_Sema->ActOnCallExpr(TUScope, UnresolvedLookup, Loc, 
-                                            MultiExprArg(), Loc).take();
+        = m_Sema->BuildDeclarationNameExpr(CSS, R, /*ADL*/ false).get();
+      Expr* TheCall = m_Sema->ActOnCallExpr(TUScope, UnresolvedLookup, Loc,
+                                            MultiExprArg(), Loc).get();
       assert(VD && TheCall && "Missing VD or its init!");
       VD->setInit(TheCall);
 

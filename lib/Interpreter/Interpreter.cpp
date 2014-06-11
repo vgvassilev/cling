@@ -1191,17 +1191,20 @@ namespace cling {
   void Interpreter::GenerateAutoloadingMap(llvm::StringRef inFile,
                                            llvm::StringRef outFile) {
     cling::Transaction* T;
+
     this->declare(std::string("#include \"") + std::string(inFile) + "\"", &T);
+//    T->dump();
     for(auto dcit=T->decls_begin(); dcit!=T->decls_end(); ++dcit) {
       Transaction::DelayCallInfo& dci = *dcit;
-
-      for(auto dit = dci.m_DGR.begin(); dit != dci.m_DGR.end(); ++dit) {
-        clang::Decl* decl = *dit;
-        auto visitor = new AutoloadingVisitor(inFile,outFile);
-        visitor->TraverseDecl(decl);
-        delete visitor;
+      if (dci.m_Call==Transaction::kCCIHandleTopLevelDecl) {
+//      dci.dump();
+        for(auto dit = dci.m_DGR.begin(); dit != dci.m_DGR.end(); ++dit) {
+          clang::Decl* decl = *dit;
+//        decl->dump();
+          DeclPrinter visitor(llvm::outs(),clang::PrintingPolicy(clang::LangOptions()));
+          visitor.Visit(decl);
+        }
       }
-
     }
     return;
   }

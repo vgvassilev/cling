@@ -1192,8 +1192,15 @@ namespace cling {
                                            llvm::StringRef outFile) {
     cling::Transaction* T;
 
-    this->declare(std::string("#include \"") + std::string(inFile) + "\"", &T);
-//    T->dump();
+    CompilationResult result =this->declare(std::string("#include \"") + std::string(inFile) + "\"", &T);
+    if (result != CompilationResult::kSuccess) {
+      llvm::outs() << "Compilation failure\n";
+      return;
+    }
+    std::string err;
+    llvm::raw_fd_ostream out(outFile.data(),err,llvm::sys::fs::OpenFlags::F_None);
+    FwdPrinter visitor(out,inFile);
+//    llvm::outs()<<result<<T->empty()<<"\n";
     for(auto dcit=T->decls_begin(); dcit!=T->decls_end(); ++dcit) {
       Transaction::DelayCallInfo& dci = *dcit;
       if (dci.m_Call==Transaction::kCCIHandleTopLevelDecl) {
@@ -1201,8 +1208,8 @@ namespace cling {
         for(auto dit = dci.m_DGR.begin(); dit != dci.m_DGR.end(); ++dit) {
           clang::Decl* decl = *dit;
 //        decl->dump();
-          DeclPrinter visitor(llvm::outs(),clang::PrintingPolicy(clang::LangOptions()));
           visitor.Visit(decl);
+
         }
       }
     }

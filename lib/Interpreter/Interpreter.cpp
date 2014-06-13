@@ -1203,6 +1203,11 @@ namespace cling {
 //    llvm::outs()<<result<<T->empty()<<"\n";
     for(auto dcit=T->decls_begin(); dcit!=T->decls_end(); ++dcit) {
       Transaction::DelayCallInfo& dci = *dcit;
+      if(dci.m_DGR.isNull()) {
+          llvm::outs() << "null\n";
+//          T->printStructureBrief();
+          break;
+      }
       if (dci.m_Call==Transaction::kCCIHandleTopLevelDecl) {
 //      dci.dump();
         for(auto dit = dci.m_DGR.begin(); dit != dci.m_DGR.end(); ++dit) {

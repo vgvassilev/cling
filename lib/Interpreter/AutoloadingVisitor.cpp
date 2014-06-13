@@ -254,9 +254,9 @@ namespace cling {
         } else
           Terminator = ";";
 
-//        if (Terminator)
-//          Out << Terminator;
-//        Out << "\n";
+        if (Terminator)
+          Out << Terminator;
+        Out << "\n";
       }
 
       if (!Decls.empty())
@@ -278,16 +278,21 @@ namespace cling {
           Out << "__module_private__ ";
       }
       D->getTypeSourceInfo()->getType().print(Out, Policy, D->getName());
-      prettyPrintAttributes(D);
+//      prettyPrintAttributes(D);
+      Indent() << ";\n";
     }
 
     void FwdPrinter::VisitTypeAliasDecl(TypeAliasDecl *D) {
       Out << "using " << *D;
       prettyPrintAttributes(D);
       Out << " = " << D->getTypeSourceInfo()->getType().getAsString(Policy);
+      Indent() << ";\n";
     }
 
     void FwdPrinter::VisitEnumDecl(EnumDecl *D) {
+    //FIXME: This prints out the whole definition
+    //There is no universal way of fwd declaring enums
+
       if (!Policy.SuppressSpecifiers && D->isModulePrivate())
         Out << "__module_private__ ";
       Out << "enum ";
@@ -299,29 +304,32 @@ namespace cling {
       }
       Out << *D;
 
-      if (D->isFixed())
+//      if (D->isFixed())
         Out << " : " << D->getIntegerType().stream(Policy);
 
-      if (D->isCompleteDefinition()) {
-        Out << " {\n";
-        VisitDeclContext(D);
-        Indent() << "}";
-      }
-      prettyPrintAttributes(D);
+//      if (D->isCompleteDefinition()) {
+//        Out << " {\n";
+//        VisitDeclContext(D);
+//        Indent() << "};\n";
+//      }
+        Indent() << ";\n";
+//      prettyPrintAttributes(D);
     }
 
     void FwdPrinter::VisitRecordDecl(RecordDecl *D) {
-      if (!Policy.SuppressSpecifiers && D->isModulePrivate())
-        Out << "__module_private__ ";
-      Out << D->getKindName();
-      if (D->getIdentifier())
-        Out << ' ' << *D;
+//      if (!Policy.SuppressSpecifiers && D->isModulePrivate())
+//        Out << "__module_private__ ";
+//      Out << D->getKindName();
+//      if (D->getIdentifier())
+//        Out << ' ' << *D;
 
-      if (D->isCompleteDefinition()) {
-        Out << " {\n";
-        VisitDeclContext(D);
-        Indent() << "}";
-      }
+//      if (D->isCompleteDefinition()) {
+//        Out << " {\n";
+//        VisitDeclContext(D);
+//        Indent() << "}";
+//      }
+      //FIXME: Not sure when this is called instead of VisitCXXRecordDecl
+        llvm::errs()<<D->getNameAsString()<<": VisitRecordDecl called\n";
     }
 
     void FwdPrinter::VisitEnumConstantDecl(EnumConstantDecl *D) {
@@ -333,8 +341,17 @@ namespace cling {
     }
 
     void FwdPrinter::VisitFunctionDecl(FunctionDecl *D) {
+//      if(D->getName().startswith("_"))
+//        return;
+      /*FIXME:Ugly Hack*/
+
+
       CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(D);
       CXXConversionDecl *ConversionDecl = dyn_cast<CXXConversionDecl>(D);
+      /*FIXME:Ugly Hack*/
+//      if (CDecl||ConversionDecl)
+//          return;
+
       if (!Policy.SuppressSpecifiers) {
         switch (D->getStorageClass()) {
         case SC_None: break;
@@ -539,35 +556,36 @@ namespace cling {
           Out << ' ';
 
     //    D->getBody()->printPretty(Out, 0, SubPolicy, Indentation);
-        Out << " __attribute__((annotate(\""
-            << m_InFile << "\"))) ";
-        Out <<";\n";
+
       }
+      Out << " __attribute__((annotate(\""
+          << m_InFile << "\"))) ";
+      Out <<";\n";
     }
 
     void FwdPrinter::VisitFriendDecl(FriendDecl *D) {
-      if (TypeSourceInfo *TSI = D->getFriendType()) {
-        unsigned NumTPLists = D->getFriendTypeNumTemplateParameterLists();
-        for (unsigned i = 0; i < NumTPLists; ++i)
-          PrintTemplateParameters(D->getFriendTypeTemplateParameterList(i));
-        Out << "friend ";
-        Out << " " << TSI->getType().getAsString(Policy);
-      }
-      else if (FunctionDecl *FD =
-          dyn_cast<FunctionDecl>(D->getFriendDecl())) {
-        Out << "friend ";
-        VisitFunctionDecl(FD);
-      }
-      else if (FunctionTemplateDecl *FTD =
-               dyn_cast<FunctionTemplateDecl>(D->getFriendDecl())) {
-        Out << "friend ";
-        VisitFunctionTemplateDecl(FTD);
-      }
-      else if (ClassTemplateDecl *CTD =
-               dyn_cast<ClassTemplateDecl>(D->getFriendDecl())) {
-        Out << "friend ";
-        VisitRedeclarableTemplateDecl(CTD);
-      }
+//      if (TypeSourceInfo *TSI = D->getFriendType()) {
+//        unsigned NumTPLists = D->getFriendTypeNumTemplateParameterLists();
+//        for (unsigned i = 0; i < NumTPLists; ++i)
+//          PrintTemplateParameters(D->getFriendTypeTemplateParameterList(i));
+//        Out << "friend ";
+//        Out << " " << TSI->getType().getAsString(Policy);
+//      }
+//      else if (FunctionDecl *FD =
+//          dyn_cast<FunctionDecl>(D->getFriendDecl())) {
+//        Out << "friend ";
+//        VisitFunctionDecl(FD);
+//      }
+//      else if (FunctionTemplateDecl *FTD =
+//               dyn_cast<FunctionTemplateDecl>(D->getFriendDecl())) {
+//        Out << "friend ";
+//        VisitFunctionTemplateDecl(FTD);
+//      }
+//      else if (ClassTemplateDecl *CTD =
+//               dyn_cast<ClassTemplateDecl>(D->getFriendDecl())) {
+//        Out << "friend ";
+//        VisitRedeclarableTemplateDecl(CTD);
+//      }
     }
 
     void FwdPrinter::VisitFieldDecl(FieldDecl *D) {
@@ -643,9 +661,9 @@ namespace cling {
           if ((D->getInitStyle() == VarDecl::CallInit) && !isa<ParenListExpr>(Init))
             Out << "(";
           else if (D->getInitStyle() == VarDecl::CInit) {
-            Out << " = ";
+//            Out << " = "; //FOR skipping defalt function args
           }
-          Init->printPretty(Out, 0, Policy, Indentation);
+//          Init->printPretty(Out, 0, Policy, Indentation);//FOR skipping defalt function args
           if ((D->getInitStyle() == VarDecl::CallInit) && !isa<ParenListExpr>(Init))
             Out << ")";
         }
@@ -683,7 +701,11 @@ namespace cling {
       if (D->isInline())
         Out << "inline ";
       Out << "namespace " << *D << " {\n";
-      VisitDeclContext(D);
+//      VisitDeclContext(D);
+      for(auto dit=D->decls_begin();dit!=D->decls_end();++dit) {
+        this->Visit(*dit);
+      }
+
       Indent() << "}\n";
     }
 
@@ -707,8 +729,9 @@ namespace cling {
 
     void FwdPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
-      if(ClassDeclNames.find(D->getNameAsString())!=ClassDeclNames.end())
-        return;
+//      if(ClassDeclNames.find(D->getNameAsString())!=ClassDeclNames.end()
+//          /*|| D->getName().startswith("_")*/)
+//        return;
       if (!Policy.SuppressSpecifiers && D->isModulePrivate())
         Out << "__module_private__ ";
       Out << D->getKindName();
@@ -797,8 +820,8 @@ namespace cling {
             Out << " = ";
             Args->get(i).print(Policy, Out);
           } else if (TTP->hasDefaultArgument()) {
-            Out << " = ";
-            Out << TTP->getDefaultArgument().getAsString(Policy);
+//            Out << " = ";
+//            Out << TTP->getDefaultArgument().getAsString(Policy);
           };
         } else if (const NonTypeTemplateParmDecl *NTTP =
                      dyn_cast<NonTypeTemplateParmDecl>(Param)) {
@@ -816,8 +839,8 @@ namespace cling {
             Out << " = ";
             Args->get(i).print(Policy, Out);
           } else if (NTTP->hasDefaultArgument()) {
-            Out << " = ";
-            NTTP->getDefaultArgument()->printPretty(Out, 0, Policy, Indentation);
+//            Out << " = ";
+//            NTTP->getDefaultArgument()->printPretty(Out, 0, Policy, Indentation);
           }
         } else if (const TemplateTemplateParmDecl *TTPD =
                      dyn_cast<TemplateTemplateParmDecl>(Param)) {
@@ -868,5 +891,10 @@ namespace cling {
       }
 
       return VisitRedeclarableTemplateDecl(D);
+    }
+    void FwdPrinter::VisitClassTemplateSpecializationDecl(clang::ClassTemplateSpecializationDecl* D) {
+
+        //D->dump();
+
     }
 }

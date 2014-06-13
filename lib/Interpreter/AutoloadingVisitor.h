@@ -92,6 +92,7 @@ namespace cling {
     void VisitTemplateDecl(const clang::TemplateDecl *D);
     void VisitFunctionTemplateDecl(clang::FunctionTemplateDecl *D);
     void VisitClassTemplateDecl(clang::ClassTemplateDecl *D);
+    void VisitClassTemplateSpecializationDecl(clang::ClassTemplateSpecializationDecl* D);
 //  void VisitObjCMethodDecl(ObjCMethodDecl *D);
 //  void VisitObjCImplementationDecl(ObjCImplementationDecl *D);
 //  void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);

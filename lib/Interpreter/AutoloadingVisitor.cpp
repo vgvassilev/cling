@@ -1,100 +1,5 @@
 #include "AutoloadingVisitor.h"
 namespace cling {
-//  bool AutoloadingVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* Declaration) {
-////    llvm::outs()<<"Called CXXRT\n";
-//    if(Declaration->getName().startswith("_")
-//          || Declaration->getName().size() == 0
-//          /*|| //TODO: Find a way to avoid templates here*/)
-//      return true;
-
-////    std::vector<NamespacePrinterRAII> scope;
-////    clang::DeclContext* c=Declaration->getEnclosingNamespaceContext();
-////    while(c->isNamespace()) {
-////      clang::NamespaceDecl* n = llvm::cast<clang::NamespaceDecl>(c);
-////      scope.emplace_back(n->getNameAsString());
-////      c=c->getParent();
-////    }
-
-//    llvm::outs() << "\n" << Declaration->getKindName()
-//             << " __attribute__((annotate(\""
-//             << m_InFile << "\"))) "
-//             << Declaration->getName() << ";\n";
-//    return true;
-//  }
-//  bool AutoloadingVisitor::VisitFunctionDecl(clang::FunctionDecl* Declaration) {
-
-//    if(Declaration->getName().startswith("_")
-//        || Declaration->getName().size() == 0
-//        || Declaration->isCXXClassMember()
-//        || !Declaration->hasBody())
-//      return false;
-
-////    std::vector<NamespacePrinterRAII> scope;
-////    clang::DeclContext* c = Declaration->getEnclosingNamespaceContext();
-////    while(c->isNamespace()) {
-////      clang::NamespaceDecl* n = llvm::cast<clang::NamespaceDecl>(c);
-////      scope.emplace_back(n->getNameAsString());
-////      c=c->getParent();
-////    }
-
-//    llvm::outs() << "\n" << Declaration->getReturnType().getAsString()
-//             << " " << Declaration->getName() << " () "
-//             << "__attribute__((annotate(\""
-//             << m_InFile << "\")));\n";
-
-//    //TODO: arg list, not sure if necessary
-//    return false;
-//  }
-
-//  bool AutoloadingVisitor::VisitClassTemplateDecl(clang::ClassTemplateDecl* Declaration) {
-////    llvm::outs()<<"Called CT\n";
-//   if(Declaration->getName().startswith("_")
-//      || Declaration->getName().size() == 0)
-//     return false;
-
-////    std::vector<NamespacePrinterRAII> scope;
-////    clang::DeclContext* c=
-////      Declaration->getTemplatedDecl()->getEnclosingNamespaceContext();
-////    while(c->isNamespace()) {
-////      clang::NamespaceDecl* n = llvm::cast<clang::NamespaceDecl>(c);
-////      scope.emplace_back(n->getNameAsString());
-////      c=c->getParent();
-////    }
-
-//    llvm::outs()<<"template <";
-//    clang::TemplateParameterList* tl=Declaration->getTemplateParameters();
-//    for(auto it=tl->begin();it!=tl->end();++it) {
-//      if(llvm::isa<clang::NonTypeTemplateParmDecl>(*it)) {
-//        clang::NonTypeTemplateParmDecl* td=llvm::cast<clang::NonTypeTemplateParmDecl>(*it);
-//        llvm::outs() << td->getType().getAsString();
-//      }
-//      else llvm::outs() << "typename";
-//      llvm::outs()<<" " << (*it)->getName();
-//      if((it+1) != tl->end())
-//        llvm::outs() << ", ";
-//    }
-//    llvm::outs()<<"> ";
-//    this->TraverseDecl(Declaration->getTemplatedDecl());
-
-////    llvm::outs()<<"> class __attribute__((annotate(\""
-////            << m_InFile << "\"))) "
-////            << Declaration->getName() << ";\n";
-
-//    return false;
-//  }
-//  bool AutoloadingVisitor::VisitNamespaceDecl(clang::NamespaceDecl* Declaration) {
-////    llvm::outs()<<"CALLED N\n";
-//    llvm::outs()<<"namespace "<<Declaration->getName()<<" {\n";
-//    for(auto dit=Declaration->decls_begin();dit!=Declaration->decls_end();++dit) {
-//      clang::Decl* decl=*dit;
-//      this->TraverseDecl(decl);
-//    }
-//    llvm::outs()<<"\n}\n";
-//    return false;
-//  }
-
-} // end namespace cling
-namespace cling {
     using namespace clang;
     static QualType GetBaseType(QualType T) {
       // FIXME: This should be on the Type class!
@@ -279,14 +184,18 @@ namespace cling {
       }
       D->getTypeSourceInfo()->getType().print(Out, Policy, D->getName());
 //      prettyPrintAttributes(D);
-      Indent() << ";\n";
+//      Indent() << ";\n";
     }
 
     void FwdPrinter::VisitTypeAliasDecl(TypeAliasDecl *D) {
+      /*FIXME: Ugly Hack*/
+//      if(!D->getLexicalDeclContext()->isNamespace()
+//              && !D->getLexicalDeclContext()->isFileContext())
+//          return;
       Out << "using " << *D;
       prettyPrintAttributes(D);
       Out << " = " << D->getTypeSourceInfo()->getType().getAsString(Policy);
-      Indent() << ";\n";
+//      Indent() << ";\n";
     }
 
     void FwdPrinter::VisitEnumDecl(EnumDecl *D) {
@@ -343,8 +252,10 @@ namespace cling {
     void FwdPrinter::VisitFunctionDecl(FunctionDecl *D) {
 //      if(D->getName().startswith("_"))
 //        return;
-      /*FIXME:Ugly Hack*/
-
+      /*FIXME:Ugly Hack: should idealy never be triggerred */
+      if (D->isCXXClassMember()) {
+        return;
+      }
 
       CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(D);
       CXXConversionDecl *ConversionDecl = dyn_cast<CXXConversionDecl>(D);
@@ -560,7 +471,7 @@ namespace cling {
       }
       Out << " __attribute__((annotate(\""
           << m_InFile << "\"))) ";
-      Out <<";\n";
+//      Out <<";\n";
     }
 
     void FwdPrinter::VisitFriendDecl(FriendDecl *D) {
@@ -619,6 +530,10 @@ namespace cling {
 
 
     void FwdPrinter::VisitVarDecl(VarDecl *D) {
+      /*//FIXME:Ugly hack*/
+      if(D->isStaticDataMember()||D->isStaticLocal()) {
+        return;
+      }
       if (!Policy.SuppressSpecifiers) {
         StorageClass SC = D->getStorageClass();
         if (SC != SC_None)
@@ -704,6 +619,7 @@ namespace cling {
 //      VisitDeclContext(D);
       for(auto dit=D->decls_begin();dit!=D->decls_end();++dit) {
         this->Visit(*dit);
+        Out << ";\n";
       }
 
       Indent() << "}\n";
@@ -729,9 +645,13 @@ namespace cling {
 
     void FwdPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
-//      if(ClassDeclNames.find(D->getNameAsString())!=ClassDeclNames.end()
-//          /*|| D->getName().startswith("_")*/)
-//        return;
+      if(ClassDeclNames.find(D->getNameAsString())!=ClassDeclNames.end()
+          /*|| D->getName().startswith("_")*/)
+        return;
+        /*FIXME:Ugly Hack: should idealy never be triggerred */
+        if (D->isCXXClassMember()) {
+          return;
+        }
       if (!Policy.SuppressSpecifiers && D->isModulePrivate())
         Out << "__module_private__ ";
       Out << D->getKindName();
@@ -768,7 +688,7 @@ namespace cling {
     //    VisitDeclContext(D);
     //    Indent() << "}";
     //  }
-      Out << ";\n";
+//      Out << ";\n";
       ClassDeclNames.insert(D->getNameAsString());
     }
 
@@ -867,6 +787,10 @@ namespace cling {
     }
 
     void FwdPrinter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
+      /*FIXME:Ugly Hack: should idealy never be triggerred */
+      if (D->isCXXClassMember()) {
+        return;
+      }
       if (PrintInstantiation) {
         TemplateParameterList *Params = D->getTemplateParameters();
         for (FunctionTemplateDecl::spec_iterator I = D->spec_begin(), E = D->spec_end();
@@ -880,6 +804,9 @@ namespace cling {
     }
 
     void FwdPrinter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
+      if(ClassDeclNames.find(D->getNameAsString())!=ClassDeclNames.end()
+        /*|| D->getName().startswith("_")*/)
+       return;
       if (PrintInstantiation) {
         TemplateParameterList *Params = D->getTemplateParameters();
         for (ClassTemplateDecl::spec_iterator I = D->spec_begin(), E = D->spec_end();

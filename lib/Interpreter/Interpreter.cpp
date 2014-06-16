@@ -1190,7 +1190,7 @@ namespace cling {
 
   void Interpreter::GenerateAutoloadingMap(llvm::StringRef inFile,
                                            llvm::StringRef outFile) {
-    cling::Transaction* T;
+    cling::Transaction* T=0;
 
     CompilationResult result =this->declare(std::string("#include \"") + std::string(inFile) + "\"", &T);
     if (result != CompilationResult::kSuccess) {
@@ -1214,7 +1214,7 @@ namespace cling {
           clang::Decl* decl = *dit;
 //        decl->dump();
           visitor.Visit(decl);
-
+          out << ";\n";
         }
       }
     }

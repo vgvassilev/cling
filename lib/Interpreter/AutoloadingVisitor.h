@@ -1,3 +1,4 @@
+//TODO: Adapted from
 #ifndef CLING_AUTOLOADING_VISITOR_H
 #define CLING_AUTOLOADING_VISITOR_H
 #include "clang/AST/ASTContext.h"
@@ -13,33 +14,6 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include <set>
-
-namespace cling {
-//  class NamespacePrinterRAII {
-//  public:
-//    NamespacePrinterRAII(std::string name) {
-//      llvm::outs()<< "namespace " <<name<<" {\n";
-//    }
-//    ~NamespacePrinterRAII() {
-//      llvm::outs()<<"\n}\n";
-//    }
-//  };
-
-//  class AutoloadingVisitor
-//    :public clang::RecursiveASTVisitor<AutoloadingVisitor> {
-//  public:
-//    AutoloadingVisitor(llvm::StringRef InFile,llvm::StringRef OutFile)
-//        :m_InFile(InFile),m_OutFile(OutFile){}
-//    bool VisitCXXRecordDecl(clang::CXXRecordDecl* Declaration);
-//    bool VisitFunctionDecl(clang::FunctionDecl* Declaration);
-//    bool VisitClassTemplateDecl(clang::ClassTemplateDecl* Declaration);
-//    bool VisitNamespaceDecl(clang::NamespaceDecl* Declaration);
-////    bool VisitTranslationUnitDecl(clang::TranslationUnitDecl* Declaration);
-//  private:
-//    llvm::StringRef m_InFile;
-//    llvm::StringRef m_OutFile;
-//  };
-}//end namespace cling
 
 namespace cling {
 
@@ -93,20 +67,6 @@ namespace cling {
     void VisitFunctionTemplateDecl(clang::FunctionTemplateDecl *D);
     void VisitClassTemplateDecl(clang::ClassTemplateDecl *D);
     void VisitClassTemplateSpecializationDecl(clang::ClassTemplateSpecializationDecl* D);
-//  void VisitObjCMethodDecl(ObjCMethodDecl *D);
-//  void VisitObjCImplementationDecl(ObjCImplementationDecl *D);
-//  void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
-//  void VisitObjCProtocolDecl(ObjCProtocolDecl *D);
-//  void VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D);
-//  void VisitObjCCategoryDecl(ObjCCategoryDecl *D);
-//  void VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *D);
-//  void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
-//  void VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D);
-//  void VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D);
-//  void VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D);
-//  void VisitUsingDecl(UsingDecl *D);
-//  void VisitUsingShadowDecl(UsingShadowDecl *D);
-//  void VisitOMPThreadPrivateDecl(OMPThreadPrivateDecl *D);
 
     void PrintTemplateParameters(const clang::TemplateParameterList *Params,
                                const clang::TemplateArgumentList *Args = 0);

@@ -360,7 +360,9 @@ namespace cling {
             FT->getNoexceptExpr()->printPretty(EOut, 0, SubPolicy,
                                                Indentation);
             EOut.flush();
-            Proto += EOut.str();
+            //Proto += EOut.str()
+            //Commented out to fix swap bug, no idea why this was here
+            //Print was already being called earlier above
             Proto += ")";
           }
         }

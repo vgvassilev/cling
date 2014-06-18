@@ -39,16 +39,16 @@ namespace cling {
     }
 
     void FwdPrinter::prettyPrintAttributes(Decl *D) {
-      if (Policy.PolishForDeclaration)
-        return;
+//      if (Policy.PolishForDeclaration)
+//        return;
 
-      if (D->hasAttrs()) {
-        AttrVec &Attrs = D->getAttrs();
-        for (AttrVec::const_iterator i=Attrs.begin(), e=Attrs.end(); i!=e; ++i) {
-          Attr *A = *i;
-          A->printPretty(Out, Policy);
-        }
-      }
+//      if (D->hasAttrs()) {
+//        AttrVec &Attrs = D->getAttrs();
+//        for (AttrVec::const_iterator i=Attrs.begin(), e=Attrs.end(); i!=e; ++i) {
+//          Attr *A = *i;
+//          A->printPretty(Out, Policy);
+//        }
+//      }
     }
 
     void FwdPrinter::ProcessDeclGroup(SmallVectorImpl<Decl*>& Decls) {
@@ -300,7 +300,7 @@ namespace cling {
         Proto += "(";
         if (FT) {
           llvm::raw_string_ostream POut(Proto);
-          FwdPrinter ParamPrinter(POut, m_InFile, SubPolicy, Indentation);
+          FwdPrinter ParamPrinter(POut, m_SMgr, SubPolicy, Indentation);
           for (unsigned i = 0, e = D->getNumParams(); i != e; ++i) {
             if (i) POut << ", ";
             ParamPrinter.VisitParmVarDecl(D->getParamDecl(i));
@@ -457,7 +457,7 @@ namespace cling {
           // This is a K&R function definition, so we need to print the
           // parameters.
           Out << '\n';
-          FwdPrinter ParamPrinter(Out,m_InFile, SubPolicy, Indentation);
+          FwdPrinter ParamPrinter(Out,m_SMgr, SubPolicy, Indentation);
           Indentation += Policy.Indentation;
           for (unsigned i = 0, e = D->getNumParams(); i != e; ++i) {
             Indent();
@@ -472,7 +472,7 @@ namespace cling {
 
       }
       Out << " __attribute__((annotate(\""
-          << m_InFile << "\"))) ";
+          << m_SMgr.getFilename(D->getSourceRange().getBegin())<< "\"))) ";
 //      Out <<";\n";
     }
 
@@ -532,10 +532,12 @@ namespace cling {
 
 
     void FwdPrinter::VisitVarDecl(VarDecl *D) {
-      /*//FIXME:Ugly hack*/
+      //FIXME:Ugly hack
       if(D->isStaticDataMember()||D->isStaticLocal()) {
         return;
       }
+      if(D->isDefinedOutsideFunctionOrMethod())
+        Out << "extern ";
       if (!Policy.SuppressSpecifiers) {
         StorageClass SC = D->getStorageClass();
         if (SC != SC_None)
@@ -658,7 +660,7 @@ namespace cling {
         Out << "__module_private__ ";
       Out << D->getKindName();
       Out << " __attribute__((annotate(\""
-          << m_InFile << "\"))) ";
+          << m_SMgr.getFilename(D->getSourceRange().getBegin()) << "\"))) ";
       if (D->getIdentifier())
         Out << ' ' << *D ;
 

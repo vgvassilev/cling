@@ -30,14 +30,14 @@ namespace cling {
     void Print(clang::AccessSpecifier AS);
 
     std::set<std::string> ClassDeclNames;
-    llvm::StringRef m_InFile;
+    clang::SourceManager& m_SMgr;
 
   public:
-    FwdPrinter(llvm::raw_ostream &Out, llvm::StringRef inFile,
+    FwdPrinter(llvm::raw_ostream &Out, clang::SourceManager& smgr,
         const clang::PrintingPolicy &Policy =clang::PrintingPolicy(clang::LangOptions()),
         unsigned Indentation = 0, bool PrintInstantiation = false)
       : Out(Out), Policy(Policy), Indentation(Indentation),
-        PrintInstantiation(PrintInstantiation),m_InFile(inFile)
+        PrintInstantiation(PrintInstantiation),m_SMgr(smgr)
         { }
 
     void VisitDeclContext(clang::DeclContext *DC, bool Indent = true);

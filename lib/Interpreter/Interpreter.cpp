@@ -1199,7 +1199,7 @@ namespace cling {
     }
     std::string err;
     llvm::raw_fd_ostream out(outFile.data(),err,llvm::sys::fs::OpenFlags::F_None);
-    FwdPrinter visitor(out,inFile);
+    FwdPrinter visitor(out,this->getSema().getSourceManager());
 //    llvm::outs()<<result<<T->empty()<<"\n";
     for(auto dcit=T->decls_begin(); dcit!=T->decls_end(); ++dcit) {
       Transaction::DelayCallInfo& dci = *dcit;

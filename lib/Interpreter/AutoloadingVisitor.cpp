@@ -49,6 +49,8 @@ namespace cling {
 //          A->printPretty(Out, Policy);
 //        }
 //      }
+        Out << " __attribute__((annotate(\""
+            << m_SMgr.getFilename(D->getSourceRange().getBegin()) << "\"))) ";
     }
 
     void FwdPrinter::ProcessDeclGroup(SmallVectorImpl<Decl*>& Decls) {
@@ -183,7 +185,7 @@ namespace cling {
           Out << "__module_private__ ";
       }
       D->getTypeSourceInfo()->getType().print(Out, Policy, D->getName());
-//      prettyPrintAttributes(D);
+      prettyPrintAttributes(D);
 //      Indent() << ";\n";
     }
 
@@ -221,8 +223,9 @@ namespace cling {
 //        VisitDeclContext(D);
 //        Indent() << "};\n";
 //      }
-        Indent() << ";\n";
-//      prettyPrintAttributes(D);
+
+      prettyPrintAttributes(D);
+      Indent() << ";\n";
     }
 
     void FwdPrinter::VisitRecordDecl(RecordDecl *D) {
@@ -471,8 +474,8 @@ namespace cling {
     //    D->getBody()->printPretty(Out, 0, SubPolicy, Indentation);
 
       }
-      Out << " __attribute__((annotate(\""
-          << m_SMgr.getFilename(D->getSourceRange().getBegin())<< "\"))) ";
+//      Out << " __attribute__((annotate(\""
+//          << m_SMgr.getFilename(D->getSourceRange().getBegin())<< "\"))) ";
 //      Out <<";\n";
     }
 
@@ -536,8 +539,10 @@ namespace cling {
       if(D->isStaticDataMember()||D->isStaticLocal()) {
         return;
       }
-      if(D->isDefinedOutsideFunctionOrMethod())
+      if(D->isDefinedOutsideFunctionOrMethod() && !(D->getStorageClass()==SC_Extern))
         Out << "extern ";
+
+
       if (!Policy.SuppressSpecifiers) {
         StorageClass SC = D->getStorageClass();
         if (SC != SC_None)
@@ -587,7 +592,8 @@ namespace cling {
             Out << ")";
         }
       }
-      prettyPrintAttributes(D);
+      if(D->isDefinedOutsideFunctionOrMethod())
+        prettyPrintAttributes(D);
     }
 
     void FwdPrinter::VisitParmVarDecl(ParmVarDecl *D) {

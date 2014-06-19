@@ -207,6 +207,7 @@ namespace cling {
       if (!Policy.SuppressSpecifiers && D->isModulePrivate())
         Out << "__module_private__ ";
       Out << "enum ";
+      prettyPrintAttributes(D);
       if (D->isScoped()) {
         if (D->isScopedUsingClassTag())
           Out << "class ";
@@ -224,7 +225,7 @@ namespace cling {
 //        Indent() << "};\n";
 //      }
 
-      prettyPrintAttributes(D);
+
       Indent() << ";\n";
     }
 

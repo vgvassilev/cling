@@ -1,44 +1,43 @@
 #include "AutoloadingVisitor.h"
 namespace cling {
-    using namespace clang;
-    static QualType GetBaseType(QualType T) {
-      // FIXME: This should be on the Type class!
-      QualType BaseType = T;
-      while (!BaseType->isSpecifierType()) {
-        if (isa<TypedefType>(BaseType))
-          break;
-        else if (const PointerType* PTy = BaseType->getAs<PointerType>())
-          BaseType = PTy->getPointeeType();
-        else if (const BlockPointerType *BPy = BaseType->getAs<BlockPointerType>())
-          BaseType = BPy->getPointeeType();
-        else if (const ArrayType* ATy = dyn_cast<ArrayType>(BaseType))
-          BaseType = ATy->getElementType();
-        else if (const FunctionType* FTy = BaseType->getAs<FunctionType>())
-          BaseType = FTy->getReturnType();
-        else if (const VectorType *VTy = BaseType->getAs<VectorType>())
-          BaseType = VTy->getElementType();
-        else if (const ReferenceType *RTy = BaseType->getAs<ReferenceType>())
-          BaseType = RTy->getPointeeType();
-        else
-          llvm_unreachable("Unknown declarator!");
-      }
-      return BaseType;
+  using namespace clang;
+  static QualType GetBaseType(QualType T) {
+    // FIXME: This should be on the Type class!
+    QualType BaseType = T;
+    while (!BaseType->isSpecifierType()) {
+      if (isa<TypedefType>(BaseType))
+        break;
+      else if (const PointerType* PTy = BaseType->getAs<PointerType>())
+        BaseType = PTy->getPointeeType();
+      else if (const BlockPointerType *BPy = BaseType->getAs<BlockPointerType>())
+        BaseType = BPy->getPointeeType();
+      else if (const ArrayType* ATy = dyn_cast<ArrayType>(BaseType))
+        BaseType = ATy->getElementType();
+      else if (const FunctionType* FTy = BaseType->getAs<FunctionType>())
+        BaseType = FTy->getReturnType();
+      else if (const VectorType *VTy = BaseType->getAs<VectorType>())
+        BaseType = VTy->getElementType();
+      else if (const ReferenceType *RTy = BaseType->getAs<ReferenceType>())
+        BaseType = RTy->getPointeeType();
+      else
+        llvm_unreachable("Unknown declarator!");
     }
-    static QualType getDeclType(Decl* D) {
-      if (TypedefNameDecl* TDD = dyn_cast<TypedefNameDecl>(D))
-        return TDD->getUnderlyingType();
-      if (ValueDecl* VD = dyn_cast<ValueDecl>(D))
+    return BaseType;
+  }
+  static QualType getDeclType(Decl* D) {
+    if (TypedefNameDecl* TDD = dyn_cast<TypedefNameDecl>(D))
+      return TDD->getUnderlyingType();
+    if (ValueDecl* VD = dyn_cast<ValueDecl>(D))
         return VD->getType();
-      return QualType();
-    }
+    return QualType();
+  }
 
-    raw_ostream& FwdPrinter::Indent(unsigned Indentation) {
-      for (unsigned i = 0; i != Indentation; ++i)
-        Out << "  ";
-      return Out;
-    }
-
-    void FwdPrinter::prettyPrintAttributes(Decl *D) {
+  raw_ostream& FwdPrinter::Indent(unsigned Indentation) {
+    for (unsigned i = 0; i != Indentation; ++i)
+      Out << "  ";
+    return Out;
+  }
+  void FwdPrinter::prettyPrintAttributes(Decl *D) {
 //      if (Policy.PolishForDeclaration)
 //        return;
 
@@ -49,50 +48,49 @@ namespace cling {
 //          A->printPretty(Out, Policy);
 //        }
 //      }
-        Out << " __attribute__((annotate(\""
-            << m_SMgr.getFilename(D->getSourceRange().getBegin()) << "\"))) ";
-    }
+    Out << " __attribute__((annotate(\""
+        << m_SMgr.getFilename(D->getSourceRange().getBegin()) << "\"))) ";
+  }
 
-    void FwdPrinter::ProcessDeclGroup(SmallVectorImpl<Decl*>& Decls) {
-      this->Indent();
-      Decl::printGroup(Decls.data(), Decls.size(), Out, Policy, Indentation);
-      Out << ";\n";
-      Decls.clear();
+  void FwdPrinter::ProcessDeclGroup(SmallVectorImpl<Decl*>& Decls) {
+    this->Indent();
+    Decl::printGroup(Decls.data(), Decls.size(), Out, Policy, Indentation);
+    Out << ";\n";
+    Decls.clear();
 
-    }
+  }
 
-    void FwdPrinter::Print(AccessSpecifier AS) {
-      switch(AS) {
+  void FwdPrinter::Print(AccessSpecifier AS) {
+    switch(AS) {
       case AS_none:      llvm_unreachable("No access specifier!");
       case AS_public:    Out << "public"; break;
       case AS_protected: Out << "protected"; break;
       case AS_private:   Out << "private"; break;
-      }
     }
+  }
 
     //----------------------------------------------------------------------------
     // Common C declarations
     //----------------------------------------------------------------------------
 
-    void FwdPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
-      if (Policy.TerseOutput)
-        return;
+  void FwdPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
+    if (Policy.TerseOutput)
+      return;
+    if (Indent)
+      Indentation += Policy.Indentation;
 
-      if (Indent)
-        Indentation += Policy.Indentation;
-
-      SmallVector<Decl*, 2> Decls;
-      for (DeclContext::decl_iterator D = DC->decls_begin(), DEnd = DC->decls_end();
-           D != DEnd; ++D) {
+    SmallVector<Decl*, 2> Decls;
+    for (DeclContext::decl_iterator D = DC->decls_begin(), DEnd = DC->decls_end();
+      D != DEnd; ++D) {
 
         // Don't print ObjCIvarDecls, as they are printed when visiting the
         // containing ObjCInterfaceDecl.
-        if (isa<ObjCIvarDecl>(*D))
-          continue;
+    if (isa<ObjCIvarDecl>(*D))
+      continue;
 
         // Skip over implicit declarations in pretty-printing mode.
-        if (D->isImplicit())
-          continue;
+    if (D->isImplicit())
+      continue;
 
         // The next bits of code handles stuff like "struct {int x;} a,b"; we're
         // forced to merge the declarations because there's no other way to
@@ -102,122 +100,122 @@ namespace cling {
         //
         // Check whether the current declaration should be grouped with a previous
         // unnamed struct.
-        QualType CurDeclType = getDeclType(*D);
-        if (!Decls.empty() && !CurDeclType.isNull()) {
-          QualType BaseType = GetBaseType(CurDeclType);
-          if (!BaseType.isNull() && isa<ElaboratedType>(BaseType))
+    QualType CurDeclType = getDeclType(*D);
+    if (!Decls.empty() && !CurDeclType.isNull()) {
+        QualType BaseType = GetBaseType(CurDeclType);
+        if (!BaseType.isNull() && isa<ElaboratedType>(BaseType))
             BaseType = cast<ElaboratedType>(BaseType)->getNamedType();
-          if (!BaseType.isNull() && isa<TagType>(BaseType) &&
-              cast<TagType>(BaseType)->getDecl() == Decls[0]) {
+        if (!BaseType.isNull() && isa<TagType>(BaseType) &&
+                cast<TagType>(BaseType)->getDecl() == Decls[0]) {
             Decls.push_back(*D);
             continue;
-          }
         }
+    }
 
-        // If we have a merged group waiting to be handled, handle it now.
-        if (!Decls.empty())
-          ProcessDeclGroup(Decls);
-
-        // If the current declaration is an unnamed tag type, save it
-        // so we can merge it with the subsequent declaration(s) using it.
-        if (isa<TagDecl>(*D) && !cast<TagDecl>(*D)->getIdentifier()) {
-          Decls.push_back(*D);
-          continue;
-        }
-
-        if (isa<AccessSpecDecl>(*D)) {
-          Indentation -= Policy.Indentation;
-          this->Indent();
-          Print(D->getAccess());
-          Out << ":\n";
-          Indentation += Policy.Indentation;
-          continue;
-        }
-
-        this->Indent();
-        Visit(*D);
-
-        // FIXME: Need to be able to tell the FwdPrinter when
-        const char *Terminator = 0;
-        if (isa<OMPThreadPrivateDecl>(*D))
-          Terminator = 0;
-        else if (isa<FunctionDecl>(*D) &&
-                 cast<FunctionDecl>(*D)->isThisDeclarationADefinition())
-          Terminator = 0;
-        else if (isa<ObjCMethodDecl>(*D) && cast<ObjCMethodDecl>(*D)->getBody())
-          Terminator = 0;
-        else if (isa<NamespaceDecl>(*D) || isa<LinkageSpecDecl>(*D) ||
-                 isa<ObjCImplementationDecl>(*D) ||
-                 isa<ObjCInterfaceDecl>(*D) ||
-                 isa<ObjCProtocolDecl>(*D) ||
-                 isa<ObjCCategoryImplDecl>(*D) ||
-                 isa<ObjCCategoryDecl>(*D))
-          Terminator = 0;
-        else if (isa<EnumConstantDecl>(*D)) {
-          DeclContext::decl_iterator Next = D;
-          ++Next;
-          if (Next != DEnd)
-            Terminator = ",";
-        } else
-          Terminator = ";";
-
-        if (Terminator)
-          Out << Terminator;
-        Out << "\n";
-      }
-
-      if (!Decls.empty())
+    // If we have a merged group waiting to be handled, handle it now.
+    if (!Decls.empty())
         ProcessDeclGroup(Decls);
 
-      if (Indent)
+    // If the current declaration is an unnamed tag type, save it
+    // so we can merge it with the subsequent declaration(s) using it.
+    if (isa<TagDecl>(*D) && !cast<TagDecl>(*D)->getIdentifier()) {
+        Decls.push_back(*D);
+        continue;
+    }
+
+    if (isa<AccessSpecDecl>(*D)) {
         Indentation -= Policy.Indentation;
+        this->Indent();
+        Print(D->getAccess());
+        Out << ":\n";
+        Indentation += Policy.Indentation;
+        continue;
     }
 
-    void FwdPrinter::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
+    this->Indent();
+    Visit(*D);
+
+    // FIXME: Need to be able to tell the FwdPrinter when
+    const char *Terminator = 0;
+    if (isa<OMPThreadPrivateDecl>(*D))
+        Terminator = 0;
+    else if (isa<FunctionDecl>(*D) &&
+             cast<FunctionDecl>(*D)->isThisDeclarationADefinition())
+        Terminator = 0;
+    else if (isa<ObjCMethodDecl>(*D) && cast<ObjCMethodDecl>(*D)->getBody())
+        Terminator = 0;
+    else if (isa<NamespaceDecl>(*D) || isa<LinkageSpecDecl>(*D) ||
+             isa<ObjCImplementationDecl>(*D) ||
+             isa<ObjCInterfaceDecl>(*D) ||
+             isa<ObjCProtocolDecl>(*D) ||
+             isa<ObjCCategoryImplDecl>(*D) ||
+             isa<ObjCCategoryDecl>(*D))
+        Terminator = 0;
+    else if (isa<EnumConstantDecl>(*D)) {
+        DeclContext::decl_iterator Next = D;
+        ++Next;
+        if (Next != DEnd)
+            Terminator = ",";
+    } else
+        Terminator = ";";
+
+    if (Terminator)
+        Out << Terminator;
+    Out << "\n";
+    }
+
+    if (!Decls.empty())
+        ProcessDeclGroup(Decls);
+
+    if (Indent)
+        Indentation -= Policy.Indentation;
+  }
+
+  void FwdPrinter::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
       VisitDeclContext(D, false);
+  }
+
+  void FwdPrinter::VisitTypedefDecl(TypedefDecl *D) {
+    if (!Policy.SuppressSpecifiers) {
+      Out << "typedef ";
+
+    if (D->isModulePrivate())
+      Out << "__module_private__ ";
     }
-
-    void FwdPrinter::VisitTypedefDecl(TypedefDecl *D) {
-      if (!Policy.SuppressSpecifiers) {
-        Out << "typedef ";
-
-        if (D->isModulePrivate())
-          Out << "__module_private__ ";
-      }
-      D->getTypeSourceInfo()->getType().print(Out, Policy, D->getName());
-      prettyPrintAttributes(D);
+    D->getTypeSourceInfo()->getType().print(Out, Policy, D->getName());
+    prettyPrintAttributes(D);
 //      Indent() << ";\n";
-    }
+  }
 
-    void FwdPrinter::VisitTypeAliasDecl(TypeAliasDecl *D) {
+  void FwdPrinter::VisitTypeAliasDecl(TypeAliasDecl *D) {
       /*FIXME: Ugly Hack*/
 //      if(!D->getLexicalDeclContext()->isNamespace()
 //              && !D->getLexicalDeclContext()->isFileContext())
 //          return;
-      Out << "using " << *D;
-      prettyPrintAttributes(D);
-      Out << " = " << D->getTypeSourceInfo()->getType().getAsString(Policy);
+    Out << "using " << *D;
+    prettyPrintAttributes(D);
+    Out << " = " << D->getTypeSourceInfo()->getType().getAsString(Policy);
 //      Indent() << ";\n";
+  }
+
+  void FwdPrinter::VisitEnumDecl(EnumDecl *D) {
+    if (D->getName().size()==0)
+      return;
+
+    if (!Policy.SuppressSpecifiers && D->isModulePrivate())
+      Out << "__module_private__ ";
+    Out << "enum ";
+    prettyPrintAttributes(D);
+    if (D->isScoped()) {
+      if (D->isScopedUsingClassTag())
+        Out << "class ";
+      else
+        Out << "struct ";
     }
-
-    void FwdPrinter::VisitEnumDecl(EnumDecl *D) {
-      if (D->getName().size()==0)
-        return;
-
-      if (!Policy.SuppressSpecifiers && D->isModulePrivate())
-        Out << "__module_private__ ";
-      Out << "enum ";
-      prettyPrintAttributes(D);
-      if (D->isScoped()) {
-        if (D->isScopedUsingClassTag())
-          Out << "class ";
-        else
-          Out << "struct ";
-      }
-      Out << *D;
+    Out << *D;
 
 //      if (D->isFixed())
-        Out << " : " << D->getIntegerType().stream(Policy);
+    Out << " : " << D->getIntegerType().stream(Policy);
 
 //      if (D->isCompleteDefinition()) {
 //        Out << " {\n";
@@ -226,10 +224,10 @@ namespace cling {
 //      }
 
 
-      Indent() << ";\n";
-    }
+    Indent() << ";\n";
+  }
 
-    void FwdPrinter::VisitRecordDecl(RecordDecl *D) {
+  void FwdPrinter::VisitRecordDecl(RecordDecl *D) {
 //      if (!Policy.SuppressSpecifiers && D->isModulePrivate())
 //        Out << "__module_private__ ";
 //      Out << D->getKindName();
@@ -242,79 +240,78 @@ namespace cling {
 //        Indent() << "}";
 //      }
       //FIXME: Not sure when this is called instead of VisitCXXRecordDecl
-        llvm::errs()<<D->getNameAsString()<<": VisitRecordDecl called\n";
+    llvm::errs()<<D->getNameAsString()<<": VisitRecordDecl called\n";
+  }
+
+  void FwdPrinter::VisitEnumConstantDecl(EnumConstantDecl *D) {
+    Out << *D;
+    if (Expr *Init = D->getInitExpr()) {
+      Out << " = ";
+      Init->printPretty(Out, 0, Policy, Indentation);
+    }
+  }
+
+  void FwdPrinter::VisitFunctionDecl(FunctionDecl *D) {
+    if(D->getNameAsString().size()==0 || D->getNameAsString()[0]=='_')
+      return;
+     /*FIXME:Ugly Hack: should idealy never be triggerred */
+    if (D->isCXXClassMember()) {
+      return;
     }
 
-    void FwdPrinter::VisitEnumConstantDecl(EnumConstantDecl *D) {
-      Out << *D;
-      if (Expr *Init = D->getInitExpr()) {
-        Out << " = ";
-        Init->printPretty(Out, 0, Policy, Indentation);
-      }
-    }
-
-    void FwdPrinter::VisitFunctionDecl(FunctionDecl *D) {
-      if(D->getNameAsString().size()==0 || D->getNameAsString()[0]=='_')
-        return;
-      /*FIXME:Ugly Hack: should idealy never be triggerred */
-      if (D->isCXXClassMember()) {
-        return;
-      }
-
-      CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(D);
+    CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(D);
       CXXConversionDecl *ConversionDecl = dyn_cast<CXXConversionDecl>(D);
       /*FIXME:Ugly Hack*/
 //      if (CDecl||ConversionDecl)
 //          return;
 
-      if (!Policy.SuppressSpecifiers) {
-        switch (D->getStorageClass()) {
+    if (!Policy.SuppressSpecifiers) {
+      switch (D->getStorageClass()) {
         case SC_None: break;
         case SC_Extern: Out << "extern "; break;
         case SC_Static: Out << "static "; break;
         case SC_PrivateExtern: Out << "__private_extern__ "; break;
         case SC_Auto: case SC_Register: case SC_OpenCLWorkGroupLocal:
           llvm_unreachable("invalid for functions");
+      }
+
+      if (D->isInlineSpecified())  Out << "inline ";
+      if (D->isVirtualAsWritten()) Out << "virtual ";
+      if (D->isModulePrivate())    Out << "__module_private__ ";
+      if (D->isConstexpr() && !D->isExplicitlyDefaulted()) Out << "constexpr ";
+      if ((CDecl && CDecl->isExplicitSpecified()) ||
+          (ConversionDecl && ConversionDecl->isExplicit()))
+        Out << "explicit ";
+    }
+
+    PrintingPolicy SubPolicy(Policy);
+    SubPolicy.SuppressSpecifiers = false;
+    std::string Proto = D->getNameInfo().getAsString();
+    QualType Ty = D->getType();
+    while (const ParenType *PT = dyn_cast<ParenType>(Ty)) {
+      Proto = '(' + Proto + ')';
+      Ty = PT->getInnerType();
+    }
+
+    if (const FunctionType *AFT = Ty->getAs<FunctionType>()) {
+      const FunctionProtoType *FT = 0;
+      if (D->hasWrittenPrototype())
+        FT = dyn_cast<FunctionProtoType>(AFT);
+
+      Proto += "(";
+      if (FT) {
+        llvm::raw_string_ostream POut(Proto);
+        FwdPrinter ParamPrinter(POut, m_SMgr, SubPolicy, Indentation);
+        for (unsigned i = 0, e = D->getNumParams(); i != e; ++i) {
+          if (i) POut << ", ";
+          ParamPrinter.VisitParmVarDecl(D->getParamDecl(i));
         }
 
-        if (D->isInlineSpecified())  Out << "inline ";
-        if (D->isVirtualAsWritten()) Out << "virtual ";
-        if (D->isModulePrivate())    Out << "__module_private__ ";
-        if (D->isConstexpr() && !D->isExplicitlyDefaulted()) Out << "constexpr ";
-        if ((CDecl && CDecl->isExplicitSpecified()) ||
-            (ConversionDecl && ConversionDecl->isExplicit()))
-          Out << "explicit ";
-      }
-
-      PrintingPolicy SubPolicy(Policy);
-      SubPolicy.SuppressSpecifiers = false;
-      std::string Proto = D->getNameInfo().getAsString();
-
-      QualType Ty = D->getType();
-      while (const ParenType *PT = dyn_cast<ParenType>(Ty)) {
-        Proto = '(' + Proto + ')';
-        Ty = PT->getInnerType();
-      }
-
-      if (const FunctionType *AFT = Ty->getAs<FunctionType>()) {
-        const FunctionProtoType *FT = 0;
-        if (D->hasWrittenPrototype())
-          FT = dyn_cast<FunctionProtoType>(AFT);
-
-        Proto += "(";
-        if (FT) {
-          llvm::raw_string_ostream POut(Proto);
-          FwdPrinter ParamPrinter(POut, m_SMgr, SubPolicy, Indentation);
-          for (unsigned i = 0, e = D->getNumParams(); i != e; ++i) {
-            if (i) POut << ", ";
-            ParamPrinter.VisitParmVarDecl(D->getParamDecl(i));
-          }
-
-          if (FT->isVariadic()) {
-            if (D->getNumParams()) POut << ", ";
-            POut << "...";
-          }
-        } else if (D->doesThisDeclarationHaveABody() && !D->hasPrototype()) {
+        if (FT->isVariadic()) {
+          if (D->getNumParams()) POut << ", ";
+          POut << "...";
+        }
+      } else if (D->doesThisDeclarationHaveABody() && !D->hasPrototype()) {
           for (unsigned i = 0, e = D->getNumParams(); i != e; ++i) {
             if (i)
               Proto += ", ";
@@ -322,17 +319,17 @@ namespace cling {
           }
         }
 
-        Proto += ")";
+      Proto += ")";
 
-        if (FT) {
-          if (FT->isConst())
-            Proto += " const";
+      if (FT) {
+        if (FT->isConst())
+          Proto += " const";
           if (FT->isVolatile())
             Proto += " volatile";
           if (FT->isRestrict())
             Proto += " __restrict";
 
-          switch (FT->getRefQualifier()) {
+        switch (FT->getRefQualifier()) {
           case RQ_None:
             break;
           case RQ_LValue:
@@ -341,22 +338,22 @@ namespace cling {
           case RQ_RValue:
             Proto += " &&";
             break;
-          }
         }
+      }
 
-        if (FT && FT->hasDynamicExceptionSpec()) {
-          Proto += " throw(";
-          if (FT->getExceptionSpecType() == EST_MSAny)
-            Proto += "...";
-          else
-            for (unsigned I = 0, N = FT->getNumExceptions(); I != N; ++I) {
-              if (I)
-                Proto += ", ";
+      if (FT && FT->hasDynamicExceptionSpec()) {
+        Proto += " throw(";
+        if (FT->getExceptionSpecType() == EST_MSAny)
+          Proto += "...";
+        else
+          for (unsigned I = 0, N = FT->getNumExceptions(); I != N; ++I) {
+            if (I)
+              Proto += ", ";
 
-              Proto += FT->getExceptionType(I).getAsString(SubPolicy);
-            }
-          Proto += ")";
-        } else if (FT && isNoexceptExceptionSpec(FT->getExceptionSpecType())) {
+          Proto += FT->getExceptionType(I).getAsString(SubPolicy);
+        }
+        Proto += ")";
+      } else if (FT && isNoexceptExceptionSpec(FT->getExceptionSpecType())) {
           Proto += " noexcept";
           if (FT->getExceptionSpecType() == EST_ComputedNoexcept) {
             Proto += "(";
@@ -369,7 +366,7 @@ namespace cling {
             //Print was already being called earlier above
             Proto += ")";
           }
-        }
+      }
 
         if (CDecl) {
           bool HasInitializerList = false;
@@ -470,17 +467,17 @@ namespace cling {
           }
           Indentation -= Policy.Indentation;
         } else
-          Out << ' ';
+       Out << ' ';
 
     //    D->getBody()->printPretty(Out, 0, SubPolicy, Indentation);
 
-      }
+    }
 //      Out << " __attribute__((annotate(\""
 //          << m_SMgr.getFilename(D->getSourceRange().getBegin())<< "\"))) ";
 //      Out <<";\n";
-    }
+  }
 
-    void FwdPrinter::VisitFriendDecl(FriendDecl *D) {
+  void FwdPrinter::VisitFriendDecl(FriendDecl *D) {
 //      if (TypeSourceInfo *TSI = D->getFriendType()) {
 //        unsigned NumTPLists = D->getFriendTypeNumTemplateParameterLists();
 //        for (unsigned i = 0; i < NumTPLists; ++i)
@@ -503,53 +500,52 @@ namespace cling {
 //        Out << "friend ";
 //        VisitRedeclarableTemplateDecl(CTD);
 //      }
+  }
+
+  void FwdPrinter::VisitFieldDecl(FieldDecl *D) {
+    if (!Policy.SuppressSpecifiers && D->isMutable())
+      Out << "mutable ";
+    if (!Policy.SuppressSpecifiers && D->isModulePrivate())
+      Out << "__module_private__ ";
+    Out << D->getASTContext().getUnqualifiedObjCPointerType(D->getType()).
+        stream(Policy, D->getName());
+
+    if (D->isBitField()) {
+      Out << " : ";
+      D->getBitWidth()->printPretty(Out, 0, Policy, Indentation);
     }
 
-    void FwdPrinter::VisitFieldDecl(FieldDecl *D) {
-      if (!Policy.SuppressSpecifiers && D->isMutable())
-        Out << "mutable ";
-      if (!Policy.SuppressSpecifiers && D->isModulePrivate())
-        Out << "__module_private__ ";
-
-      Out << D->getASTContext().getUnqualifiedObjCPointerType(D->getType()).
-                stream(Policy, D->getName());
-
-      if (D->isBitField()) {
-        Out << " : ";
-        D->getBitWidth()->printPretty(Out, 0, Policy, Indentation);
-      }
-
-      Expr *Init = D->getInClassInitializer();
-      if (!Policy.SuppressInitializers && Init) {
-        if (D->getInClassInitStyle() == ICIS_ListInit)
-          Out << " ";
-        else
-          Out << " = ";
-        Init->printPretty(Out, 0, Policy, Indentation);
-      }
-      prettyPrintAttributes(D);
+    Expr *Init = D->getInClassInitializer();
+    if (!Policy.SuppressInitializers && Init) {
+      if (D->getInClassInitStyle() == ICIS_ListInit)
+        Out << " ";
+      else
+        Out << " = ";
+      Init->printPretty(Out, 0, Policy, Indentation);
     }
+    prettyPrintAttributes(D);
+  }
 
-    void FwdPrinter::VisitLabelDecl(LabelDecl *D) {
-      Out << *D << ":";
+  void FwdPrinter::VisitLabelDecl(LabelDecl *D) {
+    Out << *D << ":";
+  }
+
+
+  void FwdPrinter::VisitVarDecl(VarDecl *D) {
+    //FIXME:Ugly hack
+    if(D->getStorageClass()==SC_Static) {
+      return;
     }
+    if(D->isDefinedOutsideFunctionOrMethod() && !(D->getStorageClass()==SC_Extern))
+      Out << "extern ";
 
 
-    void FwdPrinter::VisitVarDecl(VarDecl *D) {
-      //FIXME:Ugly hack
-      if(D->getStorageClass()==SC_Static) {
-        return;
-      }
-      if(D->isDefinedOutsideFunctionOrMethod() && !(D->getStorageClass()==SC_Extern))
-        Out << "extern ";
+    if (!Policy.SuppressSpecifiers) {
+      StorageClass SC = D->getStorageClass();
+      if (SC != SC_None)
+        Out << VarDecl::getStorageClassSpecifierString(SC) << " ";
 
-
-      if (!Policy.SuppressSpecifiers) {
-        StorageClass SC = D->getStorageClass();
-        if (SC != SC_None)
-          Out << VarDecl::getStorageClassSpecifierString(SC) << " ";
-
-        switch (D->getTSCSpec()) {
+      switch (D->getTSCSpec()) {
         case TSCS_unspecified:
           break;
         case TSCS___thread:
@@ -561,116 +557,116 @@ namespace cling {
         case TSCS_thread_local:
           Out << "thread_local ";
           break;
-        }
-
-        if (D->isModulePrivate())
-          Out << "__module_private__ ";
       }
 
-      QualType T = D->getTypeSourceInfo()
-        ? D->getTypeSourceInfo()->getType()
-        : D->getASTContext().getUnqualifiedObjCPointerType(D->getType());
-      T.print(Out, Policy, D->getName());
+      if (D->isModulePrivate())
+        Out << "__module_private__ ";
+    }
 
-      Expr *Init = D->getInit();
-      if (!Policy.SuppressInitializers && Init) {
-        bool ImplicitInit = false;
-        if (CXXConstructExpr *Construct =
-                dyn_cast<CXXConstructExpr>(Init->IgnoreImplicit())) {
-          if (D->getInitStyle() == VarDecl::CallInit &&
+    QualType T = D->getTypeSourceInfo()
+      ? D->getTypeSourceInfo()->getType()
+      : D->getASTContext().getUnqualifiedObjCPointerType(D->getType());
+    T.print(Out, Policy, D->getName());
+
+    Expr *Init = D->getInit();
+    if (!Policy.SuppressInitializers && Init) {
+      bool ImplicitInit = false;
+      if (CXXConstructExpr *Construct =
+            dyn_cast<CXXConstructExpr>(Init->IgnoreImplicit())) {
+      if (D->getInitStyle() == VarDecl::CallInit &&
               !Construct->isListInitialization()) {
             ImplicitInit = Construct->getNumArgs() == 0 ||
               Construct->getArg(0)->isDefaultArgument();
-          }
-        }
-        if (!ImplicitInit) {
-          if ((D->getInitStyle() == VarDecl::CallInit) && !isa<ParenListExpr>(Init))
-            Out << "(";
-          else if (D->getInitStyle() == VarDecl::CInit) {
-//            Out << " = "; //FOR skipping default function args
-          }
-//          Init->printPretty(Out, 0, Policy, Indentation);//FOR skipping defalt function args
-          if ((D->getInitStyle() == VarDecl::CallInit) && !isa<ParenListExpr>(Init))
-            Out << ")";
-        }
       }
-      if(D->isDefinedOutsideFunctionOrMethod())
-        prettyPrintAttributes(D);
     }
+    if (!ImplicitInit) {
+      if ((D->getInitStyle() == VarDecl::CallInit) && !isa<ParenListExpr>(Init))
+        Out << "(";
+      else if (D->getInitStyle() == VarDecl::CInit) {
+//            Out << " = "; //FOR skipping default function args
+      }
+//          Init->printPretty(Out, 0, Policy, Indentation);//FOR skipping defalt function args
+      if ((D->getInitStyle() == VarDecl::CallInit) && !isa<ParenListExpr>(Init))
+        Out << ")";
+      }
+    }
+    if(D->isDefinedOutsideFunctionOrMethod())
+      prettyPrintAttributes(D);
+  }
 
-    void FwdPrinter::VisitParmVarDecl(ParmVarDecl *D) {
-      VisitVarDecl(D);
-    }
+  void FwdPrinter::VisitParmVarDecl(ParmVarDecl *D) {
+    VisitVarDecl(D);
+  }
 
-    void FwdPrinter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
-      Out << "__asm (";
-      D->getAsmString()->printPretty(Out, 0, Policy, Indentation);
-      Out << ")";
-    }
+  void FwdPrinter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
+    Out << "__asm (";
+    D->getAsmString()->printPretty(Out, 0, Policy, Indentation);
+    Out << ")";
+  }
 
-    void FwdPrinter::VisitImportDecl(ImportDecl *D) {
-      Out << "@import " << D->getImportedModule()->getFullModuleName()
-          << ";\n";
-    }
+  void FwdPrinter::VisitImportDecl(ImportDecl *D) {
+    Out << "@import " << D->getImportedModule()->getFullModuleName()
+        << ";\n";
+  }
 
-    void FwdPrinter::VisitStaticAssertDecl(StaticAssertDecl *D) {
-      Out << "static_assert(";
-      D->getAssertExpr()->printPretty(Out, 0, Policy, Indentation);
-      Out << ", ";
-      D->getMessage()->printPretty(Out, 0, Policy, Indentation);
-      Out << ")";
-    }
+  void FwdPrinter::VisitStaticAssertDecl(StaticAssertDecl *D) {
+    Out << "static_assert(";
+    D->getAssertExpr()->printPretty(Out, 0, Policy, Indentation);
+    Out << ", ";
+    D->getMessage()->printPretty(Out, 0, Policy, Indentation);
+    Out << ")";
+  }
 
     //----------------------------------------------------------------------------
     // C++ declarations
     //----------------------------------------------------------------------------
-    void FwdPrinter::VisitNamespaceDecl(NamespaceDecl *D) {
-      if (D->isInline())
-        Out << "inline ";
-      Out << "namespace " << *D << " {\n";
+  void FwdPrinter::VisitNamespaceDecl(NamespaceDecl *D) {
+    if (D->isInline())
+      Out << "inline ";
+    Out << "namespace " << *D << " {\n";
 //      VisitDeclContext(D);
-      for(auto dit=D->decls_begin();dit!=D->decls_end();++dit) {
-        this->Visit(*dit);
-        Out << ";\n";
-      }
-
-      Indent() << "}\n";
+    for(auto dit=D->decls_begin();dit!=D->decls_end();++dit) {
+      this->Visit(*dit);
+      Out << ";\n";
     }
 
-    void FwdPrinter::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
-      Out << "using namespace ";
-      if (D->getQualifier())
-        D->getQualifier()->print(Out, Policy);
-      Out << *D->getNominatedNamespaceAsWritten();
-    }
+    Indent() << "}\n";
+  }
 
-    void FwdPrinter::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
-      Out << "namespace " << *D << " = ";
-      if (D->getQualifier())
-        D->getQualifier()->print(Out, Policy);
-      Out << *D->getAliasedNamespace();
-    }
+  void FwdPrinter::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
+    Out << "using namespace ";
+    if (D->getQualifier())
+      D->getQualifier()->print(Out, Policy);
+    Out << *D->getNominatedNamespaceAsWritten();
+  }
 
-    void FwdPrinter::VisitEmptyDecl(EmptyDecl *D) {
-      prettyPrintAttributes(D);
-    }
+  void FwdPrinter::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
+    Out << "namespace " << *D << " = ";
+    if (D->getQualifier())
+      D->getQualifier()->print(Out, Policy);
+    Out << *D->getAliasedNamespace();
+  }
 
-    void FwdPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
+  void FwdPrinter::VisitEmptyDecl(EmptyDecl *D) {
+    prettyPrintAttributes(D);
+  }
 
-      if(ClassDeclNames.find(D->getNameAsString())!=ClassDeclNames.end()
+  void FwdPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
+
+    if(ClassDeclNames.find(D->getNameAsString())!=ClassDeclNames.end()
           /*|| D->getName().startswith("_")*/)
-        return;
+      return;
 
-      if (D->getNameAsString().size()==0)
-        return;
+    if (D->getNameAsString().size()==0)
+      return;
 
-      if (!Policy.SuppressSpecifiers && D->isModulePrivate())
-        Out << "__module_private__ ";
-      Out << D->getKindName();
-      Out << " __attribute__((annotate(\""
-          << m_SMgr.getFilename(D->getSourceRange().getBegin()) << "\"))) ";
-      if (D->getIdentifier())
-        Out << ' ' << *D ;
+    if (!Policy.SuppressSpecifiers && D->isModulePrivate())
+      Out << "__module_private__ ";
+    Out << D->getKindName();
+    Out << " __attribute__((annotate(\""
+        << m_SMgr.getFilename(D->getSourceRange().getBegin()) << "\"))) ";
+    if (D->getIdentifier())
+      Out << ' ' << *D ;
 
     //  if (D->isCompleteDefinition()) {
     //    // Print the base classes
@@ -701,140 +697,139 @@ namespace cling {
     //    Indent() << "}";
     //  }
 //      Out << ";\n";
-      ClassDeclNames.insert(D->getNameAsString());
+    ClassDeclNames.insert(D->getNameAsString());
+  }
+
+  void FwdPrinter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
+    const char *l;
+    if (D->getLanguage() == LinkageSpecDecl::lang_c)
+      l = "C";
+    else {
+      assert(D->getLanguage() == LinkageSpecDecl::lang_cxx &&
+             "unknown language in linkage specification");
+      l = "C++";
     }
 
-    void FwdPrinter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
-      const char *l;
-      if (D->getLanguage() == LinkageSpecDecl::lang_c)
-        l = "C";
-      else {
-        assert(D->getLanguage() == LinkageSpecDecl::lang_cxx &&
-               "unknown language in linkage specification");
-        l = "C++";
-      }
+    Out << "extern \"" << l << "\" ";
+    if (D->hasBraces()) {
+      Out << "{\n";
+      VisitDeclContext(D);
+      Indent() << "}";
+    } else
+      Visit(*D->decls_begin());
+  }
 
-      Out << "extern \"" << l << "\" ";
-      if (D->hasBraces()) {
-        Out << "{\n";
-        VisitDeclContext(D);
-        Indent() << "}";
-      } else
-        Visit(*D->decls_begin());
-    }
-
-    void FwdPrinter::PrintTemplateParameters(const TemplateParameterList *Params,
+  void FwdPrinter::PrintTemplateParameters(const TemplateParameterList *Params,
                                               const TemplateArgumentList *Args) {
-      assert(Params);
-      assert(!Args || Params->size() == Args->size());
+    assert(Params);
+    assert(!Args || Params->size() == Args->size());
 
-      Out << "template <";
+    Out << "template <";
 
-      for (unsigned i = 0, e = Params->size(); i != e; ++i) {
-        if (i != 0)
-          Out << ", ";
+    for (unsigned i = 0, e = Params->size(); i != e; ++i) {
+      if (i != 0)
+        Out << ", ";
 
-        const Decl *Param = Params->getParam(i);
-        if (const TemplateTypeParmDecl *TTP =
-              dyn_cast<TemplateTypeParmDecl>(Param)) {
+      const Decl *Param = Params->getParam(i);
+      if (const TemplateTypeParmDecl *TTP =
+            dyn_cast<TemplateTypeParmDecl>(Param)) {
 
-          if (TTP->wasDeclaredWithTypename())
-            Out << "typename ";
-          else
-            Out << "class ";
+        if (TTP->wasDeclaredWithTypename())
+          Out << "typename ";
+        else
+          Out << "class ";
 
-          if (TTP->isParameterPack())
-            Out << "... ";
+        if (TTP->isParameterPack())
+          Out << "... ";
 
-          Out << *TTP;
+        Out << *TTP;
 
-          if (Args) {
-            Out << " = ";
-            Args->get(i).print(Policy, Out);
-          } else if (TTP->hasDefaultArgument()) {
+        if (Args) {
+          Out << " = ";
+          Args->get(i).print(Policy, Out);
+        } else if (TTP->hasDefaultArgument()) {
 //            Out << " = ";
 //            Out << TTP->getDefaultArgument().getAsString(Policy);
           };
-        } else if (const NonTypeTemplateParmDecl *NTTP =
-                     dyn_cast<NonTypeTemplateParmDecl>(Param)) {
-          Out << NTTP->getType().getAsString(Policy);
+      } else if (const NonTypeTemplateParmDecl *NTTP =
+                   dyn_cast<NonTypeTemplateParmDecl>(Param)) {
+        Out << NTTP->getType().getAsString(Policy);
+        if (NTTP->isParameterPack() && !isa<PackExpansionType>(NTTP->getType()))
+          Out << "...";
 
-          if (NTTP->isParameterPack() && !isa<PackExpansionType>(NTTP->getType()))
-            Out << "...";
+        if (IdentifierInfo *Name = NTTP->getIdentifier()) {
+          Out << ' ';
+          Out << Name->getName();
+        }
 
-          if (IdentifierInfo *Name = NTTP->getIdentifier()) {
-            Out << ' ';
-            Out << Name->getName();
-          }
-
-          if (Args) {
-            Out << " = ";
-            Args->get(i).print(Policy, Out);
-          } else if (NTTP->hasDefaultArgument()) {
+        if (Args) {
+          Out << " = ";
+          Args->get(i).print(Policy, Out);
+        } else if (NTTP->hasDefaultArgument()) {
 //            Out << " = ";
 //            NTTP->getDefaultArgument()->printPretty(Out, 0, Policy, Indentation);
-          }
-        } else if (const TemplateTemplateParmDecl *TTPD =
-                     dyn_cast<TemplateTemplateParmDecl>(Param)) {
-          VisitTemplateDecl(TTPD);
+        }
+      } else if (const TemplateTemplateParmDecl *TTPD =
+                   dyn_cast<TemplateTemplateParmDecl>(Param)) {
+        VisitTemplateDecl(TTPD);
           // FIXME: print the default argument, if present.
-        }
-      }
-
-      Out << "> ";
-    }
-
-    void FwdPrinter::VisitTemplateDecl(const TemplateDecl *D) {
-      PrintTemplateParameters(D->getTemplateParameters());
-
-      if (const TemplateTemplateParmDecl *TTP =
-            dyn_cast<TemplateTemplateParmDecl>(D)) {
-        Out << "class ";
-        if (TTP->isParameterPack())
-          Out << "...";
-        Out << D->getName();
-      } else {
-        Visit(D->getTemplatedDecl());
       }
     }
 
-    void FwdPrinter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
-      if(D->getNameAsString().size()==0 || D->getNameAsString()[0]=='_')
-        return;
-      /*FIXME:Ugly Hack: should idealy never be triggerred */
-      if (D->isCXXClassMember())
-        return;
-      if (PrintInstantiation) {
-        TemplateParameterList *Params = D->getTemplateParameters();
-        for (FunctionTemplateDecl::spec_iterator I = D->spec_begin(), E = D->spec_end();
-             I != E; ++I) {
-          PrintTemplateParameters(Params, (*I)->getTemplateSpecializationArgs());
-          Visit(*I);
-        }
+    Out << "> ";
+  }
+
+  void FwdPrinter::VisitTemplateDecl(const TemplateDecl *D) {
+    PrintTemplateParameters(D->getTemplateParameters());
+
+    if (const TemplateTemplateParmDecl *TTP =
+          dyn_cast<TemplateTemplateParmDecl>(D)) {
+      Out << "class ";
+    if (TTP->isParameterPack())
+      Out << "...";
+    Out << D->getName();
+    } else {
+      Visit(D->getTemplatedDecl());
+    }
+  }
+
+  void FwdPrinter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
+    if(D->getNameAsString().size()==0 || D->getNameAsString()[0]=='_')
+      return;
+    /*FIXME:Ugly Hack: should idealy never be triggerred */
+    if (D->isCXXClassMember())
+      return;
+    if (PrintInstantiation) {
+      TemplateParameterList *Params = D->getTemplateParameters();
+      for (FunctionTemplateDecl::spec_iterator I = D->spec_begin(), E = D->spec_end();
+           I != E; ++I) {
+        PrintTemplateParameters(Params, (*I)->getTemplateSpecializationArgs());
+        Visit(*I);
       }
-
-      return VisitRedeclarableTemplateDecl(D);
     }
 
-    void FwdPrinter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
-      if(ClassDeclNames.find(D->getNameAsString())!=ClassDeclNames.end()
-        /*|| D->getName().startswith("_")*/)
-       return;
-      if (PrintInstantiation) {
-        TemplateParameterList *Params = D->getTemplateParameters();
-        for (ClassTemplateDecl::spec_iterator I = D->spec_begin(), E = D->spec_end();
-             I != E; ++I) {
-          PrintTemplateParameters(Params, &(*I)->getTemplateArgs());
-          Visit(*I);
-          Out << '\n';
-        }
+    return VisitRedeclarableTemplateDecl(D);
+  }
+
+  void FwdPrinter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
+    if(ClassDeclNames.find(D->getNameAsString())!=ClassDeclNames.end()
+      /*|| D->getName().startswith("_")*/)
+     return;
+    if (PrintInstantiation) {
+      TemplateParameterList *Params = D->getTemplateParameters();
+      for (ClassTemplateDecl::spec_iterator I = D->spec_begin(), E = D->spec_end();
+           I != E; ++I) {
+        PrintTemplateParameters(Params, &(*I)->getTemplateArgs());
+        Visit(*I);
+        Out << '\n';
       }
-
-      return VisitRedeclarableTemplateDecl(D);
     }
-    void FwdPrinter::VisitClassTemplateSpecializationDecl(clang::ClassTemplateSpecializationDecl* D) {
 
-        //D->dump();
+    return VisitRedeclarableTemplateDecl(D);
+  }
+  void FwdPrinter::VisitClassTemplateSpecializationDecl(clang::ClassTemplateSpecializationDecl* D) {
 
-    }
+      //D->dump();
+
+  }
 }

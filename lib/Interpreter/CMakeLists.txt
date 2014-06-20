@@ -19,8 +19,8 @@ set( LLVM_LINK_COMPONENTS
 add_cling_library(clingInterpreter
   AutoSynthesizer.cpp
   AutoloadingTransform.cpp
-  AutoloadingVisitor.cpp
   AutoloadCallback.cpp
+  AutoloadingVisitor.cpp
   BackendPass.cpp
   CheckEmptyTransactionTransformer.cpp
   CIFactory.cpp
@@ -49,6 +49,7 @@ add_cling_library(clingInterpreter
 
   LINK_LIBS
   clangBasic
+  clangAST
   )
   
 if(NOT WIN32)

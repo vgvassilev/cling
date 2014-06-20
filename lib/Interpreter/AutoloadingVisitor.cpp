@@ -201,8 +201,8 @@ namespace cling {
     }
 
     void FwdPrinter::VisitEnumDecl(EnumDecl *D) {
-    //FIXME: This prints out the whole definition
-    //There is no universal way of fwd declaring enums
+      if (D->getName().size()==0)
+        return;
 
       if (!Policy.SuppressSpecifiers && D->isModulePrivate())
         Out << "__module_private__ ";
@@ -254,8 +254,8 @@ namespace cling {
     }
 
     void FwdPrinter::VisitFunctionDecl(FunctionDecl *D) {
-//      if(D->getName().startswith("_"))
-//        return;
+      if(D->getNameAsString().size()==0 || D->getNameAsString()[0]=='_')
+        return;
       /*FIXME:Ugly Hack: should idealy never be triggerred */
       if (D->isCXXClassMember()) {
         return;
@@ -330,7 +330,7 @@ namespace cling {
           if (FT->isVolatile())
             Proto += " volatile";
           if (FT->isRestrict())
-            Proto += " restrict";
+            Proto += " restrict"; //it seems clang does not support restrict properly
 
           switch (FT->getRefQualifier()) {
           case RQ_None:
@@ -537,7 +537,7 @@ namespace cling {
 
     void FwdPrinter::VisitVarDecl(VarDecl *D) {
       //FIXME:Ugly hack
-      if(D->isStaticDataMember()||D->isStaticLocal()) {
+      if(D->getStorageClass()==SC_Static) {
         return;
       }
       if(D->isDefinedOutsideFunctionOrMethod() && !(D->getStorageClass()==SC_Extern))
@@ -571,6 +571,7 @@ namespace cling {
         ? D->getTypeSourceInfo()->getType()
         : D->getASTContext().getUnqualifiedObjCPointerType(D->getType());
       T.print(Out, Policy, D->getName());
+
       Expr *Init = D->getInit();
       if (!Policy.SuppressInitializers && Init) {
         bool ImplicitInit = false;
@@ -586,7 +587,7 @@ namespace cling {
           if ((D->getInitStyle() == VarDecl::CallInit) && !isa<ParenListExpr>(Init))
             Out << "(";
           else if (D->getInitStyle() == VarDecl::CInit) {
-//            Out << " = "; //FOR skipping defalt function args
+//            Out << " = "; //FOR skipping default function args
           }
 //          Init->printPretty(Out, 0, Policy, Indentation);//FOR skipping defalt function args
           if ((D->getInitStyle() == VarDecl::CallInit) && !isa<ParenListExpr>(Init))
@@ -659,10 +660,10 @@ namespace cling {
       if(ClassDeclNames.find(D->getNameAsString())!=ClassDeclNames.end()
           /*|| D->getName().startswith("_")*/)
         return;
-        /*FIXME:Ugly Hack: should idealy never be triggerred */
-        if (D->isCXXClassMember()) {
-          return;
-        }
+
+      if (D->getNameAsString().size()==0)
+        return;
+
       if (!Policy.SuppressSpecifiers && D->isModulePrivate())
         Out << "__module_private__ ";
       Out << D->getKindName();
@@ -798,10 +799,11 @@ namespace cling {
     }
 
     void FwdPrinter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
-      /*FIXME:Ugly Hack: should idealy never be triggerred */
-      if (D->isCXXClassMember()) {
+      if(D->getNameAsString().size()==0 || D->getNameAsString()[0]=='_')
         return;
-      }
+      /*FIXME:Ugly Hack: should idealy never be triggerred */
+      if (D->isCXXClassMember())
+        return;
       if (PrintInstantiation) {
         TemplateParameterList *Params = D->getTemplateParameters();
         for (FunctionTemplateDecl::spec_iterator I = D->spec_begin(), E = D->spec_end();

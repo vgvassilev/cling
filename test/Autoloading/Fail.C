@@ -9,18 +9,16 @@
 // RUN: cat %s | %cling -I %S -Xclang -verify
 // Test templateFail
 //XFAIL: *
-//Becasue no way to declare sub types, and instantiation
+//All the currently failing stuff
 
 #include "cling/Interpreter/Interpreter.h"
 // #include "cling/Interpreter/AutoloadCallback.h"
-gCling->GenerateAutoloadingMap("TemplateFail.h","test.h");
+gCling->GenerateAutoloadingMap("Fail.h","test.h");
 
 gCling->process("const char * const argV = \"cling\";");
 gCling->process("cling::Interpreter *DefaultInterp;");
 
 gCling->process("DefaultInterp = new cling::Interpreter(1, &argV);");
-// gCling->process("DefaultInterp->setCallbacks(new cling::AutoloadCallback(DefaultInterp));")
 gCling->process("DefaultInterp->process(\"#include \\\"test.h\\\"\");");
-// gCling->process("DefaultInterp->process(\"#include \\\"TemplateFail.h\\\"\");");
 
 .q

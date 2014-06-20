@@ -1190,18 +1190,34 @@ namespace cling {
 
   void Interpreter::GenerateAutoloadingMap(llvm::StringRef inFile,
                                            llvm::StringRef outFile) {
-    cling::Transaction* T;
-    this->declare(std::string("#include \"") + std::string(inFile) + "\"", &T);
-    for(auto dcit=T->decls_begin(); dcit!=T->decls_end(); ++dcit) {
+    cling::Transaction* T = 0;
+
+    CompilationResult result = this->declare(std::string("#include \"") + std::string(inFile) + "\"", &T);
+    if (result != CompilationResult::kSuccess) {
+      llvm::outs() << "Compilation failure\n";
+      return;
+    }
+    std::string err;
+    llvm::raw_fd_ostream out(outFile.data(), err, llvm::sys::fs::OpenFlags::F_None);
+    FwdPrinter visitor(out,this->getSema().getSourceManager());
+
+//    llvm::outs()<<result<<T->empty()<<"\n";
+    for(auto dcit = T->decls_begin(); dcit != T->decls_end(); ++dcit) {
       Transaction::DelayCallInfo& dci = *dcit;
-
-      for(auto dit = dci.m_DGR.begin(); dit != dci.m_DGR.end(); ++dit) {
-        clang::Decl* decl = *dit;
-        auto visitor = new AutoloadingVisitor(inFile,outFile);
-        visitor->TraverseDecl(decl);
-        delete visitor;
+      if(dci.m_DGR.isNull()) {
+//          llvm::outs() << "null\n";
+//          T->printStructureBrief();
+          break;
       }
-
+      if (dci.m_Call == Transaction::kCCIHandleTopLevelDecl) {
+//      dci.dump();
+        for(auto dit = dci.m_DGR.begin(); dit != dci.m_DGR.end(); ++dit) {
+          clang::Decl* decl = *dit;
+//        decl->dump();
+          visitor.Visit(decl);
+          out << ";\n";
+        }
+      }
     }
     return;
   }

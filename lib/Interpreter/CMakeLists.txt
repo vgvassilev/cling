@@ -49,6 +49,7 @@ add_cling_library(clingInterpreter
 
   LINK_LIBS
   clangBasic
+  clangAST
   )
   
 if(NOT WIN32)

@@ -1190,14 +1190,25 @@ namespace cling {
 
   void Interpreter::GenerateAutoloadingMap(llvm::StringRef inFile,
                                            llvm::StringRef outFile) {
-    cling::Transaction* T = 0;
+//    cling::Transaction* T = 0;
 
-    CompilationResult result = this->declare(std::string("#include \"")
-                                             + std::string(inFile) + "\"", &T);
-    if (result != CompilationResult::kSuccess) {
-      llvm::outs() << "Compilation failure\n";
-      return;
-    }
+//    CompilationResult result = this->declare(std::string("#include \"")
+//                                             + std::string(inFile) + "\"", &T);
+
+      CompilationOptions CO;
+      CO.DeclarationExtraction = 0;
+      CO.ValuePrinting = 0;
+      CO.ResultEvaluation = 0;
+      CO.DynamicScoping = 0;
+      CO.Debug = isPrintingDebug();
+
+    cling::Transaction* T = m_IncrParser->Parse
+            (std::string("#include \"") + std::string(inFile) + "\"", CO);
+
+//    if (result != CompilationResult::kSuccess) {
+//      llvm::outs() << "Compilation failure\n";
+//      return;
+//    }
     std::string err;
     llvm::raw_fd_ostream out(outFile.data(), err,
                              llvm::sys::fs::OpenFlags::F_None);
@@ -1222,6 +1233,7 @@ namespace cling {
         }
       }
     }
+    T->setState(Transaction::kCommitted);
     return;
   }
 } // namespace cling

@@ -229,19 +229,18 @@ namespace cling {
   }
 
   void ForwardDeclPrinter::VisitRecordDecl(RecordDecl *D) {
-//      if (!Policy.SuppressSpecifiers && D->isModulePrivate())
-//        Out << "__module_private__ ";
-//      Out << D->getKindName();
-//      if (D->getIdentifier())
-//        Out << ' ' << *D;
+    if (!Policy.SuppressSpecifiers && D->isModulePrivate())
+      Out << "__module_private__ ";
+    Out << D->getKindName();
+    prettyPrintAttributes(D);
+    if (D->getIdentifier())
+      Out << ' ' << *D;
 
-//      if (D->isCompleteDefinition()) {
-//        Out << " {\n";
-//        VisitDeclContext(D);
-//        Indent() << "}";
-//      }
-      //FIXME: Not sure when this is called instead of VisitCXXRecordDecl
-    llvm::errs()<<D->getNameAsString() << ": VisitRecordDecl called\n";
+//    if (D->isCompleteDefinition()) {
+//      Out << " {\n";
+//      VisitDeclContext(D);
+//      Indent() << "}";
+//    }
   }
 
   void ForwardDeclPrinter::VisitEnumConstantDecl(EnumConstantDecl *D) {

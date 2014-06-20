@@ -13,7 +13,7 @@
 #include "DynamicLookup.h"
 #include "IncrementalExecutor.h"
 #include "IncrementalParser.h"
-#include "AutoloadingVisitor.h"
+#include "ForwardDeclPrinter.h"
 
 #include "cling/Interpreter/CIFactory.h"
 #include "cling/Interpreter/ClangInternalState.h"
@@ -1192,14 +1192,17 @@ namespace cling {
                                            llvm::StringRef outFile) {
     cling::Transaction* T = 0;
 
-    CompilationResult result = this->declare(std::string("#include \"") + std::string(inFile) + "\"", &T);
+    CompilationResult result = this->declare(std::string("#include \"")
+                                             + std::string(inFile) + "\"", &T);
     if (result != CompilationResult::kSuccess) {
       llvm::outs() << "Compilation failure\n";
       return;
     }
     std::string err;
-    llvm::raw_fd_ostream out(outFile.data(), err, llvm::sys::fs::OpenFlags::F_None);
-    FwdPrinter visitor(out,this->getSema().getSourceManager());
+    llvm::raw_fd_ostream out(outFile.data(), err,
+                             llvm::sys::fs::OpenFlags::F_None);
+
+    ForwardDeclPrinter visitor(out,this->getSema().getSourceManager());
 
 //    llvm::outs()<<result<<T->empty()<<"\n";
     for(auto dcit = T->decls_begin(); dcit != T->decls_end(); ++dcit) {

@@ -17,7 +17,7 @@
 
 namespace cling {
 
-  class FwdPrinter : public clang::DeclVisitor<FwdPrinter> {
+  class ForwardDeclPrinter : public clang::DeclVisitor<ForwardDeclPrinter> {
     llvm::raw_ostream &Out;
     clang::PrintingPolicy Policy;
     unsigned Indentation;
@@ -33,7 +33,7 @@ namespace cling {
     clang::SourceManager& m_SMgr;
 
   public:
-    FwdPrinter(llvm::raw_ostream &Out, clang::SourceManager& smgr,
+    ForwardDeclPrinter(llvm::raw_ostream &Out, clang::SourceManager& smgr,
         const clang::PrintingPolicy &Policy =clang::PrintingPolicy(clang::LangOptions()),
         unsigned Indentation = 0, bool PrintInstantiation = false)
       : Out(Out), Policy(Policy), Indentation(Indentation),

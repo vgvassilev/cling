@@ -1,4 +1,5 @@
-#include "AutoloadingVisitor.h"
+#include "ForwardDeclPrinter.h"
+
 namespace cling {
   using namespace clang;
   static QualType GetBaseType(QualType T) {
@@ -32,12 +33,12 @@ namespace cling {
     return QualType();
   }
 
-  raw_ostream& FwdPrinter::Indent(unsigned Indentation) {
+  raw_ostream& ForwardDeclPrinter::Indent(unsigned Indentation) {
     for (unsigned i = 0; i != Indentation; ++i)
       Out << "  ";
     return Out;
   }
-  void FwdPrinter::prettyPrintAttributes(Decl *D) {
+  void ForwardDeclPrinter::prettyPrintAttributes(Decl *D) {
 //      if (Policy.PolishForDeclaration)
 //        return;
 
@@ -52,7 +53,7 @@ namespace cling {
         << m_SMgr.getFilename(D->getSourceRange().getBegin()) << "\"))) ";
   }
 
-  void FwdPrinter::ProcessDeclGroup(SmallVectorImpl<Decl*>& Decls) {
+  void ForwardDeclPrinter::ProcessDeclGroup(SmallVectorImpl<Decl*>& Decls) {
     this->Indent();
     Decl::printGroup(Decls.data(), Decls.size(), Out, Policy, Indentation);
     Out << ";\n";
@@ -60,7 +61,7 @@ namespace cling {
 
   }
 
-  void FwdPrinter::Print(AccessSpecifier AS) {
+  void ForwardDeclPrinter::Print(AccessSpecifier AS) {
     switch(AS) {
       case AS_none:      llvm_unreachable("No access specifier!");
       case AS_public:    Out << "public"; break;
@@ -73,7 +74,7 @@ namespace cling {
     // Common C declarations
     //----------------------------------------------------------------------------
 
-  void FwdPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
+  void ForwardDeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
     if (Policy.TerseOutput)
       return;
     if (Indent)
@@ -171,11 +172,11 @@ namespace cling {
         Indentation -= Policy.Indentation;
   }
 
-  void FwdPrinter::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
+  void ForwardDeclPrinter::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
       VisitDeclContext(D, false);
   }
 
-  void FwdPrinter::VisitTypedefDecl(TypedefDecl *D) {
+  void ForwardDeclPrinter::VisitTypedefDecl(TypedefDecl *D) {
     if (!Policy.SuppressSpecifiers) {
       Out << "typedef ";
 
@@ -187,7 +188,7 @@ namespace cling {
 //      Indent() << ";\n";
   }
 
-  void FwdPrinter::VisitTypeAliasDecl(TypeAliasDecl *D) {
+  void ForwardDeclPrinter::VisitTypeAliasDecl(TypeAliasDecl *D) {
       /*FIXME: Ugly Hack*/
 //      if(!D->getLexicalDeclContext()->isNamespace()
 //              && !D->getLexicalDeclContext()->isFileContext())
@@ -198,7 +199,7 @@ namespace cling {
 //      Indent() << ";\n";
   }
 
-  void FwdPrinter::VisitEnumDecl(EnumDecl *D) {
+  void ForwardDeclPrinter::VisitEnumDecl(EnumDecl *D) {
     if (D->getName().size() == 0)
       return;
 
@@ -227,7 +228,7 @@ namespace cling {
     Indent() << ";\n";
   }
 
-  void FwdPrinter::VisitRecordDecl(RecordDecl *D) {
+  void ForwardDeclPrinter::VisitRecordDecl(RecordDecl *D) {
 //      if (!Policy.SuppressSpecifiers && D->isModulePrivate())
 //        Out << "__module_private__ ";
 //      Out << D->getKindName();
@@ -243,7 +244,7 @@ namespace cling {
     llvm::errs()<<D->getNameAsString() << ": VisitRecordDecl called\n";
   }
 
-  void FwdPrinter::VisitEnumConstantDecl(EnumConstantDecl *D) {
+  void ForwardDeclPrinter::VisitEnumConstantDecl(EnumConstantDecl *D) {
     Out << *D;
     if (Expr *Init = D->getInitExpr()) {
       Out << " = ";
@@ -251,7 +252,7 @@ namespace cling {
     }
   }
 
-  void FwdPrinter::VisitFunctionDecl(FunctionDecl *D) {
+  void ForwardDeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     if (D->getNameAsString().size() == 0 || D->getNameAsString()[0] == '_')
       return;
      /*FIXME:Ugly Hack: should idealy never be triggerred */
@@ -301,7 +302,7 @@ namespace cling {
       Proto += "(";
       if (FT) {
         llvm::raw_string_ostream POut(Proto);
-        FwdPrinter ParamPrinter(POut, m_SMgr, SubPolicy, Indentation);
+        ForwardDeclPrinter ParamPrinter(POut, m_SMgr, SubPolicy, Indentation);
         for (unsigned i = 0, e = D->getNumParams(); i != e; ++i) {
           if (i) POut << ", ";
           ParamPrinter.VisitParmVarDecl(D->getParamDecl(i));
@@ -458,7 +459,7 @@ namespace cling {
           // This is a K&R function definition, so we need to print the
           // parameters.
           Out << '\n';
-          FwdPrinter ParamPrinter(Out,m_SMgr, SubPolicy, Indentation);
+          ForwardDeclPrinter ParamPrinter(Out,m_SMgr, SubPolicy, Indentation);
           Indentation += Policy.Indentation;
           for (unsigned i = 0, e = D->getNumParams(); i != e; ++i) {
             Indent();
@@ -477,7 +478,7 @@ namespace cling {
 //      Out <<";\n";
   }
 
-  void FwdPrinter::VisitFriendDecl(FriendDecl *D) {
+  void ForwardDeclPrinter::VisitFriendDecl(FriendDecl *D) {
 //      if (TypeSourceInfo *TSI = D->getFriendType()) {
 //        unsigned NumTPLists = D->getFriendTypeNumTemplateParameterLists();
 //        for (unsigned i = 0; i < NumTPLists; ++i)
@@ -502,7 +503,7 @@ namespace cling {
 //      }
   }
 
-  void FwdPrinter::VisitFieldDecl(FieldDecl *D) {
+  void ForwardDeclPrinter::VisitFieldDecl(FieldDecl *D) {
     if (!Policy.SuppressSpecifiers && D->isMutable())
       Out << "mutable ";
     if (!Policy.SuppressSpecifiers && D->isModulePrivate())
@@ -526,12 +527,12 @@ namespace cling {
     prettyPrintAttributes(D);
   }
 
-  void FwdPrinter::VisitLabelDecl(LabelDecl *D) {
+  void ForwardDeclPrinter::VisitLabelDecl(LabelDecl *D) {
     Out << *D << ":";
   }
 
 
-  void FwdPrinter::VisitVarDecl(VarDecl *D) {
+  void ForwardDeclPrinter::VisitVarDecl(VarDecl *D) {
     //FIXME:Ugly hack
     if(D->getStorageClass() == SC_Static) {
       return;
@@ -594,22 +595,22 @@ namespace cling {
       prettyPrintAttributes(D);
   }
 
-  void FwdPrinter::VisitParmVarDecl(ParmVarDecl *D) {
+  void ForwardDeclPrinter::VisitParmVarDecl(ParmVarDecl *D) {
     VisitVarDecl(D);
   }
 
-  void FwdPrinter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
+  void ForwardDeclPrinter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
     Out << "__asm (";
     D->getAsmString()->printPretty(Out, 0, Policy, Indentation);
     Out << ")";
   }
 
-  void FwdPrinter::VisitImportDecl(ImportDecl *D) {
+  void ForwardDeclPrinter::VisitImportDecl(ImportDecl *D) {
     Out << "@import " << D->getImportedModule()->getFullModuleName()
         << ";\n";
   }
 
-  void FwdPrinter::VisitStaticAssertDecl(StaticAssertDecl *D) {
+  void ForwardDeclPrinter::VisitStaticAssertDecl(StaticAssertDecl *D) {
     Out << "static_assert(";
     D->getAssertExpr()->printPretty(Out, 0, Policy, Indentation);
     Out << ", ";
@@ -620,7 +621,7 @@ namespace cling {
     //----------------------------------------------------------------------------
     // C++ declarations
     //----------------------------------------------------------------------------
-  void FwdPrinter::VisitNamespaceDecl(NamespaceDecl *D) {
+  void ForwardDeclPrinter::VisitNamespaceDecl(NamespaceDecl *D) {
     if (D->isInline())
       Out << "inline ";
     Out << "namespace " << *D << " {\n";
@@ -633,25 +634,25 @@ namespace cling {
     Indent() << "}\n";
   }
 
-  void FwdPrinter::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
+  void ForwardDeclPrinter::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
     Out << "using namespace ";
     if (D->getQualifier())
       D->getQualifier()->print(Out, Policy);
     Out << *D->getNominatedNamespaceAsWritten();
   }
 
-  void FwdPrinter::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
+  void ForwardDeclPrinter::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
     Out << "namespace " << *D << " = ";
     if (D->getQualifier())
       D->getQualifier()->print(Out, Policy);
     Out << *D->getAliasedNamespace();
   }
 
-  void FwdPrinter::VisitEmptyDecl(EmptyDecl *D) {
+  void ForwardDeclPrinter::VisitEmptyDecl(EmptyDecl *D) {
     prettyPrintAttributes(D);
   }
 
-  void FwdPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
+  void ForwardDeclPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
     if(ClassDeclNames.find(D->getNameAsString()) != ClassDeclNames.end()
           /*|| D->getName().startswith("_")*/)
@@ -700,7 +701,7 @@ namespace cling {
     ClassDeclNames.insert(D->getNameAsString());
   }
 
-  void FwdPrinter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
+  void ForwardDeclPrinter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
     const char *l;
     if (D->getLanguage() == LinkageSpecDecl::lang_c)
       l = "C";
@@ -719,7 +720,7 @@ namespace cling {
       Visit(*D->decls_begin());
   }
 
-  void FwdPrinter::PrintTemplateParameters(const TemplateParameterList *Params,
+  void ForwardDeclPrinter::PrintTemplateParameters(const TemplateParameterList *Params,
                                               const TemplateArgumentList *Args) {
     assert(Params);
     assert(!Args || Params->size() == Args->size());
@@ -779,7 +780,7 @@ namespace cling {
     Out << "> ";
   }
 
-  void FwdPrinter::VisitTemplateDecl(const TemplateDecl *D) {
+  void ForwardDeclPrinter::VisitTemplateDecl(const TemplateDecl *D) {
     PrintTemplateParameters(D->getTemplateParameters());
 
     if (const TemplateTemplateParmDecl *TTP =
@@ -793,7 +794,7 @@ namespace cling {
     }
   }
 
-  void FwdPrinter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
+  void ForwardDeclPrinter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
     if(D->getNameAsString().size() == 0 || D->getNameAsString()[0] == '_')
       return;
     /*FIXME:Ugly Hack: should idealy never be triggerred */
@@ -802,8 +803,8 @@ namespace cling {
 
     if (PrintInstantiation) {
       TemplateParameterList *Params = D->getTemplateParameters();
-      for (FunctionTemplateDecl::spec_iterator I = D->spec_begin(), E = D->spec_end();
-           I != E; ++I) {
+      for (FunctionTemplateDecl::spec_iterator I = D->spec_begin(),
+           E = D->spec_end(); I != E; ++I) {
         PrintTemplateParameters(Params, (*I)->getTemplateSpecializationArgs());
         Visit(*I);
       }
@@ -812,14 +813,14 @@ namespace cling {
     return VisitRedeclarableTemplateDecl(D);
   }
 
-  void FwdPrinter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
+  void ForwardDeclPrinter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
     if(ClassDeclNames.find(D->getNameAsString()) != ClassDeclNames.end()
       /*|| D->getName().startswith("_")*/)
      return;
     if (PrintInstantiation) {
       TemplateParameterList *Params = D->getTemplateParameters();
-      for (ClassTemplateDecl::spec_iterator I = D->spec_begin(), E = D->spec_end();
-           I != E; ++I) {
+      for (ClassTemplateDecl::spec_iterator I = D->spec_begin(),
+           E = D->spec_end(); I != E; ++I) {
         PrintTemplateParameters(Params, &(*I)->getTemplateArgs());
         Visit(*I);
         Out << '\n';
@@ -828,7 +829,8 @@ namespace cling {
 
     return VisitRedeclarableTemplateDecl(D);
   }
-  void FwdPrinter::VisitClassTemplateSpecializationDecl(clang::ClassTemplateSpecializationDecl* D) {
+  void ForwardDeclPrinter::VisitClassTemplateSpecializationDecl
+        (clang::ClassTemplateSpecializationDecl* D) {
 
       //D->dump();
 

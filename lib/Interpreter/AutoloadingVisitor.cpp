@@ -330,7 +330,7 @@ namespace cling {
           if (FT->isVolatile())
             Proto += " volatile";
           if (FT->isRestrict())
-            Proto += " restrict"; //it seems clang does not support restrict properly
+            Proto += " __restrict";
 
           switch (FT->getRefQualifier()) {
           case RQ_None:

@@ -1200,15 +1200,16 @@ namespace cling {
     std::string err;
     llvm::raw_fd_ostream out(outFile.data(),err,llvm::sys::fs::OpenFlags::F_None);
     FwdPrinter visitor(out,this->getSema().getSourceManager());
+
 //    llvm::outs()<<result<<T->empty()<<"\n";
-    for(auto dcit=T->decls_begin(); dcit!=T->decls_end(); ++dcit) {
+    for(auto dcit = T->decls_begin(); dcit != T->decls_end(); ++dcit) {
       Transaction::DelayCallInfo& dci = *dcit;
       if(dci.m_DGR.isNull()) {
-          llvm::outs() << "null\n";
+//          llvm::outs() << "null\n";
 //          T->printStructureBrief();
           break;
       }
-      if (dci.m_Call==Transaction::kCCIHandleTopLevelDecl) {
+      if (dci.m_Call == Transaction::kCCIHandleTopLevelDecl) {
 //      dci.dump();
         for(auto dit = dci.m_DGR.begin(); dit != dci.m_DGR.end(); ++dit) {
           clang::Decl* decl = *dit;

@@ -240,7 +240,7 @@ namespace cling {
 //        Indent() << "}";
 //      }
       //FIXME: Not sure when this is called instead of VisitCXXRecordDecl
-    llvm::errs()<<D->getNameAsString()<<": VisitRecordDecl called\n";
+    llvm::errs()<<D->getNameAsString() << ": VisitRecordDecl called\n";
   }
 
   void FwdPrinter::VisitEnumConstantDecl(EnumConstantDecl *D) {

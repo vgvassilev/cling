@@ -1,4 +1,4 @@
-//TODO: Adapted from
+//TODO: Adapted from DeclPrinter, may need to be rewritten
 #ifndef CLING_AUTOLOADING_VISITOR_H
 #define CLING_AUTOLOADING_VISITOR_H
 #include "clang/AST/ASTContext.h"

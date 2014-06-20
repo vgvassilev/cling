@@ -199,7 +199,7 @@ namespace cling {
   }
 
   void FwdPrinter::VisitEnumDecl(EnumDecl *D) {
-    if (D->getName().size()==0)
+    if (D->getName().size() == 0)
       return;
 
     if (!Policy.SuppressSpecifiers && D->isModulePrivate())
@@ -252,7 +252,7 @@ namespace cling {
   }
 
   void FwdPrinter::VisitFunctionDecl(FunctionDecl *D) {
-    if(D->getNameAsString().size()==0 || D->getNameAsString()[0]=='_')
+    if (D->getNameAsString().size() == 0 || D->getNameAsString()[0] == '_')
       return;
      /*FIXME:Ugly Hack: should idealy never be triggerred */
     if (D->isCXXClassMember()) {
@@ -533,10 +533,10 @@ namespace cling {
 
   void FwdPrinter::VisitVarDecl(VarDecl *D) {
     //FIXME:Ugly hack
-    if(D->getStorageClass()==SC_Static) {
+    if(D->getStorageClass() == SC_Static) {
       return;
     }
-    if(D->isDefinedOutsideFunctionOrMethod() && !(D->getStorageClass()==SC_Extern))
+    if(D->isDefinedOutsideFunctionOrMethod() && !(D->getStorageClass() == SC_Extern))
       Out << "extern ";
 
 
@@ -653,11 +653,11 @@ namespace cling {
 
   void FwdPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
-    if(ClassDeclNames.find(D->getNameAsString())!=ClassDeclNames.end()
+    if(ClassDeclNames.find(D->getNameAsString()) != ClassDeclNames.end()
           /*|| D->getName().startswith("_")*/)
       return;
 
-    if (D->getNameAsString().size()==0)
+    if (D->getNameAsString().size() == 0)
       return;
 
     if (!Policy.SuppressSpecifiers && D->isModulePrivate())
@@ -794,11 +794,12 @@ namespace cling {
   }
 
   void FwdPrinter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
-    if(D->getNameAsString().size()==0 || D->getNameAsString()[0]=='_')
+    if(D->getNameAsString().size() == 0 || D->getNameAsString()[0] == '_')
       return;
     /*FIXME:Ugly Hack: should idealy never be triggerred */
     if (D->isCXXClassMember())
       return;
+
     if (PrintInstantiation) {
       TemplateParameterList *Params = D->getTemplateParameters();
       for (FunctionTemplateDecl::spec_iterator I = D->spec_begin(), E = D->spec_end();
@@ -812,7 +813,7 @@ namespace cling {
   }
 
   void FwdPrinter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
-    if(ClassDeclNames.find(D->getNameAsString())!=ClassDeclNames.end()
+    if(ClassDeclNames.find(D->getNameAsString()) != ClassDeclNames.end()
       /*|| D->getName().startswith("_")*/)
      return;
     if (PrintInstantiation) {

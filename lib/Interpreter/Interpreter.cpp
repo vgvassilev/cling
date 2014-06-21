@@ -1194,13 +1194,15 @@ namespace cling {
 
 //    CompilationResult result = this->declare(std::string("#include \"")
 //                                             + std::string(inFile) + "\"", &T);
+    llvm::SmallVector<std::string,30> incpaths;
+    GetIncludePaths(incpaths,true,false);
 
-      CompilationOptions CO;
-      CO.DeclarationExtraction = 0;
-      CO.ValuePrinting = 0;
-      CO.ResultEvaluation = 0;
-      CO.DynamicScoping = 0;
-      CO.Debug = isPrintingDebug();
+    CompilationOptions CO;
+    CO.DeclarationExtraction = 0;
+    CO.ValuePrinting = 0;
+    CO.ResultEvaluation = 0;
+    CO.DynamicScoping = 0;
+    CO.Debug = isPrintingDebug();
 
     cling::Transaction* T = m_IncrParser->Parse
             (std::string("#include \"") + std::string(inFile) + "\"", CO);
@@ -1213,21 +1215,34 @@ namespace cling {
     llvm::raw_fd_ostream out(outFile.data(), err,
                              llvm::sys::fs::OpenFlags::F_None);
 
-    ForwardDeclPrinter visitor(out,this->getSema().getSourceManager());
+    ForwardDeclPrinter visitor(out,getSema().getSourceManager());
 
-//    llvm::outs()<<result<<T->empty()<<"\n";
     for(auto dcit = T->decls_begin(); dcit != T->decls_end(); ++dcit) {
       Transaction::DelayCallInfo& dci = *dcit;
       if(dci.m_DGR.isNull()) {
-//          llvm::outs() << "null\n";
-//          T->printStructureBrief();
           break;
       }
       if (dci.m_Call == Transaction::kCCIHandleTopLevelDecl) {
-//      dci.dump();
         for(auto dit = dci.m_DGR.begin(); dit != dci.m_DGR.end(); ++dit) {
           clang::Decl* decl = *dit;
-//        decl->dump();
+
+          //skip logic start
+          bool skip = false;
+          auto filename = getSema().getSourceManager().getFilename
+                  (decl->getSourceRange().getBegin());
+          auto path = llvm::sys::path::parent_path(filename);
+          for (auto p : incpaths) {
+            if (llvm::sys::fs::equivalent(p,path)
+                    || llvm::sys::fs::equivalent
+                    (p,llvm::sys::path::parent_path(path))) {
+              skip = true;
+              break;
+            }
+          }
+          if (skip)
+            continue;
+          //skip logic end
+
           visitor.Visit(decl);
           out << ";\n";
         }
@@ -1236,4 +1251,4 @@ namespace cling {
     T->setState(Transaction::kCommitted);
     return;
   }
-} // namespace cling
+} //end namespace cling

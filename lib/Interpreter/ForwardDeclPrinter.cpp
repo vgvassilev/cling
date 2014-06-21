@@ -254,6 +254,8 @@ namespace cling {
   void ForwardDeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     if (D->getNameAsString().size() == 0 || D->getNameAsString()[0] == '_')
       return;
+    if (D->getStorageClass() == SC_Static)
+      return;
      /*FIXME:Ugly Hack: should idealy never be triggerred */
     if (D->isCXXClassMember()) {
       return;
@@ -539,7 +541,6 @@ namespace cling {
     if(D->isDefinedOutsideFunctionOrMethod() && !(D->getStorageClass() == SC_Extern))
       Out << "extern ";
 
-
     if (!Policy.SuppressSpecifiers) {
       StorageClass SC = D->getStorageClass();
       if (SC != SC_None)
@@ -566,7 +567,14 @@ namespace cling {
     QualType T = D->getTypeSourceInfo()
       ? D->getTypeSourceInfo()->getType()
       : D->getASTContext().getUnqualifiedObjCPointerType(D->getType());
+
+    //FIXME: It prints restrict as restrict
+    //which is not valid C++
+    //Should be __restrict
+    //So, we ignore restrict here
+    T.removeLocalRestrict();
     T.print(Out, Policy, D->getName());
+    T.addRestrict();
 
     Expr *Init = D->getInit();
     if (!Policy.SuppressInitializers && Init) {
@@ -648,7 +656,7 @@ namespace cling {
   }
 
   void ForwardDeclPrinter::VisitEmptyDecl(EmptyDecl *D) {
-    prettyPrintAttributes(D);
+//    prettyPrintAttributes(D);
   }
 
   void ForwardDeclPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
@@ -796,6 +804,8 @@ namespace cling {
   void ForwardDeclPrinter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
     if(D->getNameAsString().size() == 0 || D->getNameAsString()[0] == '_')
       return;
+//    if (D->getStorageClass() == SC_Static)
+//      return;
     /*FIXME:Ugly Hack: should idealy never be triggerred */
     if (D->isCXXClassMember())
       return;
@@ -814,7 +824,7 @@ namespace cling {
 
   void ForwardDeclPrinter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
     if(ClassDeclNames.find(D->getNameAsString()) != ClassDeclNames.end()
-      /*|| D->getName().startswith("_")*/)
+      || D->getName().size() == 0 )
      return;
     if (PrintInstantiation) {
       TemplateParameterList *Params = D->getTemplateParameters();

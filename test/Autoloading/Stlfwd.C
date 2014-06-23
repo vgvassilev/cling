@@ -8,9 +8,8 @@
 
 // RUN: cat %s | %cling -I %S -Xclang -verify
 // Test stlFwd
-<<<<<<< HEAD
-//XFAIL: *
-// Only for reference purposes, doesn't actually use FwdPrinter
+
+// Only for reference purposes, doesn't actually use ForwardDeclPrinter
 namespace std {
     
   template <typename T,typename A> class __attribute__((annotate("vector"))) vector;

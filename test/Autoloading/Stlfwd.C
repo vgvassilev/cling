@@ -8,8 +8,8 @@
 
 // RUN: cat %s | %cling -I %S -Xclang -verify
 // Test stlFwd
-//XFAIL: *
-//fail because the way the autoloading transformation is loaded now, causes assertion failure for this
+
+// Only for reference purposes, doesn't actually use ForwardDeclPrinter
 namespace std {
     
   template <typename T,typename A> class __attribute__((annotate("vector"))) vector;
@@ -33,3 +33,7 @@ namespace std {
 #include<map>
 #include<algorithm>
 #include<string>
+
+//expected-no-diagnostics
+.q
+

@@ -29,7 +29,7 @@ namespace cling {
 
     void Print(clang::AccessSpecifier AS);
 
-    std::set<std::string> ClassDeclNames;
+    std::set<std::string> m_ClassDeclNames;
     clang::SourceManager& m_SMgr;
 
   public:

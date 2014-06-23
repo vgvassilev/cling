@@ -39,6 +39,7 @@ namespace cling {
     return Out;
   }
   void ForwardDeclPrinter::prettyPrintAttributes(Decl *D) {
+//FIXME: This ignores attributes which are already present
 //      if (Policy.PolishForDeclaration)
 //        return;
 
@@ -189,10 +190,6 @@ namespace cling {
   }
 
   void ForwardDeclPrinter::VisitTypeAliasDecl(TypeAliasDecl *D) {
-      /*FIXME: Ugly Hack*/
-//      if(!D->getLexicalDeclContext()->isNamespace()
-//              && !D->getLexicalDeclContext()->isFileContext())
-//          return;
     Out << "using " << *D;
     prettyPrintAttributes(D);
     Out << " = " << D->getTypeSourceInfo()->getType().getAsString(Policy);
@@ -256,16 +253,13 @@ namespace cling {
       return;
     if (D->getStorageClass() == SC_Static)
       return;
-     /*FIXME:Ugly Hack: should idealy never be triggerred */
+     /*FIXME:Should idealy never be triggerred */
     if (D->isCXXClassMember()) {
       return;
     }
 
     CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(D);
       CXXConversionDecl *ConversionDecl = dyn_cast<CXXConversionDecl>(D);
-      /*FIXME:Ugly Hack*/
-//      if (CDecl||ConversionDecl)
-//          return;
 
     if (!Policy.SuppressSpecifiers) {
       switch (D->getStorageClass()) {
@@ -474,9 +468,6 @@ namespace cling {
     //    D->getBody()->printPretty(Out, 0, SubPolicy, Indentation);
 
     }
-//      Out << " __attribute__((annotate(\""
-//          << m_SMgr.getFilename(D->getSourceRange().getBegin())<< "\"))) ";
-//      Out <<";\n";
   }
 
   void ForwardDeclPrinter::VisitFriendDecl(FriendDecl *D) {
@@ -534,7 +525,7 @@ namespace cling {
 
 
   void ForwardDeclPrinter::VisitVarDecl(VarDecl *D) {
-    //FIXME:Ugly hack
+    //We do not want to print static vars
     if(D->getStorageClass() == SC_Static) {
       return;
     }
@@ -661,7 +652,7 @@ namespace cling {
 
   void ForwardDeclPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
-    if(ClassDeclNames.find(D->getNameAsString()) != ClassDeclNames.end()
+    if(m_ClassDeclNames.find(D->getNameAsString()) != m_ClassDeclNames.end()
           /*|| D->getName().startswith("_")*/)
       return;
 
@@ -705,7 +696,7 @@ namespace cling {
     //    Indent() << "}";
     //  }
 //      Out << ";\n";
-    ClassDeclNames.insert(D->getNameAsString());
+    m_ClassDeclNames.insert(D->getNameAsString());
   }
 
   void ForwardDeclPrinter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
@@ -804,9 +795,7 @@ namespace cling {
   void ForwardDeclPrinter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
     if(D->getNameAsString().size() == 0 || D->getNameAsString()[0] == '_')
       return;
-//    if (D->getStorageClass() == SC_Static)
-//      return;
-    /*FIXME:Ugly Hack: should idealy never be triggerred */
+    /*FIXME:Should idealy never be triggerred */
     if (D->isCXXClassMember())
       return;
 
@@ -823,7 +812,7 @@ namespace cling {
   }
 
   void ForwardDeclPrinter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
-    if(ClassDeclNames.find(D->getNameAsString()) != ClassDeclNames.end()
+    if(m_ClassDeclNames.find(D->getNameAsString()) != m_ClassDeclNames.end()
       || D->getName().size() == 0 )
      return;
     if (PrintInstantiation) {
@@ -840,8 +829,8 @@ namespace cling {
   }
   void ForwardDeclPrinter::VisitClassTemplateSpecializationDecl
         (clang::ClassTemplateSpecializationDecl* D) {
-
-      //D->dump();
+    //FIXME: We do not generate decls for specializations yet
+    //D->dump();
 
   }
 }//end namespace cling

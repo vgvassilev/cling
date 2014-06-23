@@ -1190,10 +1190,6 @@ namespace cling {
 
   void Interpreter::GenerateAutoloadingMap(llvm::StringRef inFile,
                                            llvm::StringRef outFile) {
-//    cling::Transaction* T = 0;
-
-//    CompilationResult result = this->declare(std::string("#include \"")
-//                                             + std::string(inFile) + "\"", &T);
     llvm::SmallVector<std::string,30> incpaths;
     GetIncludePaths(incpaths,true,false);
 
@@ -1207,10 +1203,6 @@ namespace cling {
     cling::Transaction* T = m_IncrParser->Parse
             (std::string("#include \"") + std::string(inFile) + "\"", CO);
 
-//    if (result != CompilationResult::kSuccess) {
-//      llvm::outs() << "Compilation failure\n";
-//      return;
-//    }
     std::string err;
     llvm::raw_fd_ostream out(outFile.data(), err,
                              llvm::sys::fs::OpenFlags::F_None);

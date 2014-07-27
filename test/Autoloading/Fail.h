@@ -18,21 +18,3 @@ namespace test { //nested name specifier
   
 }//end namespace test
 
-namespace test { //restrict keyword: try include/mmprivate.h and strlcpy.h when fixed
-  typedef long ssize_t;
-  typedef unsigned int size_t;
-  //Has signature of readlink from unistd.h
-  extern ssize_t FunctionUsingRestrictPtr (const char *__restrict __path,
-             char *__restrict __buf, size_t __len);
-}//end namespace test
-
-namespace test { //default template arg
-  template <typename T,int MAX=100> class Stack {
-  };
-  Stack<int> FunctionReturningStack(){return Stack<int>();}
-}//end namespace test
-
-namespace test {
-//#include<tuple> //'tie' function
-//commented out to skip huge output
-}

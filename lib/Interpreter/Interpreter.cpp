@@ -1207,7 +1207,6 @@ namespace cling {
     // If this was already #included we will get a T == 0.
     if (!T)
       return;
-
     std::string err;
     llvm::raw_fd_ostream out(outFile.data(), err,
                              llvm::sys::fs::OpenFlags::F_None);

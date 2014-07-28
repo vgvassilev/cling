@@ -23,10 +23,13 @@ namespace cling {
          I != E; ++I) {
       Transaction::DelayCallInfo DCI = *I;
       std::vector<clang::Decl*> decls;
+      if (!(*J)->hasAttr<AnnotateAttr>())
+        continue;
+
       for (DeclGroupRef::iterator J = DCI.m_DGR.begin(),
              JE = DCI.m_DGR.end(); J != JE; ++J) {
-        if (EnumDecl* ED = dyn_cast<EnumDecl>(*J))
-          if (ED->hasAttr<AnnotateAttr>() && ED->isFixed()) {
+        if (EnumDecl* ED = dyn_cast<EnumDecl>(*J)) {
+          if (ED->isFixed()) {
             struct EnumDeclDerived: public EnumDecl {
               static void setFixed(EnumDecl* ED, bool value = true) {
                 ((EnumDeclDerived*)ED)->IsFixed = value;
@@ -34,6 +37,7 @@ namespace cling {
             };
             EnumDeclDerived::setFixed(ED, false);
           }
+        }
 //FIXME: Enable when safe !
 //        if ( (*J)->hasAttr<AnnotateAttr>() /*FIXME: && CorrectCallbackLoaded() how ? */  )
 //          clang::Decl::castToDeclContext(*J)->setHasExternalLexicalStorage();

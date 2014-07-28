@@ -396,8 +396,27 @@ namespace clang {
     ///                MacroDirective to forward.
     ///\returns true on success.
     ///
-    bool UnloadMacro(Transaction::MacroDirectiveInfo MD) { 
+    bool UnloadMacro(Transaction::MacroDirectiveInfo MD) {
       return VisitMacro(MD);
+    }
+
+    // Copied and adapted from: ASTReaderDecl.cpp
+    template<typename DeclT>
+    void setLatestDeclImpl(DeclT* Latest) {
+      //RedeclLink is a protected member.
+      struct RedeclDerived : public Redeclarable<DeclT> {
+        static void setLatest(DeclT* Latest) {
+          Redeclarable<DeclT>* D = Latest->getFirstDecl();
+          ((RedeclDerived*)D)->RedeclLink.setLatest(Latest);
+        }
+      };
+      // Lets allow for now just removal of the last decl in the chain
+      assert(Latest->getMostRecentDecl()->getPreviousDecl() == Latest
+             && "Removing not the one to the last.");
+      RedeclDerived::setLatest(Latest);
+    }
+    void setLatestDeclImpl(...) {
+      llvm_unreachable("attachPreviousDecl on non-redeclarable declaration");
     }
 
     ///\brief Removes given declaration from the chain of redeclarations.
@@ -424,6 +443,7 @@ namespace clang {
         StoredDeclsMap* Map = DC->getPrimaryContext()->getLookupPtr();
         if (Map) {
           NamedDecl* ND = (NamedDecl*)((T*)R);
+          assert(ND == R->getMostRecentDecl() && "Not the most recent decl");
           DeclarationName Name = ND->getDeclName();
           if (!Name.isEmpty()) {
             StoredDeclsMap::iterator Pos = Map->find(Name);
@@ -436,7 +456,7 @@ namespace clang {
                 // in the lookup table. My assumption is that the DeclUnloader
                 // adds it here. This needs to be investigated mode. For now
                 // std::find gets promoted from assert to condition :)
-                if (*I == ND && std::find(decls.begin(), decls.end(), 
+                if (*I == ND && std::find(decls.begin(), decls.end(),
                                           PrevDecls[0]) == decls.end()) {
                   // The decl was registered in the lookup, update it.
                   *I = PrevDecls[0];
@@ -446,15 +466,8 @@ namespace clang {
             }
           }
         }
-        // Put 0 in the end of the array so that the loop will reset the
-        // pointer to latest redeclaration in the chain to itself.
-        //
-        PrevDecls.push_back(0);
-
-        // 0 <- A <- B <- C
-        for(unsigned i = PrevDecls.size() - 1; i > 0; --i) {
-          PrevDecls[i-1]->setPreviousDecl(PrevDecls[i]);
-        }
+        // Set a new latest redecl.
+        setLatestDeclImpl(R->getPreviousDecl());
       }
       return true;
     }

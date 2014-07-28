@@ -11,13 +11,11 @@
 
 #include "cling/Interpreter/Interpreter.h"
 gCling->GenerateAutoloadingMap("Def2.h","fwd_def2.h");
-.undo 1
 gCling->EnableAutoloading();
 #include "fwd_def2.h"
 #include "Def2.h"
 
 gCling->GenerateAutoloadingMap("Enum.h","fwd_enums.h");
-.undo 1
 #include "fwd_enums.h"
 #include "Enum.h"
 

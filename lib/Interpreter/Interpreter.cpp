@@ -218,6 +218,7 @@ namespace cling {
            I = IncrParserTransactions.begin(), E = IncrParserTransactions.end();
          I != E; ++I)
       m_IncrParser->commitTransaction(*I);
+//    EnableAutoloading();
   }
 
   Interpreter::~Interpreter() {
@@ -1235,7 +1236,8 @@ namespace cling {
     return;
   }
   void Interpreter::EnableAutoloading() {
-    setCallbacks(new AutoloadCallback(this));
+    if (!getCallbacks())
+      setCallbacks(new AutoloadCallback(this));
   }
 
 } //end namespace cling

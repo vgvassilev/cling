@@ -591,7 +591,7 @@ namespace cling {
     llvm::OwningPtr<clang::driver::Compilation>
       Compilation(Driver.BuildCompilation(RF));
     const clang::driver::ArgStringList* CC1Args
-      = GetCC1Arguments(Diags.getPtr(), Compilation.get());
+      = GetCC1Arguments(Diags.get(), Compilation.get());
     if (CC1Args == NULL) {
       return 0;
     }
@@ -633,7 +633,7 @@ namespace cling {
     // Create and setup a compiler instance.
     llvm::OwningPtr<CompilerInstance> CI(new CompilerInstance());
     CI->setInvocation(Invocation);
-    CI->setDiagnostics(Diags.getPtr());
+    CI->setDiagnostics(Diags.get());
     {
       //
       //  Buffer the error messages while we process
@@ -654,11 +654,11 @@ namespace cling {
         return 0;
     }
     CI->setTarget(TargetInfo::CreateTargetInfo(CI->getDiagnostics(),
-                                               &Invocation->getTargetOpts()));
+                                               Invocation->TargetOpts));
     if (!CI->hasTarget()) {
       return 0;
     }
-    CI->getTarget().setForcedLangOptions(CI->getLangOpts());
+    CI->getTarget().adjust(CI->getLangOpts());
     SetClingTargetLangOpts(CI->getLangOpts(), CI->getTarget());
     if (CI->getTarget().getTriple().getOS() == llvm::Triple::Cygwin) {
       // clang "forgets" the basic arch part needed by winnt.h:
@@ -769,7 +769,7 @@ namespace cling {
                                          const TargetInfo& Target) {
     if (Target.getTriple().getOS() == llvm::Triple::Win32) {
       Opts.MicrosoftExt = 1;
-      Opts.MSCVersion = 1300;
+      Opts.MSCompatibilityVersion = 1300;
       // Should fix http://llvm.org/bugs/show_bug.cgi?id=10528
       Opts.DelayedTemplateParsing = 1;
     } else {

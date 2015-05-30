@@ -15,10 +15,14 @@ cache:
 
 addons:
   apt:
+    sources:
+      - ubuntu-toolchain-r-test
+      - llvm-toolchain-precise-3.6
     packages:
+      - binutils-gold
       - g++-4.9
       - gcc-4.9
-      - clang-3.4
+      - clang-3.6
 
 before_install:
 - echo $LANG

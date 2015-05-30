@@ -32,7 +32,7 @@ before_install:
 - if [ "$CXX" == "g++" ]; then
     export CXX=/usr/bin/g++-4.8;
     export CC=/usr/bin/gcc-4.8;
-    ls /usr/bin/g++-4.8
+    ls /usr/bin/g++-4.8;
   elif [ "$CXX" == "clang++" ]; then
     export CXX=/usr/bin/clang++-3.6;
     export CC=/usr/bin/clang-3.6;

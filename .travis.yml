@@ -16,9 +16,9 @@ cache:
 addons:
   apt:
     packages:
-      -g++-4.8
-      -gcc-4.8
-      -clang-3.4
+      - g++-4.8
+      - gcc-4.8
+      - clang-3.4
 
 before_install:
 - echo $LANG
@@ -48,7 +48,6 @@ script:
 branches:
   only:
   - master
-  - FixMacOS
 
 notifications:
   recipients:

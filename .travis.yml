@@ -28,6 +28,13 @@ before_install:
 - echo $LANG
 - echo $LC_ALL
 - clang --version || gcc --version
+- if [ "$CXX" == "g++" ]; then
+    export CXX=/usr/bin/g++4.9;
+    export CC=/usr/bin/gcc-4.9;
+  elif [ "$CXX" == "clang++" ]; then
+    export CXX=/usr/bin/clang++-3.5;
+    export CC=/usr/bin/clang-3.5;
+  fi
 
 before_script:
 - mkdir src inst obj

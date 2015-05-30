@@ -55,6 +55,7 @@ script:
 branches:
   only:
   - master
+  - FixMacOS
 
 notifications:
   recipients:

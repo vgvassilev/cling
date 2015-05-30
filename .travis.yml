@@ -1,57 +1,59 @@
 language: cpp
 
 compiler:
-  - gcc
-  - clang
+- gcc
+- clang
+
 os:
-  - linux
-  - osx
+- linux
+- osx
 
 before_install:
-  - echo $LANG
-  - echo $LC_ALL
-  - clang --version || gcc --version
-  - sudo apt-get install python-software-properties
-#  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-#  - sudo apt-get update
-#  - sudo apt-get install gcc-4.8
-#  - sudo apt-get install g++-4.8
-  - sudo apt-get install binutils-gold
-#  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
-#  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 50
+- echo $LANG
+- echo $LC_ALL
+- echo clang --version || gcc --version
+- sudo apt-get install python-software-properties
+- sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+- sudo apt-get update
+- sudo apt-get install binutils-gold
 
 before_script:
-  - mkdir src inst obj
-  - git clone https://github.com/vgvassilev/llvm.git src
-  - (cd src && git checkout cling-patches)
-  - git clone https://github.com/vgvassilev/clang.git src/tools/clang
-  - (cd src/tools/clang && git checkout cling-patches)
-  - git clone https://github.com/vgvassilev/cling.git src/tools/cling
-  - cd src
-  - cd ../obj
-  - travis_retry ../src/configure --prefix=`pwd`/../inst --disable-docs --disable-bindings --disable-visibility-inlines-hidden --disable-clang-rewriter --disable-clang-static-analyzer --disable-clang-arcmt --disable-compiler-version-checks --enable-targets=host
+- mkdir src inst obj
+- git clone https://github.com/vgvassilev/llvm.git src
+- (cd src && git checkout cling-patches)
+- git clone https://github.com/vgvassilev/clang.git src/tools/clang
+- (cd src/tools/clang && git checkout cling-patches)
+- git clone https://github.com/vgvassilev/cling.git src/tools/cling
+- cd src
+- cd ../obj
+- travis_retry ../src/configure --prefix=`pwd`/../inst --disable-docs --disable-bindings
+  --disable-visibility-inlines-hidden --disable-clang-rewriter --disable-clang-static-analyzer
+  --disable-clang-arcmt --disable-compiler-version-checks --enable-targets=host
 
 script:
-  - travis_retry make -j4 -k
-  - travis_retry make -j4 -k
-  - travis_retry make install
-  - cd tools/cling
-  - make test LIT_ARGS=--no-progress-bar
+- travis_retry make -j4 -k
+- travis_retry make -j4 -k
+- travis_retry make install
+- cd tools/cling
+- make test LIT_ARGS=--no-progress-bar
 
 branches:
   only:
-    - master
+  - master
 
 notifications:
   recipients:
-    - v.g.vassilev@gmail.com
-    #- cling-dev@cern.ch
-
+  - v.g.vassilev@gmail.com
   email:
     on_success: change
     on_failure: always
-  #irc:
-  #channels:
-    #- "chat.freenode.net#rubinius"
   template:
-    - "%{repository}/%{branch} (%{commit} - %{author}): %{message}"
+  - '%{repository}/%{branch} (%{commit} - %{author}): %{message}'
+
+deploy:
+  provider: releases
+  api_key:
+    secure: avhabhfxtmQ/WM3yJw8MbmfzIurOqf7Y+Wx+Xa6jwrHqrVn6UpvZiZ7An+3ieTv6ohDw6EjtbcvZizrnqDtnLlDqsFmlynC92raE5YU9DceK1cfNEflohQ0d+EVRRFQ6Y52YwPQbJ78kj26DAdHVSl+9n95VNGI3lEsIaYcNZWo=
+  file: ''
+  on:
+    tags: true

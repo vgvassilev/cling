@@ -8,6 +8,11 @@ os:
 - linux
 - osx
 
+sudo: false
+
+cache:
+  apt: true
+
 addons:
   apt:
     packages:

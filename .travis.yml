@@ -1,4 +1,5 @@
-language: cpp
+# Force getting OSX
+language: objective-c
 
 compiler:
 - gcc

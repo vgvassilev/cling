@@ -15,16 +15,18 @@ before_install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
     sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y &&
     sudo apt-get update
-
+  fi
 
 install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
     sudo apt-get install python-software-properties binutils-gold gcc-4.8 g++-4.8
+  fi
 
 after_install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50 &&
     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 50
+  fi
 
 before_script:
 - mkdir src inst obj

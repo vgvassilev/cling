@@ -13,8 +13,8 @@ before_install:
 - echo $LC_ALL
 - clang --version || gcc --version
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-    sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y; # GCC
-    sudo add-apt-repository -y ppa:h-rayflood/llvm; # Clang
+    sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y;
+    sudo add-apt-repository -y ppa:h-rayflood/llvm;
     sudo apt-get update;
   fi
 

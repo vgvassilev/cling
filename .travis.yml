@@ -39,7 +39,7 @@ branches:
 
 notifications:
   recipients:
-    - vvasilev@cern.ch
+    - v.g.vassilev@gmail.com
     #- cling-dev@cern.ch
 
   email:

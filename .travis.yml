@@ -1,5 +1,4 @@
-# Force getting OSX
-language: objective-c
+language: cpp
 
 compiler:
 - gcc
@@ -20,8 +19,12 @@ before_install:
 
 install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-    sudo apt-get install python-software-properties &&
-    sudo apt-get install binutils-gold
+    sudo apt-get install python-software-properties binutils-gold gcc-4.8 g++-4.8
+
+after_install:
+- if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+    sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50 &&
+    sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 50
 
 before_script:
 - mkdir src inst obj

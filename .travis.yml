@@ -20,17 +20,19 @@ addons:
       - llvm-toolchain-precise-3.6
     packages:
       - binutils-gold
-      - g++-4.7
-      - gcc-4.7
+      - g++-4.8
+      - gcc-4.8
       - clang-3.6
+    #alternatives: implemented 2 days ago and still to come.
 
 before_install:
 - echo $LANG
 - echo $LC_ALL
 - clang --version || gcc --version
 - if [ "$CXX" == "g++" ]; then
-    export CXX=/usr/bin/g++-4.7;
-    export CC=/usr/bin/gcc-4.7;
+    export CXX=/usr/bin/g++-4.8;
+    export CC=/usr/bin/gcc-4.8;
+    ls /usr/bin/g++-4.8
   elif [ "$CXX" == "clang++" ]; then
     export CXX=/usr/bin/clang++-3.6;
     export CC=/usr/bin/clang-3.6;

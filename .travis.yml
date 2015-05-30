@@ -2,18 +2,23 @@ language: cpp
 
 compiler:
   - gcc
+  - clang
+os:
+  - linux
+  - osx
 
 before_install:
   - echo $LANG
   - echo $LC_ALL
+  - clang --version || gcc --version
   - sudo apt-get install python-software-properties
-  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-  - sudo apt-get update
-  - sudo apt-get install gcc-4.8
-  - sudo apt-get install g++-4.8
+#  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+#  - sudo apt-get update
+#  - sudo apt-get install gcc-4.8
+#  - sudo apt-get install g++-4.8
   - sudo apt-get install binutils-gold
-  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
-  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 50
+#  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
+#  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 50
 
 before_script:
   - mkdir src inst obj
@@ -50,7 +55,3 @@ notifications:
     #- "chat.freenode.net#rubinius"
   template:
     - "%{repository}/%{branch} (%{commit} - %{author}): %{message}"
-
-os:
-  - linux
-#  - osx

@@ -40,6 +40,8 @@ before_install:
 
 before_script:
 - mkdir src inst obj
+- mkdir -v $TRAVIS_BUILD_DIR/tmp
+- ls -l
 - git clone https://github.com/vgvassilev/llvm.git src
 - (cd src && git checkout cling-patches)
 - git clone https://github.com/vgvassilev/clang.git src/tools/clang

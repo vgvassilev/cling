@@ -51,7 +51,7 @@ before_script:
 - cd ../obj
 - travis_retry ../src/configure --prefix=`pwd`/../inst --disable-docs --disable-bindings
   --disable-visibility-inlines-hidden --disable-clang-rewriter --disable-clang-static-analyzer
-  --disable-clang-arcmt --disable-compiler-version-checks --enable-targets=host
+  --disable-clang-arcmt --disable-compiler-version-checks --enable-targets=host --enable-optimized=yes
 
 script:
 - travis_retry make -j4 -k

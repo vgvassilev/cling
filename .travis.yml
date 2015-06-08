@@ -29,7 +29,7 @@ before_install:
 - echo $LANG
 - echo $LC_ALL
 - clang --version || gcc --version
-- if ["$TRAVIS_OS_NAME" == "linux" ]; then
+- if [ "$TRAVIS_OS_NAME" == "linux" ]; then
     if [ "$CXX" == "g++" ]; then
       export CXX=/usr/bin/g++-4.8;
       export CC=/usr/bin/gcc-4.8;

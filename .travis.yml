@@ -29,14 +29,14 @@ before_install:
 - echo $LANG
 - echo $LC_ALL
 - clang --version || gcc --version
-- if [ "$CXX" == "g++" ]; then
-    export CXX=/usr/bin/g++-4.8;
-    export CC=/usr/bin/gcc-4.8;
-    ls /usr/bin/g++-4.8;
-  elif [ "$CXX" == "clang++" ]; then
-    export CXX=/usr/bin/clang++-3.6;
-    export CC=/usr/bin/clang-3.6;
-  fi
+- if ["$TRAVIS_OS_NAME" == "linux" ]; then
+    if [ "$CXX" == "g++" ]; then
+      export CXX=/usr/bin/g++-4.8;
+      export CC=/usr/bin/gcc-4.8;
+    elif [ "$CXX" == "clang++" ]; then
+      export CXX=/usr/bin/clang++-3.6;
+      export CC=/usr/bin/clang-3.6;
+    fi
 
 before_script:
 - mkdir src inst obj

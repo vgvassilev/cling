@@ -13,7 +13,7 @@ matrix:
     - compiler: gcc
       os: osx
 
-sudo: false
+sudo: true
 
 cache:
   apt: true

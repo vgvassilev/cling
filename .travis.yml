@@ -37,6 +37,7 @@ before_install:
       export CXX=/usr/bin/clang++-3.6;
       export CC=/usr/bin/clang-3.6;
     fi
+  fi
 
 before_script:
 - mkdir src inst obj

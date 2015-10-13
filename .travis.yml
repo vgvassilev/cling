@@ -1,27 +1,45 @@
+sudo: false
 language: cpp
+
+os:
+  - linux
+  - osx
 
 compiler:
   - gcc
 
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - build-essential
+    - binutils-gold
+    - g++-4.9
+    - gcc-4.9
+    - git
+    - debhelper
+    - devscripts
+    - python
+    - python-software-properties
+    - gnupg
+
 before_install:
   - echo $LANG
   - echo $LC_ALL
-  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-  - sudo apt-get update
-  - sudo apt-get install git gcc-4.8 g++-4.8 debhelper devscripts gnupg python binutils-gold python-software-properties
-  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
-  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 50
-  - wget https://raw.githubusercontent.com/vgvassilev/cling/master/tools/packaging/cpt.py
-  - chmod +x cpt.py
+  - if [ $TRAVIS_OS_NAME == 'linux' ]; then export CXX=/usr/bin/g++-4.9;  export CC=/usr/bin/gcc-4.9; fi
+  - if [ $TRAVIS_OS_NAME == 'osx' ]; then export CXX=g++;  export CC=gcc; fi
+  - $CC --version
+  - $CXX --version
 
 before_script:
   # Perform a sanity check before proceeding
-  - echo "no" | ./cpt.py -c
+  - echo "no" | tools/packaging/cpt.py -c
 
 script:
   # FIXME: Change URLs to the repo of @vgvassilev after repositories have been updated.
   # Remove --no-test option when appropriate.
-  - ./cpt.py --create-dev-env=release --no-test --with-llvm-url=https://github.com/onyb/llvm --with-clang-url=https://github.com/onyb/clang --with-cling-url=http://root.cern.ch/git/cling.git
+  - tools/packaging/cpt.py --create-dev-env=release --no-test --with-llvm-url=http://root.cern.ch/git/llvm.git --with-clang-url=http://root.cern.ch/git/clang.git --with-cling-url=http://root.cern.ch/git/cling.git
 
 branches:
   only:
@@ -38,6 +56,3 @@ notifications:
 
   template:
     - "%{repository}/%{branch} (%{commit} - %{author}): %{message}"
-
-os:
-  - linux

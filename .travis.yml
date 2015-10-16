@@ -39,7 +39,7 @@ before_script:
 script:
   # FIXME: Change URLs to the repo of @vgvassilev after repositories have been updated.
   # Remove --no-test option when appropriate.
-  - tools/packaging/cpt.py --create-dev-env=release --no-test --with-llvm-url=http://root.cern.ch/git/llvm.git --with-clang-url=http://root.cern.ch/git/clang.git --with-cling-url=http://root.cern.ch/git/cling.git
+  - travis_retry tools/packaging/cpt.py --create-dev-env=release --no-test --with-llvm-url=http://root.cern.ch/git/llvm.git --with-clang-url=http://root.cern.ch/git/clang.git --with-cling-url=http://root.cern.ch/git/cling.git
 
 branches:
   only:

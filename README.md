@@ -42,37 +42,37 @@ packages and [subversion][4] and [git][5] to get the source code.
   Building LLVM and CLANG you must:
    * Check out the sources:
 ```bash
-    git clone http://root.cern.ch/git/llvm.git src
-    cd src
-    git checkout cling-patches
-    cd tools
-    git clone http://root.cern.ch/git/cling.git
-    git clone http://root.cern.ch/git/clang.git
-    cd clang
-    git checkout cling-patches
+git clone http://root.cern.ch/git/llvm.git src
+cd src
+git checkout cling-patches
+cd tools
+git clone http://root.cern.ch/git/cling.git
+git clone http://root.cern.ch/git/clang.git
+cd clang
+git checkout cling-patches
 ```
    * Configure, build and install them, either using CMake:
 
 ```bash
-    cd ..
-    mkdir build
-    cd build
-    cmake -DCMAKE_INSTALL_PREFIX=/some/install/dir \
-          -DLLVM_TARGETS_TO_BUILD=CBackend\;CppBackend\;X86 \
-          -DCMAKE_BUILD_TYPE=Debug \
-          ../src
-    make
-    make install
+cd ../../../
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=/some/install/dir \
+      -DLLVM_TARGETS_TO_BUILD=CBackend\;CppBackend\;X86 \
+      -DCMAKE_BUILD_TYPE=Debug \
+      ../src
+make
+make install
 ```
    * or GNU Make (see ../src/configure --help for all options):
 
 ```bash
-    cd ..
-    mkdir build
-    cd build
-    ../src/configure --prefix=/some/install/dir
-    make
-    make install
+cd ../../../
+mkdir build
+cd build
+../src/configure --prefix=/some/install/dir
+make
+make install
 ```
 #####Cling Packaging Tool
 Cling's tree has a user-friendly, command-line utility written in Python called
@@ -91,10 +91,13 @@ Full documentation of CPT can be found in [tools/packaging](https://github.com/v
 
 ##USAGE
    `/some/install/dir/bin/cling '#include <stdio.h>' 'printf("Hello World!\n")'`
+   
    To get started run: `/some/install/dir/bin/cling --help`
    or type
-   `/some/install/dir/bin/cling`
-   `[cling]$ .help`
+   ```bash
+/some/install/dir/bin/cling
+[cling]$ .help
+   ```
 
 ##DEVELOPERS' CORNER:
    We have doxygen documentation of cling's code at: http://cling.web.cern.ch/cling/doxygen/

@@ -7,7 +7,7 @@ cache:
   ccache: true
   directories:
     - $HOME/.ccache
-    - $HOME/deps/
+    - $TRAVIS_BUILD_DIR/deps/
 
 os:
   - linux
@@ -31,7 +31,7 @@ matrix:
 
 before_script:
 - |
-  mkdir -pv $HOME/cmake
+  mkdir -pv $TRAVIS_BUILD_DIR/cmake
 
   if [ $TRAVIS_OS_NAME == 'linux' ]; then
     CMAKE_URL="https://cmake.org/files/v3.6/cmake-3.6.0-Linux-x86_64.tar.gz"

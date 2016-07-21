@@ -29,8 +29,9 @@ matrix:
     - os: osx
 
 before_script:
+- export
+- ls /usr/lib/ccache
 - |
-  export
   mkdir -pv $TRAVIS_BUILD_DIR/cmake
 
   if [ $TRAVIS_OS_NAME == 'linux' ]; then

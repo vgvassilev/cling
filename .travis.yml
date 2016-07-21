@@ -31,6 +31,7 @@ matrix:
 
 before_script:
 - |
+  export
   mkdir -pv $TRAVIS_BUILD_DIR/cmake
 
   if [ $TRAVIS_OS_NAME == 'linux' ]; then

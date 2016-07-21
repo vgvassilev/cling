@@ -1,8 +1,10 @@
-sudo: false
-
 language: cpp
 
 cache: ccache
+
+os:
+  - linux
+  - osx
 
 matrix:
   include:

@@ -1,5 +1,7 @@
 # Use travis docker infrastructure
 sudo: false
+dist: trusty
+osx_image: xcode7.2
 
 language: cpp
 
@@ -12,9 +14,6 @@ cache:
 os:
   - linux
   - osx
-
-dist: trusty
-osx_image: xcode7.2
 
 compiler:
   - gcc

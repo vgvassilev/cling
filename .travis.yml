@@ -27,10 +27,6 @@ matrix:
 
   include:
     - os: linux
-      compiler: clang
-
-    - os: linux
-      compiler: gcc
 
   allow_failures:
     - os: osx

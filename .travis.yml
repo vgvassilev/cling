@@ -1,4 +1,3 @@
-dist: trusty
 language: cpp
 
 cache: ccache
@@ -6,15 +5,14 @@ cache: ccache
 os:
   - linux
   - osx
+dist: trusty
+osx_image: xcode7.2
 
 matrix:
   include:
     - os: linux
-      dist: trusty
-      sudo: required
   allow_failures:
     - os: osx
-      osx_image: xcode7.2
 
 compiler:
   - gcc

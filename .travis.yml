@@ -15,7 +15,7 @@ cache:
   ccache: true
   directories:
     - $HOME/.ccache
-    - $HOME/ci/build/cling-src
+#    - $HOME/ci/build/cling-src
     - $TRAVIS_BUILD_DIR/deps
 
 env:

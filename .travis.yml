@@ -1,23 +1,30 @@
 language: cpp
 
-cache:
-  ccache: true
-  directories:
-    - $HOME/.ccache
-    - $TRAVIS_BUILD_DIR/deps/
 
 os:
   - linux
   - osx
+
 
 # Force using trusty.
 sudo: true
 dist: trusty
 osx_image: xcode7.2
 
-compiler:
-  - gcc
-  - clang
+
+cache:
+  ccache: true
+  directories:
+    - $HOME/.ccache
+    - $HOME/ci/build/cling-src
+    - $TRAVIS_BUILD_DIR/deps
+
+env:
+  global:
+    - USE_CCACHE=1
+    - CCACHE_COMPRESS=1
+    - CCACHE_MAXSIZE=500M
+    - CCACHE_CPP2=1
 
 
 matrix:
@@ -27,6 +34,10 @@ matrix:
 
   include:
     - os: linux
+      compiler: clang
+
+    - os: linux
+      compiler: gcc
 
   allow_failures:
     - os: osx
@@ -57,7 +68,7 @@ before_script:
 script:
 - |
   if [ -z $TRAVIS_TAG ]; then
-    tools/packaging/cpt.py --current-dev=tar --with-cling-url=https://github.com/vgvassilev/cling
+    tools/packaging/cpt.py --current-dev=tar --with-cling-url=https://github.com/vgvassilev/cling --verbose
   else
     tools/packaging/cpt.py --last-stable=tar --with-cling-url=https://github.com/vgvassilev/cling
   fi

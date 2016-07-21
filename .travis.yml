@@ -49,7 +49,7 @@ before_script:
     export CMAKE=$TRAVIS_BUILD_DIR/cmake/CMake.app/Contents/bin/cmake
   fi
 
-  if [ ! -f $CMAKE ]
+  if [ ! -f $CMAKE ]; then
     mkdir -pv $TRAVIS_BUILD_DIR/cmake
     travis_retry curl -k $CMAKE_URL | tar --strip-components=1 -xz -C $TRAVIS_BUILD_DIR/cmake
   fi

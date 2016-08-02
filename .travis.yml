@@ -37,7 +37,7 @@ matrix:
       apt:
          sources: ['llvm-toolchain-precise-3.6', 'ubuntu-toolchain-r-test']
          packages: ['clang-3.6']
-         env: COMPILER='ccache clang++-3.6' BUILD_TYPE='Release'
+      env: COMPILER='ccache clang++-3.6' BUILD_TYPE='Release'
 
 
   # 2. Linux GCC Builds

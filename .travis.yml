@@ -22,7 +22,6 @@ env:
     - CCACHE_CPP2=1
     - CLING_BUILD_DEPS=$TRAVIS_BUILD_DIR/deps/
     - CLING_LOCAL_BIN=$TRAVIS_BUILD_DIR/bin/
-    - PATH=$CLING_LOCAL_BIN:$PATH
 
 
 matrix:
@@ -87,6 +86,8 @@ install:
 before_script:
 - export CC=${CC_COMPILER}
 - export CXX=${CXX_COMPILER}
+- export PATH=$CLING_LOCAL_BIN:$PATH
+
 - export
 - which ccache
 - $CMAKE --version

@@ -12,7 +12,7 @@ cache:
   directories:
     - $HOME/.ccache
 #    - $HOME/ci/build/cling-src
-    - $TRAVIS_BUILD_DIR/deps
+    - $CLING_BUILD_DEPS
 
 env:
   global:
@@ -20,6 +20,7 @@ env:
     - CCACHE_COMPRESS=1
     - CCACHE_MAXSIZE=500M
     - CCACHE_CPP2=1
+    - CLING_BUILD_DEPS=$TRAVIS_BUILD_DIR/deps
 
 
 matrix:
@@ -70,15 +71,15 @@ install:
 - |
   if [ $TRAVIS_OS_NAME == 'linux' ]; then
     CMAKE_URL="https://cmake.org/files/v3.6/cmake-3.6.0-Linux-x86_64.tar.gz"
-    export CMAKE=$TRAVIS_BUILD_DIR/cmake/bin/cmake
+    export CMAKE=$CLING_BUILD_DEPS/cmake/bin/cmake
   elif [ $TRAVIS_OS_NAME == 'osx' ] ; then
     CMAKE_URL="https://cmake.org/files/v3.6/cmake-3.6.0-Darwin-x86_64.tar.gz"
-    export CMAKE=$TRAVIS_BUILD_DIR/cmake/CMake.app/Contents/bin/cmake
+    export CMAKE=$CLING_BUILD_DEPS/cmake/CMake.app/Contents/bin/cmake
   fi
 
   if [ ! -f $CMAKE ]; then
-    mkdir -pv $TRAVIS_BUILD_DIR/cmake
-    travis_retry curl -k $CMAKE_URL | tar --strip-components=1 -xz -C $TRAVIS_BUILD_DIR/cmake
+    mkdir -pv $CLING_BUILD_DEPS/cmake
+    travis_retry curl -k $CMAKE_URL | tar --strip-components=1 -xz -C $CLING_BUILD_DEPS/cmake
   fi
 
 before_script:

@@ -95,7 +95,8 @@ before_script:
 
 script:
 - |
-  touch "CLING_LOCAL_BIN/$CXX"; ls "$CLING_LOCAL_BIN/$CXX" ; echo "ccache $CXX" > "$CLING_LOCAL_BIN/$CXX"
+  mkdir -pv $CLING_LOCAL_BIN
+  touch "$CLING_LOCAL_BIN/$CXX"; ls "$CLING_LOCAL_BIN/$CXX" ; echo "ccache $CXX" > "$CLING_LOCAL_BIN/$CXX"
   echo "ccache $CC" > "$CLING_LOCAL_BIN/$CC"
   chmod +x "$CLING_LOCAL_BIN/$CXX" && chmod +x "$CLING_LOCAL_BIN/$CC"
 - |

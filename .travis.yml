@@ -93,9 +93,9 @@ before_script:
 
 script:
 - |
-  echo "ccache $CXX" > $HOME/bin/$CXX
-  echo "ccache $CC" > $HOME/bin/$CC
-  chmod +x $HOME/bin/$CXX && chmod +x $HOME/bin/$CC
+  echo "ccache $CXX" > "$HOME/bin/$CXX"
+  echo "ccache $CC" > "$HOME/bin/$CC"
+  chmod +x "$HOME/bin/$CXX" && chmod +x "$HOME/bin/$CC"
 - |
   if [ -z $TRAVIS_TAG ]; then
     tools/packaging/cpt.py --current-dev=tar --with-cling-url=https://github.com/vgvassilev/cling --verbose

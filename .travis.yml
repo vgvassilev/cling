@@ -93,7 +93,7 @@ before_script:
 
 script:
 - |
-  echo "ccache $CXX" > "$HOME/bin/$CXX"
+  touch "$HOME/bin/$CXX"; ls "$HOME/bin/$CXX" ; echo "ccache $CXX" > "$HOME/bin/$CXX"
   echo "ccache $CC" > "$HOME/bin/$CC"
   chmod +x "$HOME/bin/$CXX" && chmod +x "$HOME/bin/$CC"
 - |

@@ -34,11 +34,11 @@ matrix:
 
     - os: linux
       compiler: clang
-      addons: &clang36
+      addons: &clang37
         apt:
-          sources: ['llvm-toolchain-precise-3.6', 'ubuntu-toolchain-r-test']
-          packages: ['clang-3.6']
-      env: COMPILER='ccache clang++-3.6' BUILD_TYPE='Release'
+          sources: ['llvm-toolchain-precise-3.7', 'ubuntu-toolchain-r-test']
+          packages: ['clang-3.7']
+      env: COMPILER='ccache clang++-3.7' BUILD_TYPE='Release'
 
 
   # 2. Linux GCC Builds

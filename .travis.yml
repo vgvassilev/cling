@@ -35,9 +35,9 @@ matrix:
       compiler: clang
       addons: &clang36
       apt:
-          sources: ['llvm-toolchain-precise-3.6', 'ubuntu-toolchain-r-test']
-          packages: ['clang-3.6']
-          env: COMPILER='ccache clang++-3.6' BUILD_TYPE='Release'
+         sources: ['llvm-toolchain-precise-3.6', 'ubuntu-toolchain-r-test']
+         packages: ['clang-3.6']
+         env: COMPILER='ccache clang++-3.6' BUILD_TYPE='Release'
 
 
   # 2. Linux GCC Builds
@@ -84,8 +84,7 @@ install:
 before_script:
 - export CXX=${COMPILER}
 - export
-- ls /usr/lib/ccache
-
+- which ccache
 - $CMAKE --version
 - $CC --version
 - $CXX --version

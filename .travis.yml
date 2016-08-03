@@ -103,7 +103,7 @@ script:
 #  chmod +x "$CLING_LOCAL_BIN/$CXX" && chmod +x "$CLING_LOCAL_BIN/$CC"
 - |
   if [ -z $TRAVIS_TAG ]; then
-    tools/packaging/cpt.py --current-dev=tar --with-cling-url=https://github.com/vgvassilev/cling --verbose
+    tools/packaging/cpt.py --current-dev=tar --with-cling-url=https://github.com/vgvassilev/cling --verbose --debug-on-error
   else
     tools/packaging/cpt.py --last-stable=tar --with-cling-url=https://github.com/vgvassilev/cling
   fi

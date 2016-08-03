@@ -132,3 +132,8 @@ deploy:
   on:
     tags: true
     repo: vgvassilev/cling
+
+after_failure:
+- |
+  cat /home/travis/ci/build/builddir/CMakeFiles/CMakeOutput.log
+  cat /home/travis/ci/build/builddir/CMakeFiles/CMakeError.log

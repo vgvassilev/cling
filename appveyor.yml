@@ -18,4 +18,4 @@ install:
   -
 
 build_script:
-- tools/packaging/cpt.py --current-dev=tar --with-cling-url=https://github.com/vgvassilev/cling
+- tools\packaging\cpt.py --current-dev=tar --with-cling-url=https://github.com/vgvassilev/cling

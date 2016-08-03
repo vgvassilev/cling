@@ -24,9 +24,11 @@ env:
 
 
 matrix:
-#  exclude:
-#    - os: osx
-#      compiler: gcc
+  exclude:
+    # Note: Workaround travis-ci/travis-ci#4681
+    # Exclude default job which lacks our included environment variables.
+    - os: osx
+    - os: linux
 
   include:
 

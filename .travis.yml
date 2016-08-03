@@ -39,7 +39,7 @@ matrix:
       addons: &clang37
         apt:
           sources: ['llvm-toolchain-precise-3.7', 'ubuntu-toolchain-r-test']
-          packages: ['clang-3.7', 'libstdc++4.7']
+          packages: ['clang-3.7', 'libc++-dev']
       env: CXX_COMPILER='clang++-3.7' CC_COMPILER='clang-3.7' BUILD_TYPE='Release'
 
 

@@ -68,6 +68,8 @@ def _convert_subprocess_cmd(cmd):
         return [cmd]
 
 def _pdebug_info():
+    box_draw("Printing debug information")
+
     print("Printing CMakeOutput.log")
     with open(os.path.join(LLVM_OBJ_ROOT, 'CMakeFiles', 'CMakeOutput.log'), 'r') as f:
         print(f.read())

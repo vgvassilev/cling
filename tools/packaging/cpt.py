@@ -68,11 +68,13 @@ def _convert_subprocess_cmd(cmd):
         return [cmd]
 
 def _pdebug_info():
-    with open(os.path.join(LLVM_OBJ_ROOT, 'CMakeFiles', 'CMakeOutput.log'), 'r') as fin:
-        print(fin.read())
-    with open(os.path.join(LLVM_OBJ_ROOT, 'CMakeFiles', 'CMakeError.log'), 'r') as fin:
-        print(fin.read())
+    print("Printing CMakeOutput.log")
+    with open(os.path.join(LLVM_OBJ_ROOT, 'CMakeFiles', 'CMakeOutput.log'), 'r') as f:
+        print(f.read())
 
+    print("Printing CMakeError.log")
+    with open(os.path.join(LLVM_OBJ_ROOT, 'CMakeFiles', 'CMakeError.log'), 'r') as f:
+        print(f.read())
 
 
 def _perror(e):

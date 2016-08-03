@@ -88,7 +88,7 @@ before_script:
 - export PATH=$CLING_LOCAL_BIN:$PATH
 
 #- export
-- which ccache
+#- which ccache
 - $CMAKE --version
 - $CC --version
 - $CXX --version

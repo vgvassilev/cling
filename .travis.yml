@@ -67,6 +67,10 @@ matrix:
 
   allow_failures:
     - os: osx
+    # libc++-dev is not whitelisted yet (https://github.com/travis-ci/apt-package-whitelist/issues/3266)
+    # The build falls back to an old version and fails.
+    - os: linux
+      compiler: clang
 
 install:
 # If cmake is not in the cache, download it.

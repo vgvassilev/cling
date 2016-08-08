@@ -456,17 +456,38 @@ def safeRemove(base, *args):
     except:
         pass
 
+class Build(object):
+    def __init__(self):
+        super(Build, self).__init__()
+        self.buildType = 'Debug' if args.get('create_dev_env') else 'Release'
+        self.win32 = platform.system() == 'Windows'
+        self.cores = multiprocessing.cpu_count()
+        # Travis CI, GCC crashes if more than 4 cores used.
+        if os.environ.get('TRAVIS_OS_NAME', None):
+            self.cores = min(self.cores, 4)
+
+    def config(self, configFlags):
+        flags = '-G "Visual Studio 14"' if self.win32 else ''
+        box_draw('Configure Cling with CMake ' + flags)
+        exec_subprocess_call('%s %s %s' % (CMAKE, flags, configFlags),
+                             LLVM_OBJ_ROOT)
+
+    def make(self, targets, flags=''):
+        box_draw('Building %s (using %d cores)' % (targets, self.cores))
+        if self.win32:
+            flags += ' --config %s' % self.buildType
+            for target in targets.split():
+                exec_subprocess_call('%s --build . --target %s %s'
+                                     % (CMAKE, target, flags), LLVM_OBJ_ROOT)
+        else:
+            if args['verbose']: flags += ' VERBOSE=1'
+            exec_subprocess_call('make -j%d %s %s' % (self.cores, targets, flags),
+                                 LLVM_OBJ_ROOT)
+
 def compile(arg, libcpp, CMAKE_FLAGS=None):
     global prefix
     prefix = arg
     PYTHON = sys.executable
-
-    CMAKE = os.environ.get('CMAKE', None)
-
-    cores = multiprocessing.cpu_count()
-    if os.environ.get('TRAVIS_OS_NAME', None):
-        # Temporary fix for Travis CI, GCC crashes if more than 4 cores used.
-        cores = min(cores, 4)
 
     # Cleanup previous installation directory if any
     if os.path.isdir(prefix):
@@ -496,68 +517,49 @@ def compile(arg, libcpp, CMAKE_FLAGS=None):
         if triple:
             CMAKE_FLAGS += ' -DLLVM_HOST_TRIPLE="%s" ' % triple.rstrip()
 
-    build_type = 'Debug' if args.get('create_dev_env') else 'Release'
-    cmake_config_flags = ( ' ../{0} -DCMAKE_BUILD_TYPE={1} '
-            '-DLLVM_TARGETS_TO_BUILD=host -DCMAKE_INSTALL_PREFIX={2} '
-            .format(os.path.basename(srcdir), build_type, TMP_PREFIX)
-            + ' ' + CMAKE_FLAGS + ' '
-    )
+    build = Build()
+    cmake_config_flags = (' -DCMAKE_BUILD_TYPE={0} -DCMAKE_INSTALL_PREFIX={1} '
+                          .format(build.buildType, TMP_PREFIX) + ' -DLLVM_TARGETS_TO_BUILD=host ' +
+                          CMAKE_FLAGS + ' ' + srcdir)
 
-    if platform.system() == 'Windows':
-        if not CMAKE:
-            CMAKE = os.path.join(TMP_PREFIX, 'bin', 'cmake', 'bin', 'cmake.exe')
+    if libcpp:
+        build.config(cmake_config_flags)
+        build.make('cxx')
 
-        box_draw("Configure Cling with CMake and generate Visual Studio 14 project files")
-        exec_subprocess_call('%s -G "Visual Studio 14" %s ..\%s' % (
-            CMAKE, cmake_config_flags, os.path.basename(srcdir)), LLVM_OBJ_ROOT)
+        # Don't build libcxx and libcxxabi again with linker flags below
+        projdir = os.path.join(srcdir, 'projects')
+        shutil.rmtree(os.path.join(projdir, 'libcxx'))
+        shutil.rmtree(os.path.join(projdir, 'libcxxabi'))
 
-        box_draw("Building Cling (using %s cores)" % (cores))
+        if build.win32:
+            incFlag = '/I'
+            linkFlags = '/LIBPATH:%s ' % os.path.join(LLVM_OBJ_ROOT, 'lib')
+            linkFlags += os.path.join(LLVM_OBJ_ROOT, 'lib', 'libc++'+SHLIBEXT)
+        else:
+            incFlag = '-I'
+            linkFlags = '-L%s ' % os.path.join(LLVM_OBJ_ROOT, 'lib')
+            linkFlags += os.path.join(LLVM_OBJ_ROOT, 'lib', 'libc++'+SHLIBEXT)
+            if OS == 'Linux':
+                linkFlags += ' -lm'
+                ### Fix clang-3.5 compiling clang-3.9
+                if args['compiler'] == 'clang++-3.5':
+                    cmake_config_flags += ' -DCMAKE_CXX_FLAGS_RELEASE="-O0 -DNDEBUG" '
 
-        exec_subprocess_call('%s --build . --target cling --config Debug' % (CMAKE), LLVM_OBJ_ROOT)
-        box_draw("Install compiled binaries to prefix (using %s cores)" % (cores))
-        exec_subprocess_call('%s --build . --target INSTALL' % (CMAKE), LLVM_OBJ_ROOT)
+        cmake_config_flags += ' -DCMAKE_SHARED_LINKER_FLAGS="%s"' % linkFlags
+        cmake_config_flags += ' -DCMAKE_EXE_LINKER_FLAGS="%s"' % linkFlags
+        cmake_config_flags += ' -DCMAKE_CXX_FLAGS="%s %s" ' % (incFlag,
+                            os.path.join(LLVM_OBJ_ROOT, 'include', 'c++', 'v1'))
 
-    else:
-        box_draw('Configure Cling with CMake')
-        cmake = CMAKE or 'cmake'
+    build.config(cmake_config_flags + libcxx)
+    build.make('clang cling' if CLING_BRANCH else 'cling')
 
-        if libcpp:
-            box_draw('Building libc++ (using {0} cores)'.format(cores))
-            exec_subprocess_call(cmake + cmake_config_flags, LLVM_OBJ_ROOT)
-            exec_subprocess_call('make cxx -j{0} {1}'.format(cores,
-                                        'VERBOSE=1' if args['verbose'] else ''),
-                                 LLVM_OBJ_ROOT)
-            
-            # Don't build libcxx and libcxxabi again with linker flags below
-            projdir = os.path.join(srcdir, 'projects')
-            shutil.rmtree(os.path.join(projdir, 'libcxx'))
-            shutil.rmtree(os.path.join(projdir, 'libcxxabi'))
-
-            ### Fix clang-3.5 compiling clang-3.9
-            if args['compiler'] == 'clang++-3.5':
-                cmake_config_flags += ' -DCMAKE_CXX_FLAGS_RELEASE="-O0 -DNDEBUG" '
-
-            cmake_config_flags += ' -DCMAKE_CXX_FLAGS="-I%s/include/c++/v1" ' % LLVM_OBJ_ROOT
-            cmake_config_flags += (' -DCMAKE_SHARED_LINKER_FLAGS="-L%s/lib %s/lib/libc++%s -lm"'
-                                   ' -DCMAKE_EXE_LINKER_FLAGS="-L%s/lib %s/lib/libc++%s -lm"'
-                                    % (LLVM_OBJ_ROOT,LLVM_OBJ_ROOT,SHLIBEXT, LLVM_OBJ_ROOT,LLVM_OBJ_ROOT,SHLIBEXT))
-
-        exec_subprocess_call(cmake + cmake_config_flags + libcxx, LLVM_OBJ_ROOT)
-
-        box_draw('Building Cling (using {0} cores)'.format(cores))
-        exec_subprocess_call(
-            'make -j{0} {1} {2}'.format(cores,
-                                    'clang cling' if CLING_BRANCH else 'cling',
-                                    'VERBOSE=1' if args['verbose'] else ''),
-            LLVM_OBJ_ROOT
-        )
-
-        if not CLING_BRANCH:
-          box_draw('Install compiled binaries to prefix (using {0} cores)'.format(cores))
-          exec_subprocess_call(
-              'make install -j{0} prefix={1} cling'.format(cores, TMP_PREFIX),
-              LLVM_OBJ_ROOT
-          )
+    if not CLING_BRANCH:
+        box_draw("Install compiled binaries to prefix (using %d cores)" % build.cores)
+        if build.win32:
+            build.make('INSTALL')
+            exec_subprocess_call('%s --build . --target INSTALL' % CMAKE, LLVM_OBJ_ROOT)
+        else:
+            build.make('install', 'prefix=%s' % TMP_PREFIX)
 
 def build_dist_list(file_dict, include=[], ignore=[]):
     for key, value in file_dict.items():
@@ -596,17 +598,10 @@ def install_prefix():
 
 def test_cling(CMAKE_FLAGS=''):
     box_draw("Run Cling test suite")
-    # FIXME: Factor out the setting of CMAKE.
-    CMAKE = os.environ.get('CMAKE', None)
-    if not CMAKE and platform.system() == 'Windows':
-        CMAKE = os.path.join(TMP_PREFIX, 'bin', 'cmake', 'bin', 'cmake.exe')
-
-    cmake = CMAKE or 'cmake'
-    exec_subprocess_call(cmake +' --build . --target cling-test-depends', LLVM_OBJ_ROOT)
-    exec_subprocess_call(cmake +' --build . --target check-cling', LLVM_OBJ_ROOT)
+    build = Build()
+    build.make('cling-test-depends check-cling')
     if re.compile('-DCLING_CLANG_RUNTIME_PATCH[=:](?:ON|1)').search(CMAKE_FLAGS):
-        exec_subprocess_call(cmake +' --build . --target LTO', LLVM_OBJ_ROOT)
-        exec_subprocess_call(cmake +' --build . --target check-clang', LLVM_OBJ_ROOT)
+        build.make('LTO check-clang')
 
 def tarball():
     box_draw("Compress binaries into a bzip2 tarball")
@@ -1738,6 +1733,13 @@ if args.get('configure', None):
   CMAKE_FLAGS = args['configure']
 else:
   CMAKE_FLAGS = ''
+
+CMAKE = os.environ.get('CMAKE', None)
+if not CMAKE:
+    if platform.system() == 'Windows':
+        CMAKE = os.path.join(TMP_PREFIX, 'bin', 'cmake', 'bin', 'cmake.exe')
+    else:
+        CMAKE = 'cmake'
 
 # llvm_revision = urlopen(
 #    "https://raw.githubusercontent.com/vgvassilev/cling/master/LastKnownGoodLLVMSVNRevision.txt").readline().strip().decode(

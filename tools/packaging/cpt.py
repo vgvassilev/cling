@@ -102,6 +102,7 @@ def exec_subprocess_call(cmd, cwd):
 
 def exec_subprocess_check_output(cmd, cwd):
     cmd = _convert_subprocess_cmd(cmd)
+    out = ''
     try:
         out = subprocess.check_output(cmd, cwd=cwd, shell=False,
                                       stdin=subprocess.PIPE, stderr=subprocess.STDOUT).decode('utf-8')
@@ -225,21 +226,34 @@ def fetch_llvm(llvm_revision):
         print()
         return
 
+    def checkout():
+        if LLVM_BRANCH:
+            exec_subprocess_call('git checkout %s' % LLVM_BRANCH, srcdir)
+        else:
+            exec_subprocess_call('git checkout cling-patches-r%s' % llvm_revision, srcdir)
+    
     def get_fresh_llvm():
-        exec_subprocess_call('git clone %s %s' % (LLVM_GIT_URL, srcdir), workdir)
+        if LLVM_BRANCH:
+            exec_subprocess_call('git clone --depth=10 --branch %s %s %s'
+                                 % (LLVM_BRANCH, LLVM_GIT_URL, srcdir), workdir)
+        else:
+            exec_subprocess_call('git clone %s %s' % (LLVM_GIT_URL, srcdir), workdir)
 
-        exec_subprocess_call('git checkout cling-patches-r%s' % llvm_revision, srcdir)
+        checkout()
 
     def update_old_llvm():
         exec_subprocess_call('git stash', srcdir)
 
         # exec_subprocess_call('git clean -f -x -d', srcdir)
 
-        exec_subprocess_call('git fetch --tags', srcdir)
+        checkout()
 
-        exec_subprocess_call('git checkout cling-patches-r%s' % llvm_revision, srcdir)
-
-        exec_subprocess_call('git pull origin refs/tags/cling-patches-r%s' % (llvm_revision), srcdir)
+        if LLVM_BRANCH:
+            exec_subprocess_call('git pull origin %s' % LLVM_BRANCH, srcdir)
+        else:
+            exec_subprocess_call('git fetch --tags', srcdir)
+            exec_subprocess_call('git pull origin refs/tags/cling-patches-r%s'
+                                 % llvm_revision, srcdir)
 
     if os.path.isdir(srcdir):
         update_old_llvm()
@@ -270,24 +284,39 @@ def fetch_clang(llvm_revision):
         print()
         return
 
-    def get_fresh_clang():
-        exec_subprocess_call('git clone %s' % CLANG_GIT_URL, os.path.join(srcdir, 'tools'))
+    toolsdir = os.path.join(srcdir, 'tools')
+    clangdir = os.path.join(toolsdir, 'clang')
+    def checkout():
+       if CLANG_BRANCH:
+           exec_subprocess_call('git checkout %s' % CLANG_BRANCH, clangdir)
+       else:
+           exec_subprocess_call('git checkout cling-patches-r%s' % llvm_revision, clangdir)
 
-        exec_subprocess_call('git checkout cling-patches-r%s' % llvm_revision, os.path.join(srcdir, 'tools', 'clang'))
+    def get_fresh_clang():
+        if CLANG_BRANCH:
+            exec_subprocess_call('git clone --depth=10 --branch %s %s'
+                                 % (CLANG_BRANCH, CLANG_GIT_URL), toolsdir)
+        else:
+            exec_subprocess_call('git clone %s' % CLANG_GIT_URL, toolsdir)
+
+        checkout()
 
     def update_old_clang():
-        exec_subprocess_call('git stash', os.path.join(srcdir, 'tools', 'clang'))
+        exec_subprocess_call('git stash', clangdir)
 
-        # exec_subprocess_call('git clean -f -x -d', os.path.join(srcdir, 'tools', 'clang'))
+        # exec_subprocess_call('git clean -f -x -d', clangdir)
 
-        exec_subprocess_call('git fetch --tags', os.path.join(srcdir, 'tools', 'clang'))
+        exec_subprocess_call('git fetch --tags', clangdir)
 
-        exec_subprocess_call('git checkout cling-patches-r%s' % llvm_revision, os.path.join(srcdir, 'tools', 'clang'))
+        checkout()
+        if CLANG_BRANCH:
+            exec_subprocess_call('git pull origin %s' % CLANG_BRANCH, clangdir)
+        else:
+            exec_subprocess_call('git fetch --tags', clangdir)
+            exec_subprocess_call('git pull origin refs/tags/cling-patches-r%s' % llvm_revision,
+                                  clangdir)
 
-        exec_subprocess_call('git pull origin refs/tags/cling-patches-r%s' % llvm_revision,
-                             os.path.join(srcdir, 'tools', 'clang'))
-
-    if os.path.isdir(os.path.join(srcdir, 'tools', 'clang')):
+    if os.path.isdir(clangdir):
         update_old_clang()
     else:
         get_fresh_clang()
@@ -295,7 +324,11 @@ def fetch_clang(llvm_revision):
 
 def fetch_cling(arg):
     def get_fresh_cling():
-        exec_subprocess_call('git clone %s' % CLING_GIT_URL, os.path.join(srcdir, 'tools'))
+        if CLING_BRANCH:
+            exec_subprocess_call('git clone --depth=10 --branch %s %s'
+                                 % (CLING_BRANCH, CLING_GIT_URL), os.path.join(srcdir, 'tools'))
+        else:
+            exec_subprocess_call('git clone %s' % CLING_GIT_URL, os.path.join(srcdir, 'tools'))
 
         # if arg == 'last-stable':
         #    checkout_branch = exec_subprocess_check_output('git describe --match v* --abbrev=0 --tags | head -n 1',
@@ -380,15 +413,17 @@ def set_vars():
     print('CLANG_VERSION: ' + CLANG_VERSION)
 
 
-def compile(arg):
+def compile(arg, CMAKE_FLAGS=None):
     global prefix
     prefix = arg
     PYTHON = sys.executable
 
     CMAKE = os.environ.get('CMAKE', None)
 
-    # GCC crashes if more than 4 cores are used. Temporary fix for Travis CI.
-    cores = 4 if multiprocessing.cpu_count() > 4 else multiprocessing.cpu_count()
+    cores = multiprocessing.cpu_count()
+    if os.environ.get('TRAVIS_OS_NAME', None):
+        # Temporary fix for Travis CI, GCC crashes if more than 4 cores used.
+        cores = min(cores, 4)
 
     # Cleanup previous installation directory if any
     if os.path.isdir(prefix):
@@ -402,14 +437,21 @@ def compile(arg):
         print("Creating build directory: " + os.path.join(workdir, 'builddir'))
         os.makedirs(os.path.join(workdir, 'builddir'))
 
-    build_type = 'Debug' if args.get('create_dev_env') else 'Release'
-    cmake_config_flags = (
-            '-DCMAKE_BUILD_TYPE={0} '
-            '-DLLVM_TARGETS_TO_BUILD=host '
-            '-DCMAKE_INSTALL_PREFIX={1} '
-            '../{2}'.format(build_type, TMP_PREFIX, os.path.basename(srcdir))
-    )
+    if not CMAKE_FLAGS:
+        CMAKE_FLAGS = '-DLLVM_ENABLE_LIBCXX=ON'
 
+    ### FIX: Target isn't being set properly on Travis OS X with ccache
+    if OS == 'Darwin':
+        triple = exec_subprocess_check_output('sh %s/cmake/config.guess' % srcdir, srcdir)
+        if triple:
+            CMAKE_FLAGS += ' -DLLVM_HOST_TRIPLE="%s" ' % triple.rstrip()
+
+    build_type = 'Debug' if args.get('create_dev_env') else 'Release'
+    cmake_config_flags = ( ' ../{0} -DCMAKE_BUILD_TYPE={1} '
+            '-DLLVM_TARGETS_TO_BUILD=host -DCMAKE_INSTALL_PREFIX={2} '
+            .format(os.path.basename(srcdir), build_type, TMP_PREFIX)
+            + ' ' + CMAKE_FLAGS + ' '
+    )
 
     if platform.system() == 'Windows':
         if not CMAKE:
@@ -431,18 +473,19 @@ def compile(arg):
         exec_subprocess_call((CMAKE or 'cmake') + ' ' + cmake_config_flags, LLVM_OBJ_ROOT)
 
         box_draw('Building Cling (using {0} cores)'.format(cores))
-        make_command = 'make -j{0} cling'.format(cores)
-        if args['verbose']:
-            make_command += ' VERBOSE=1'
-
-        exec_subprocess_call(make_command, LLVM_OBJ_ROOT)
-
-
-        box_draw('Install compiled binaries to prefix (using {0} cores)'.format(cores))
         exec_subprocess_call(
-            'make install -j{0} prefix={1} cling'.format(cores, TMP_PREFIX),
+            'make -j{0} {1} {2}'.format(cores,
+                                    'clang cling' if CLING_BRANCH else 'cling',
+                                    'VERBOSE=1' if args['verbose'] else ''),
             LLVM_OBJ_ROOT
         )
+
+        if not CLING_BRANCH:
+          box_draw('Install compiled binaries to prefix (using {0} cores)'.format(cores))
+          exec_subprocess_call(
+              'make install -j{0} prefix={1} cling'.format(cores, TMP_PREFIX),
+              LLVM_OBJ_ROOT
+          )
 
 def build_dist_list(file_dict, include=[], ignore=[]):
     for key, value in file_dict.items():
@@ -479,15 +522,19 @@ def install_prefix():
                 shutil.copy(os.path.join(TMP_PREFIX, f), os.path.join(prefix, f))
 
 
-def test_cling():
+def test_cling(CMAKE_FLAGS=''):
     box_draw("Run Cling test suite")
     # FIXME: Factor out the setting of CMAKE.
     CMAKE = os.environ.get('CMAKE', None)
     if not CMAKE and platform.system() == 'Windows':
         CMAKE = os.path.join(TMP_PREFIX, 'bin', 'cmake', 'bin', 'cmake.exe')
 
-    exec_subprocess_call((CMAKE or 'cmake') + ' --build . --target check-cling', LLVM_OBJ_ROOT)
-
+    cmake = CMAKE or 'cmake'
+    exec_subprocess_call(cmake +' --build . --target cling-test-depends', LLVM_OBJ_ROOT)
+    exec_subprocess_call(cmake +' --build . --target check-cling', LLVM_OBJ_ROOT)
+    if re.compile('-DCLING_CLANG_RUNTIME_PATCH[=:](?:ON|1)').search(CMAKE_FLAGS):
+        exec_subprocess_call(cmake +' --build . --target LTO', LLVM_OBJ_ROOT)
+        exec_subprocess_call(cmake +' --build . --target check-clang', LLVM_OBJ_ROOT)
 
 def tarball():
     box_draw("Compress binaries into a bzip2 tarball")
@@ -496,8 +543,14 @@ def tarball():
     tar.add(prefix, arcname=os.path.basename(prefix))
     tar.close()
 
-
+gInCleanup = False
 def cleanup():
+    global gInCleanup
+    if gInCleanup:
+        print('Failure in cleanup lead to recursion\n')
+        return 
+
+    gInCleanup = True
     print('\n')
     box_draw("Clean up")
     if os.path.isdir(os.path.join(workdir, 'builddir')):
@@ -542,6 +595,7 @@ def cleanup():
         if os.path.isdir(os.path.join(workdir, 'Install')):
             print('Remove directory: ' + os.path.join(workdir, 'Install'))
             shutil.rmtree(os.path.join(workdir, 'Install'))
+    gInCleanup = False
 
 
 ###############################################################################
@@ -1526,6 +1580,9 @@ else:
 
 parser.add_argument('--make-proper', help='Internal option to support calls from build system')
 parser.add_argument('--verbose', help='Tell CMake to build with verbosity', action='store_true')
+parser.add_argument('--configure', help='Additional CMake configuration flags')
+parser.add_argument('--compiler', help='The compiler being used to make cling (for heuristics only)',
+                    default='')
 
 args = vars(parser.parse_args())
 
@@ -1597,6 +1654,19 @@ prefix = ''
 LLVM_GIT_URL = args['with_llvm_url']
 CLANG_GIT_URL = args['with_clang_url']
 CLING_GIT_URL = args['with_cling_url']
+
+if args['current_dev'].startswith('branch:'):
+  CLING_BRANCH = CLANG_BRANCH = LLVM_BRANCH = args['current_dev'][7:]
+elif args['current_dev'].startswith('branches:'):
+  CLING_BRANCH, CLANG_BRANCH, LLVM_BRANCH = args['current_dev'][9:].split(',')
+else:
+  CLING_BRANCH = CLANG_BRANCH = LLVM_BRANCH = None
+
+if args.get('configure', None):
+  CMAKE_FLAGS = args['configure']
+else:
+  CMAKE_FLAGS = ''
+
 # llvm_revision = urlopen(
 #    "https://raw.githubusercontent.com/vgvassilev/cling/master/LastKnownGoodLLVMSVNRevision.txt").readline().strip().decode(
 #   'utf-8')
@@ -1612,6 +1682,10 @@ print('Distribution: ' + DIST)
 print('Release: ' + RELEASE)
 print('Revision: ' + REV)
 print('Architecture: ' + platform.machine())
+if args['compiler']:
+  cInfo = exec_subprocess_check_output(args['compiler'] + ' --version',CLING_SRC_DIR)
+  print('Compiler: %s' % (cInfo if cInfo else args['compiler']))
+
 
 if len(sys.argv) == 1:
     print("Error: no options passed")
@@ -1747,7 +1821,7 @@ if args['current_dev']:
         'utf-8')
     fetch_llvm(llvm_revision)
     fetch_clang(llvm_revision)
-    fetch_cling('master')
+    fetch_cling(CLING_BRANCH if CLING_BRANCH else 'master')
     set_version()
     if args['current_dev'] == 'tar':
         if OS == 'Windows':
@@ -1800,6 +1874,12 @@ if args['current_dev']:
             test_cling()
         make_dmg()
         cleanup()
+    elif args['current_dev'].startswith('branch'):
+        compile(os.path.join(workdir, 'cling-' + VERSION.replace('-' + REVISION[:7], '')), CMAKE_FLAGS)
+        #install_prefix()
+        if not args['no_test']:
+            test_cling(CMAKE_FLAGS)
+        cleanup()
 
 if args['last_stable']:
     tag = json.loads(urlopen("https://api.github.com/repos/vgvassilev/cling/tags")
@@ -1810,6 +1890,7 @@ if args['last_stable']:
 
     # FIXME
     assert tag[0] is "v"
+    assert CLING_BRANCH == None
 
     llvm_revision = urlopen(
         'https://raw.githubusercontent.com/vgvassilev/cling/%s/LastKnownGoodLLVMSVNRevision.txt' % tag

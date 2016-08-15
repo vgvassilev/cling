@@ -117,7 +117,7 @@ install:
     CMAKE_URL="https://cmake.org/files/v3.6/cmake-3.6.0-Darwin-x86_64.tar.gz"
     export CMAKE=$CLING_BUILD_DEPS/cmake/CMake.app/Contents/bin/cmake
     brew install ccache python
-    PATH=/usr/local/opt/ccache/libexec:$PATH
+    #PATH=/usr/local/opt/ccache/libexec:$PATH
     # Try to workaround travis-ci/travis-ci#6410 by
     # introducing a timeout fulction, which will timeout before the builder,
     # returning a 'fake' success (eg. 0), tricking it to store the cache.

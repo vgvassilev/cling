@@ -1,11 +1,11 @@
 language: cpp
 sudo: false
+dist: trusty
 
 
 os:
   - linux
   - osx
-
 
 cache:
   apt: true
@@ -20,11 +20,14 @@ env:
     - CCACHE_COMPRESS=1
     - CCACHE_MAXSIZE=500M
     - CCACHE_CPP2=1
+    - CLING_BUILD_DEPS=$TRAVIS_BUILD_DIR/deps/
+    - CLING_LOCAL_BIN=$TRAVIS_BUILD_DIR/bin/
     - TIMEOUT=0
     - EXECUTE_COMMAND=
     - CXX_COMPILER=
     - CC_COMPILER=
     - COMPILER_VERSION=
+    - CPT_ARGS=--current-dev=tar --with-cling-url=https://github.com/$TRAVIS_REPO_SLUG --verbose --debug-on-error
     - secure: "DQSDJnYWR7kb2ylcE1e4GIfP9KJadHjG696HelK09zmsTJiRoxg2HhDnm3gHkrPh18AxYJAMW1rZHm0ZsnBKpS09NxOcPVseL+z3iWfBFpgCa2ueUMKHy/YBhNghmLOXVeQzGwol6iCU5xbO4ZMJHpytmQCH6Vm9ws7sg8kiatY="
 
 
@@ -32,8 +35,6 @@ env:
 branches:
   except:
     - /^__internal.*$/
-  only:
-    - master
 
 
 matrix:
@@ -79,6 +80,15 @@ matrix:
       dist: trusty
       env: CXX_COMPILER='g++' CC_COMPILER='gcc' COMPILER_VERSION='-4.8' BUILD_TYPE='Release'
            TIMEOUT=2400 EXECUTE_COMMAND="sudo ln -s `which gold` /usr/local/bin/ld"
+      
+    # Fedora under Docker 
+    - os: linux
+      sudo: required
+      dist: trusty
+      env: DOCKER=1 DEPENDENCIES='git python gcc cmake make gcc-c++ perl' 
+           CXX_COMPILER='g++' CC_COMPILER='gcc' COMPILER_VERSION='-4.9' BUILD_TYPE='Release'
+           TIMEOUT=1200
+      services: ['docker']
 
 
   # 3. OSX Clang Builds
@@ -121,11 +131,15 @@ install:
     # Try to workaround travis-ci/travis-ci#6410 by
     # introducing a timeout fulction, which will timeout before the builder,
     # returning a 'fake' success (eg. 0), tricking it to store the cache.
-    TIMEOUT=2400
+    TIMEOUT=600
   fi
 
   # Implement a platform-independent timeout function.
-  function timeout() { perl -e 'alarm shift; exec @ARGV' "$@"; }
+  TIMEOUT_FUNC="function timeout() { perl -e 'alarm shift; exec @ARGV' \"\$@\"; }"
+
+  if [ $DOCKER != '1' ]; then		
+     eval $(eval "echo \"$TIMEOUT_FUNC\"")		
+  fi
 
   if [ ! -f $CMAKE ]; then
     mkdir -pv $CLING_BUILD_DEPS/cmake
@@ -152,20 +166,49 @@ before_script:
 
 script:
 - |
-  if [ -z $TRAVIS_TAG ]; then
+  POST_TIMEOUT="RESULT=\$?; if [ \$RESULT -eq 0 ] || [ \$RESULT -eq 142 ]; then true; else false; fi;"
+  if [ $DOCKER == '1' ]; then
+    docker pull fedora
+
+    DOCKER_COMMAND="dnf install $DEPENDENCIES -y && \
+      curl https://raw.githubusercontent.com/root-mirror/cling/master/tools/packaging/cpt.py > cpt.py && \
+      chmod +x cpt.py && \
+      eval \\\$TIMEOUT_FUNC && \
+      export PATH=\\\$CLING_LOCAL_BIN:\\\$PATH && \
+      timeout \\\$TIMEOUT ./cpt.py $CPT_ARGS && \
+      eval \\\$POST_TIMEOUT"
+
+    echo "Will execute: $DOCKER_COMMAND"    
+    docker run \
+      -v $HOME/.ccache:/root/.ccache \
+      -v $CLING_LOCAL_BIN:/root/cling-bin \
+      -e USE_CCACHE=$USE_CCACHE \
+      -e CCACHE_COMPRESS=$CCACHE_COMPRESS \
+      -e CCACHE_MAXSIZE=$CCACHE_MAXSIZE \
+      -e CCACHE_CPP2=$CCACHE_CPP2 \
+      -e CXX_COMPILER=$CXX_COMPILER \
+      -e CC_COMPILER=$CC_COMPILER \
+      -e BUILD_TYPE=$BUILD_TYPE \
+      -e TIMEOUT=$TIMEOUT \
+      -e TIMEOUT_FUNC="function timeout() { perl -e 'alarm shift; exec @ARGV' \"\$@\"; }" \
+      -e POST_TIMEOUT="$POST_TIMEOUT" \
+      -e CLING_LOCAL_BIN=/root/cling-bin \
+      fedora /bin/bash \
+      -c "$DOCKER_COMMAND"
+  elif [ -z $TRAVIS_TAG ]; then
     if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
       # Move the tag to newest master
       git tag --force cling-nightlies HEAD
       git push --force https://$OAUTH_TOKEN@github.com/${TRAVIS_REPO_SLUG} cling-nightlies
     fi
 
-    timeout $TIMEOUT tools/packaging/cpt.py --current-dev=tar --with-cling-url=https://github.com/$TRAVIS_REPO_SLUG --verbose --skip-cleanup
+    timeout $TIMEOUT tools/packaging/cpt.py $CPT_ARGS
   else
     tools/packaging/cpt.py --tarball-tag=$TRAVIS_TAG --with-cling-url=https://github.com/$TRAVIS_REPO_SLUG
   fi
 
   # Convert the timeout exit code to 0.
-  RESULT=$?; if [ $RESULT -eq 0 ] || [ $RESULT -eq 142 ]; then true; else false; fi;
+  eval $(eval "echo \"$POST_TIMEOUT\"")
 
 - ccache -s
 
@@ -174,6 +217,61 @@ notifications:
     recipients:
       #- cling-dev@cern.ch
     on_success: change
+    on_failure: always
+    template:
+      - "%{repository}/%{branch} (%{commit} - %{author}): %{message}"
+      - "Build details: %{build_url}"
+      - "Change view : %{compare_url}"
+
+
+before_deploy:
+- |
+  export RELEASE_TARBALL=$(ls $HOME/ci/build/cling*.tar.bz2)
+  if [[ $TRAVIS_TAG -eq "cling-nightlies" ]]; then
+    NIGHTLY="`dirname $RELEASE_TARBALL`/`date "+%Y-%b-%d-"``basename $RELEASE_TARBALL`"
+    echo "Renaming $RELEASE_TARBALL to $NIGHTLY"
+    mv $RELEASE_TARBALL $NIGHTLY
+    export RELEASE_TARBALL=$NIGHTLY
+  fi
+  echo "Deploying $RELEASE_TARBALL to GitHub releases"
+
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key: $OAUTH_TOKEN
+  file: '${RELEASE_TARBALL}'
+  on:
+    tags: true
+    repo: $TRAVIS_REPO_SLUG
+
+after_failure:
+- |
+  echo "Dumping env."
+  find $CLING_LOCAL_BIN -type f -print0 -exec cat {} \;
+  $CMAKE --version
+  $CC --version
+  $CXX --version
+  ls -al `which ld` && ld -v
+  export
+- |
+  echo "Dumping CMakeOutput.log"
+  cat /home/travis/ci/build/builddir/CMakeFiles/CMakeOutput.log
+- |
+  echo "Dumping CMakeError.log"
+  cat /home/travis/ci/build/builddir/CMakeFiles/CMakeError.log
+- |
+  echo "Dumping cling-compiledata.h..."
+  COMPILE_DATA_H=$HOME/ci/build/builddir/tools/cling/lib/Interpreter/cling-compiledata.h
+  cat $COMPILE_DATA_H
+
+  echo "Running cling-compiledata compiler..."
+  COMPDATA_CXX=$(cat $COMPILE_DATA_H | cut -c 18- | sed "s,\",,g")
+  eval echo | LC_ALL=C $COMPDATA_CXX -xc++ -E -v -
+- |
+  echo "Dumping `which ccache`"
+  ccache -s
+  ls -la /usr/lib/ccache/ || ls -la /usr/local/opt/ccache/libexec
     on_failure: always
     template:
       - "%{repository}/%{branch} (%{commit} - %{author}): %{message}"

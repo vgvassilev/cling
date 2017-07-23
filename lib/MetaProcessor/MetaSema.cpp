@@ -16,6 +16,7 @@
 #include "cling/Interpreter/Transaction.h"
 #include "cling/Interpreter/Value.h"
 #include "cling/MetaProcessor/MetaProcessor.h"
+#include "cling/Utils/Output.h"
 
 #include "clang/AST/ASTContext.h"
 #include "clang/Basic/SourceManager.h"
@@ -462,7 +463,20 @@ namespace cling {
                               Value* result) const {
     llvm::StringRef trimmed(commandLine.trim(" \t\n\v\f\r "));
     if (!trimmed.empty()) {
-      int ret = std::system(trimmed.str().c_str());
+      int ret=1;
+
+      // redirection of stderr in stdout
+      std::string command = trimmed.str() + " 2>&1";
+      FILE *shell_result = popen(command.c_str(), "r");
+      if (shell_result)
+      {
+        char buff[512];
+        ret = 0;
+        while(fgets(buff, sizeof(buff), shell_result)!=NULL){
+          cling::outs() << buff;
+        }
+        pclose(shell_result);
+      }
 
       // Build the result
       clang::ASTContext& Ctx = m_Interpreter.getCI()->getASTContext();

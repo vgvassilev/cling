@@ -471,11 +471,8 @@ namespace cling {
       if (shell_result) {
         char buff[512];
         ret = 0;
-        bool flag = fgets(buff, sizeof(buff), shell_result) == NULL;
-        while (!flag) {
+        while (fgets(buff, sizeof(buff), shell_result))
           cling::outs() << buff;
-          flag = fgets(buff, sizeof(buff), shell_result) == NULL;
-        }
         pclose(shell_result);
       }
 

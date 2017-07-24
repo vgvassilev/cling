@@ -468,12 +468,13 @@ namespace cling {
       // redirection of stderr in stdout
       std::string command = trimmed.str() + " 2>&1";
       FILE *shell_result = popen(command.c_str(), "r");
-      if (shell_result)
-      {
+      if (shell_result) {
         char buff[512];
         ret = 0;
-        while(fgets(buff, sizeof(buff), shell_result)!=NULL){
+        bool flag = fgets(buff, sizeof(buff), shell_result) == NULL;
+        while (!flag) {
           cling::outs() << buff;
+          flag = fgets(buff, sizeof(buff), shell_result) == NULL;
         }
         pclose(shell_result);
       }

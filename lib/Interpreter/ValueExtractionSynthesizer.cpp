@@ -504,6 +504,10 @@ namespace runtime {
         .getAs<unsigned long long>() = value;
       dumpIfNoStorage(vpSVR, vpOn);
     }
+    template <class T>
+    void setValueNoAlloc(void* vpI, void* vpSVR, void* vpQT, char, T) {
+      allocateStoredRefValueAndGetGV(vpI, vpSVR, vpQT);
+    }
     void setValueNoAlloc(void* vpI, void* vpSVR, void* vpQT, char vpOn,
                          const void* value){
       allocateStoredRefValueAndGetGV(vpI, vpSVR, vpQT).getAs<void*>()

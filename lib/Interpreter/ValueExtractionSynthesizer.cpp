@@ -348,7 +348,17 @@ namespace {
         // we need to get the address of the references
         Expr* AddrOfE = m_Sema->BuildUnaryOp(/*Scope*/0, noLoc, UO_AddrOf,
                                              E).get();
-        CallArgs.push_back(AddrOfE);
+
+        QualType AddrOfETy = (AddrOfE) ? AddrOfE->getType() : m_Context->VoidTy;
+
+        // If the underlying type has overloaded `operator&` to return a
+        // non-pointer type, expression AddrOfE may not be a pointer.
+        // Cf. https://github.com/vgvassilev/cling/issues/176
+        // We ignore this case.
+        if (AddrOfETy->isAnyPointerType())
+        {
+            CallArgs.push_back(AddrOfE);
+        }
       }
       else if (desugaredTy->isAnyPointerType()) {
         // function pointers need explicit void* cast.
@@ -374,11 +384,6 @@ namespace {
       if (CallArgs.size() > nArgs) {
         Call = m_Sema->ActOnCallExpr(/*Scope*/0, m_UnresolvedNoAlloc,
                                    locStart, CallArgs, locEnd);
-      }
-      else {
-        m_Sema->Diag(locStart, diag::err_unsupported_unknown_any_decl) <<
-          utils::TypeName::GetFullyQualifiedName(desugaredTy, *m_Context) <<
-          SourceRange(locStart, locEnd);
       }
     }
 

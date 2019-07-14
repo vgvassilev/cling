@@ -728,7 +728,6 @@ def check_ubuntu(pkg):
         else:
             print(pkg.ljust(20) + '[OK]'.ljust(30))
     elif pkg == "cmake":
-        CMAKE = os.environ.get('CMAKE', 'cmake')
         if not check_version_string_ge(exec_subprocess_check_output('{cmake} --version'.format(cmake=CMAKE), '/').strip().split('\n')[0].split()[-1], '3.4.3'):
             print(pkg.ljust(20) + '[OUTDATED VERSION (<3.4.3)]'.ljust(30))
         else:
@@ -997,7 +996,6 @@ def check_redhat(pkg):
         else:
             print(pkg.ljust(20) + '[OK]'.ljust(30))
     elif pkg == "cmake":
-        CMAKE = os.environ.get('CMAKE', 'cmake')
         if not check_version_string_ge(exec_subprocess_check_output('{cmake} --version'.format(cmake=CMAKE), '/').strip().split('\n')[0].split()[-1], '3.4.3'):
             print(pkg.ljust(20) + '[OUTDATED VERSION (<3.4.3)]'.ljust(30))
         else:
@@ -1475,7 +1473,6 @@ def check_mac(pkg):
         else:
             print(pkg.ljust(20) + '[OK]'.ljust(30))
     elif pkg == "cmake":
-        CMAKE = os.environ.get('CMAKE', 'cmake')
         if not check_version_string_ge(exec_subprocess_check_output('{cmake} --version'.format(cmake=CMAKE), '/').strip().split('\n')[0].split()[-1].split('-')[0], '3.4.3'):
             print(pkg.ljust(20) + '[OUTDATED VERSION (<3.4.3)]'.ljust(30))
         else:

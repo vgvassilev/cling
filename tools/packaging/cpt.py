@@ -697,6 +697,23 @@ def check_version_string_ge(vstring, min_vstring):
             return True
     return True
 
+def which(program):
+    import os
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
 def check_ssl():
     pkg = "SSL"
     if sys.version_info < (3, 0):
@@ -716,6 +733,10 @@ def check_ssl():
 ###############################################################################
 
 def check_ubuntu(pkg):
+    if which(pkg) is None:
+        print(pkg.ljust(20) + '[NOT INSTALLED]'.ljust(30))
+        return
+
     if pkg == "gnupg":
         SIGNING_USER = exec_subprocess_check_output('gpg --fingerprint | grep uid | sed s/"uid *"//g', '/').strip()
         if SIGNING_USER == '':
@@ -733,9 +754,6 @@ def check_ubuntu(pkg):
         else:
             print(pkg.ljust(20) + '[OK]'.ljust(30))
 
-    elif exec_subprocess_check_output("dpkg-query -W -f='${Status}' %s 2>/dev/null | grep -c 'ok installed'" % (pkg),
-                                      '/').strip() == '0':
-        print(pkg.ljust(20) + '[NOT INSTALLED]'.ljust(30))
     else:
         if pkg == "gcc":
             if float(exec_subprocess_check_output('gcc -dumpversion', '/')[:3].strip()) <= 4.7:
@@ -988,6 +1006,10 @@ cling (%s-1) unstable; urgency=low
 ###############################################################################
 
 def check_redhat(pkg):
+    if which(pkg) is None:
+        print(pkg.ljust(20) + '[NOT INSTALLED]'.ljust(30))
+        return
+
     if pkg == "python":
         if platform.python_version()[0] == '3':
             print(pkg.ljust(20) + '[UNSUPPORTED VERSION (Python 3)]'.ljust(30))
@@ -1000,8 +1022,6 @@ def check_redhat(pkg):
             print(pkg.ljust(20) + '[OUTDATED VERSION (<3.4.3)]'.ljust(30))
         else:
             print(pkg.ljust(20) + '[OK]'.ljust(30))
-    elif exec_subprocess_check_output("rpm -qa | grep -w %s" % (pkg), '/').strip() == '':
-        print(pkg.ljust(20) + '[NOT INSTALLED]'.ljust(30))
     else:
         if pkg == "gcc-c++":
             if float(exec_subprocess_check_output('g++ -dumpversion', '/')[:3].strip()) <= 4.7:
@@ -1125,6 +1145,10 @@ rm -rf %{buildroot}
 ###############################################################################
 
 def check_win(pkg):
+    if which(pkg) is None:
+        print(pkg.ljust(20) + '[NOT INSTALLED]'.ljust(30))
+        return
+
     # Check for Microsoft Visual Studio 14.0
     if pkg == "msvc":
         if exec_subprocess_check_output('REG QUERY HKEY_CLASSES_ROOT\VisualStudio.DTE.14.0', 'C:\\').find(
@@ -1140,13 +1164,9 @@ def check_win(pkg):
             print(pkg.ljust(20) + '[OUTDATED VERSION (<2.7)]'.ljust(30))
         else:
             print(pkg.ljust(20) + '[OK]'.ljust(30))
-    # Check for other tools
+    # Other tools
     else:
-        if exec_subprocess_check_output('where %s' % (pkg), 'C:\\').find(
-                'INFO: Could not find files for the given pattern') != -1:
-            print(pkg.ljust(20) + '[NOT INSTALLED]'.ljust(30))
-        else:
-            print(pkg.ljust(20) + '[OK]'.ljust(30))
+        print(pkg.ljust(20) + '[OK]'.ljust(30))
 
 
 def is_os_64bit():
@@ -1465,6 +1485,10 @@ def build_nsis():
 ###############################################################################
 
 def check_mac(pkg):
+    if which(pkg) is None:
+        print(pkg.ljust(20) + '[NOT INSTALLED]'.ljust(30))
+        return
+
     if pkg == "python":
         if platform.python_version()[0] == '3':
             print(pkg.ljust(20) + '[UNSUPPORTED VERSION (Python 3)]'.ljust(30))
@@ -1477,8 +1501,6 @@ def check_mac(pkg):
             print(pkg.ljust(20) + '[OUTDATED VERSION (<3.4.3)]'.ljust(30))
         else:
             print(pkg.ljust(20) + '[OK]'.ljust(30))
-    elif exec_subprocess_check_output("type -p %s" % (pkg), '/').strip() == '':
-        print(pkg.ljust(20) + '[NOT INSTALLED]'.ljust(30))
     else:
         if pkg == "clang++":
             if float(exec_subprocess_check_output('clang++ -dumpversion', '/')[:3].strip()) <= 4.1:

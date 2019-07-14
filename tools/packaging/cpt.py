@@ -33,6 +33,7 @@ else:
     from urllib.request import urlopen
 
 import argparse
+from distutils.version import LooseVersion
 import os
 import platform
 import subprocess
@@ -688,14 +689,7 @@ def cleanup():
     gInCleanup = False
 
 def check_version_string_ge(vstring, min_vstring):
-    version_fields = [int(x) for x in vstring.split('.')]
-    min_versions = [int(x) for x in min_vstring.split('.')]
-    for i in range(0,len(min_versions)):
-        if version_fields[i] < min_versions[i]:
-            return False
-        elif version_fields[i] > min_versions[i]:
-            return True
-    return True
+    return LooseVersion(min_vstring) <= LooseVersion(vstring)
 
 def which(program):
     import os

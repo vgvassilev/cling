@@ -697,6 +697,19 @@ def check_version_string_ge(vstring, min_vstring):
             return True
     return True
 
+def check_ssl():
+    pkg = "SSL"
+    if sys.version_info < (3, 0):
+        # Python 2.x
+        import socket
+        if hasattr(socket, 'ssl'):
+            print(pkg.ljust(20) + '[SUPPORTED]'.ljust(30))
+        else:
+            print(pkg.ljust(20) + '[NOT SUPPORTED]'.ljust(30))
+    else:
+        # Python 3.x
+        print(pkg.ljust(20) + '[SUPPORTED]'.ljust(30))
+
 
 ###############################################################################
 #            Debian specific functions (ported from debianize.sh)             #
@@ -720,17 +733,6 @@ def check_ubuntu(pkg):
             print(pkg.ljust(20) + '[OUTDATED VERSION (<3.4.3)]'.ljust(30))
         else:
             print(pkg.ljust(20) + '[OK]'.ljust(30))
-    elif pkg == "SSL":
-        if sys.version_info < (3, 0):
-            # Python 2.x
-            import socket
-            if hasattr(socket, 'ssl'):
-                print(pkg.ljust(20) + '[SUPPORTED]'.ljust(30))
-            else:
-                print(pkg.ljust(20) + '[NOT SUPPORTED]'.ljust(30))
-        else:
-            # Python 3.x
-            print(pkg.ljust(20) + '[SUPPORTED]'.ljust(30))
 
     elif exec_subprocess_check_output("dpkg-query -W -f='${Status}' %s 2>/dev/null | grep -c 'ok installed'" % (pkg),
                                       '/').strip() == '0':
@@ -1000,18 +1002,6 @@ def check_redhat(pkg):
             print(pkg.ljust(20) + '[OUTDATED VERSION (<3.4.3)]'.ljust(30))
         else:
             print(pkg.ljust(20) + '[OK]'.ljust(30))
-    elif pkg == "SSL":
-        if sys.version_info < (3, 0):
-            # Python 2.x
-            import socket
-            if hasattr(socket, 'ssl'):
-                print(pkg.ljust(20) + '[SUPPORTED]'.ljust(30))
-            else:
-                print(pkg.ljust(20) + '[NOT SUPPORTED]'.ljust(30))
-        else:
-            # Python 3.x
-            print(pkg.ljust(20) + '[SUPPORTED]'.ljust(30))
-
     elif exec_subprocess_check_output("rpm -qa | grep -w %s" % (pkg), '/').strip() == '':
         print(pkg.ljust(20) + '[NOT INSTALLED]'.ljust(30))
     else:
@@ -1152,19 +1142,7 @@ def check_win(pkg):
             print(pkg.ljust(20) + '[OUTDATED VERSION (<2.7)]'.ljust(30))
         else:
             print(pkg.ljust(20) + '[OK]'.ljust(30))
-    elif pkg == 'SSL':
-        if sys.version_info < (3, 0):
-            # Python 2.x
-            import socket
-            if hasattr(socket, 'ssl'):
-                print(pkg.ljust(20) + '[SUPPORTED]'.ljust(30))
-            else:
-                print(pkg.ljust(20) + '[NOT SUPPORTED]'.ljust(30))
-        else:
-            # Python 3.x
-            print(pkg.ljust(20) + '[SUPPORTED]'.ljust(30))
-
-            # Check for other tools
+    # Check for other tools
     else:
         if exec_subprocess_check_output('where %s' % (pkg), 'C:\\').find(
                 'INFO: Could not find files for the given pattern') != -1:
@@ -1502,18 +1480,6 @@ def check_mac(pkg):
             print(pkg.ljust(20) + '[OUTDATED VERSION (<3.4.3)]'.ljust(30))
         else:
             print(pkg.ljust(20) + '[OK]'.ljust(30))
-    elif pkg == "SSL":
-        if sys.version_info < (3, 0):
-            # Python 2.x
-            import socket
-            if hasattr(socket, 'ssl'):
-                print(pkg.ljust(20) + '[SUPPORTED]'.ljust(30))
-            else:
-                print(pkg.ljust(20) + '[NOT SUPPORTED]'.ljust(30))
-        else:
-            # Python 3.x
-            print(pkg.ljust(20) + '[SUPPORTED]'.ljust(30))
-
     elif exec_subprocess_check_output("type -p %s" % (pkg), '/').strip() == '':
         print(pkg.ljust(20) + '[NOT INSTALLED]'.ljust(30))
     else:
@@ -1846,7 +1812,7 @@ if args['check_requirements']:
         check_ubuntu('devscripts')
         check_ubuntu('gnupg')
         check_ubuntu('python')
-        check_ubuntu('SSL')
+        check_ssl()
         yes = {'yes', 'y', 'ye', ''}
         no = {'no', 'n'}
 
@@ -1881,7 +1847,7 @@ Install/update the required packages by:
     elif OS == 'Windows':
         check_win('git')
         check_win('python')
-        check_win('SSL')
+        check_ssl()
         # Check Windows registry for keys that prove an MS Visual Studio 14.0 installation
         check_win('msvc')
         print('''
@@ -1895,7 +1861,7 @@ Refer to the documentation of CPT for information on setting up your Windows env
         check_redhat('gcc-c++')
         check_redhat('rpm-build')
         check_redhat('python')
-        check_redhat('SSL')
+        check_ssl()
         yes = {'yes', 'y', 'ye', ''}
         no = {'no', 'n'}
 
@@ -1927,7 +1893,7 @@ Install/update the required packages by:
         check_mac('clang')
         check_mac('clang++')
         check_mac('python')
-        check_mac('SSL')
+        check_ssl()
         yes = {'yes', 'y', 'ye', ''}
         no = {'no', 'n'}
 

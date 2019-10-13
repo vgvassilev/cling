@@ -221,7 +221,7 @@ script:
 notifications:
   email:
     recipients:
-      #- cling-dev@cern.ch
+      - reikdas@gmail.com
     on_success: change
     on_failure: always
     template:

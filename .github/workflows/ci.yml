@@ -1,0 +1,155 @@
+name: Cling CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+
+        include:
+          - name: ubuntu-16.04-gcc-4.8-compile
+            os: ubuntu-16.04
+            compiler: gcc
+            version: "4.8"
+
+          - name: ubuntu-16.04-gcc-5
+            os: ubuntu-16.04
+            compiler: gcc
+            version: "5"
+
+          - name: ubuntu-16.04-gcc-6
+            os: ubuntu-16.04
+            compiler: gcc
+            version: "6"
+
+          - name: ubuntu-16.04-gcc-7
+            os: ubuntu-16.04
+            compiler: gcc
+            version: "7"
+
+          - name: ubuntu-16.04-gcc-7-compile
+            os: ubuntu-16.04
+            compiler: gcc
+            version: "7"
+
+          - name: ubuntu-16.04-gcc-7-notar
+            os: ubuntu-16.04
+            compiler: gcc
+            version: "7"
+
+          - name: ubuntu-16.04-clang-3.9
+            os: ubuntu-16.04
+            compiler: clang
+            version: "3.9"
+
+          - name: ubuntu-16.04-clang-6
+            os: ubuntu-16.04
+            compiler: clang
+            version: "6.0"
+
+          - name: ubuntu-16.04-clang-6-compile
+            os: ubuntu-16.04
+            compiler: clang
+            version: "6.0"
+
+          - name: ubuntu-18.04-gcc-7-notar
+            os: ubuntu-18.04
+            compiler: gcc
+            version: "7"
+
+          - name: ubuntu-18.04-gcc-7-compile
+            os: ubuntu-18.04
+            compiler: gcc
+            version: "7"
+
+          - name: ubuntu-18.04-clang-7-notar
+            os: ubuntu-18.04
+            compiler: clang
+            version: "7"
+
+          - name: macos-xcode-11.2.1
+            os: macOS-latest
+            compiler: clang
+            xcode-version: "11.2.1"
+
+          - name: macos-xcode-11.2.1-compile
+            os: macOS-latest
+            compiler: clang
+            xcode-version: "11.2.1"
+
+      #    - name: macos-xcode-11.2.1-notar
+      #      os: macOS-latest
+      #      compiler: clang
+      #      xcode-version: "11.2.1"
+
+          - name: macos-gcc-9-compile
+            os: macOS-latest
+            compiler: gcc
+            version: "9"
+
+          - name: ubuntu-20.04-clang-7-compile
+            os: ubuntu-20.04
+            compiler: clang
+            version: "7"
+
+          - name: ubuntu-20.04-gcc-7-compile
+            os: ubuntu-20.04
+            compiler: gcc
+            version: "7"
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup compiler on Linux
+      run: |
+        sudo apt-get update
+        if [ "${{ matrix.compiler }}" = "gcc" ]; then
+          sudo apt-get install -y gcc-${{ matrix.version }} g++-${{ matrix.version }}
+          echo "CC=gcc-${{ matrix.version }}" >> $GITHUB_ENV
+          echo "CXX=g++-${{ matrix.version }}" >> $GITHUB_ENV
+        else
+          sudo apt-get install -y clang-${{ matrix.version }}
+          echo "CC=clang-${{ matrix.version }}" >> $GITHUB_ENV
+          echo "CXX=clang++-${{ matrix.version }}" >> $GITHUB_ENV
+        fi
+      if: runner.os == 'Linux'
+      shell: bash
+    - name: Setup compiler on OS X
+      run: |
+        curl -LO https://raw.githubusercontent.com/GiovanniBussi/macports-ci/master/macports-ci; source ./macports-ci install
+        if [ "${{ matrix.compiler }}" = "gcc" ]; then
+          brew install gcc@${{ matrix.version }}
+          echo "CC=gcc-${{ matrix.version }}" >> $GITHUB_ENV
+          echo "CXX=g++-${{ matrix.version }}" >> $GITHUB_ENV
+        else
+          sudo xcode-select -switch /Applications/Xcode_${{ matrix.xcode-version }}.app
+          echo "CC=clang" >> $GITHUB_ENV
+          echo "CXX=clang++" >> $GITHUB_ENV
+        fi
+      if: runner.os == 'macOS'
+    - name: Execute cpt
+      run: |
+        if [[ "${{ matrix.compiler }}" = "gcc" && "${{ matrix.version }}" = "7" ]]; then
+          export CLING_BUILD_FLAGS="-DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON"
+          if [ "${{ matrix.os }}" != "macOS-latest" ]; then
+            export CLING_BUILD_FLAGS="$CLING_BUILD_FLAGS -DCXX_EXTENSIONS=OFF"
+          fi
+        fi
+        export CLING_BUILD_FLAGS="$CLING_BUILD_FLAGS -DCLANG_ENABLE_ARCMT=OFF -DCLANG_ENABLE_STATIC_ANALYZER=OFF -DLLVM_ENABLE_WARNINGS=OFF -DCLING_ENABLE_WARNINGS=ON"
+        if [[ ${{ matrix.name }} == *"compile"* ]]; then
+          ./cpt.py -y --check-requirements --current-dev=tar --with-cmake-flags="$CLING_BUILD_FLAGS" --with-cling-url=https://github.com/$GITHUB_REPOSITORY --cling-branch=${{ github.head_ref }}
+        elif [[ ${{ matrix.name }} == *"notar"* ]]; then
+          ./cpt.py -y --check-requirements --current-dev=tar --with-cmake-flags="$CLING_BUILD_FLAGS" --with-cling-url=https://github.com/$GITHUB_REPOSITORY --cling-branch=${{ github.head_ref }} --with-binary-llvm
+        else
+          ./cpt.py -y --check-requirements --current-dev=tar --with-cmake-flags="$CLING_BUILD_FLAGS" --with-cling-url=https://github.com/$GITHUB_REPOSITORY --cling-branch=${{ github.head_ref }} --with-binary-llvm --with-llvm-tar
+        fi
+      working-directory: tools/packaging/

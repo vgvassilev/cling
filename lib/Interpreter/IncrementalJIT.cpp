@@ -443,7 +443,7 @@ IncrementalJIT::getSymbolAddressWithoutMangling(const std::string& Name,
   return llvm::JITSymbol(nullptr);
 }
 
-void IncrementalJIT::addModule(std::unique_ptr<llvm::Module> module) {
+void IncrementalJIT::addModule(const std::shared_ptr<llvm::Module>& module) {
   // If this module doesn't have a DataLayout attached then attach the
   // default.
   module->setDataLayout(m_TMDataLayout);
@@ -469,10 +469,10 @@ void IncrementalJIT::addModule(std::unique_ptr<llvm::Module> module) {
 }
 
 llvm::Error
-IncrementalJIT::removeModule(const llvm::Module* module) {
+IncrementalJIT::removeModule(const std::shared_ptr<llvm::Module>& module) {
   // FIXME: Track down what calls this routine on a not-yet-added module. Once
   // this is resolved we can remove this check enabling the assert.
-  auto IUnload = m_UnloadPoints.find(module);
+  auto IUnload = m_UnloadPoints.find(module.get());
   if (IUnload == m_UnloadPoints.end())
     return llvm::Error::success();
   llvm::orc::VModuleKey K = IUnload->second;

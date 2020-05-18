@@ -1075,6 +1075,7 @@ cling (%s-1) unstable; urgency=low
         f = open(os.path.join(prefix, 'debian', 'changelog'), 'a+')
         f.write('\n -- ' + SIGNING_USER + '  ' + formatdate(time.time(), tzinfo()) + '\n')
         f.close()
+        STABLE_FLAG = '0'
     else:
         TAG = VERSION.replace('v', '')
         if TAG == '0.1':
@@ -1083,7 +1084,7 @@ cling (%s-1) unstable; urgency=low
             f.close()
         STABLE_FLAG = '1'
 
-    while TAG != '0.1':
+    while TAG > '0.1':
         CMP = TAG
         TAG = str(float(TAG) - 0.1)
         if STABLE_FLAG != '1':

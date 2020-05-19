@@ -943,7 +943,6 @@ exit 0
     f = open(os.path.join(prefix, 'debian', 'cling.install'), 'w')
     template = '''
 bin/* /usr/bin
-docs/* /usr/share/doc
 include/* /usr/include
 lib/* /usr/lib
 share/* /usr/share

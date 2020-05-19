@@ -1066,7 +1066,7 @@ cling (%s-1) unstable; urgency=low
 
     if '~dev' in VERSION:
         TAG = str(float(VERSION[:VERSION.find('~')]) - 0.1)
-        template = exec_subprocess_check_output('git log v' + TAG + '...HEAD --format="  * %s" | fmt -s', CLING_SRC_DIR)
+        template = subprocess.check_output('git log v' + TAG + '...HEAD --format="  * %s" | fmt -s', cwd=CLING_SRC_DIR, shell=True).decode("utf-8")
 
         f = open(os.path.join(prefix, 'debian', 'changelog'), 'a+')
         f.write(template)
@@ -1092,8 +1092,7 @@ cling (%s-1) unstable; urgency=low
             f.write('cling (' + TAG + '-1) unstable; urgency=low\n')
             f.close()
             STABLE_FLAG = '1'
-            template = exec_subprocess_check_output('git log v' + CMP + '...v' + TAG + '--format="  * %s" | fmt -s',
-                                                    CLING_SRC_DIR)
+            template = subprocess.check_output('git log v' + CMP + '...v' + TAG + '--format="  * %s" | fmt -s', cwd=CLING_SRC_DIR, shell=True).decode("utf-8")
 
             f = open(os.path.join(prefix, 'debian', 'changelog'), 'a+')
             f.write(template)
@@ -1108,10 +1107,10 @@ cling (%s-1) unstable; urgency=low
     f.write('\nOld Changelog:\n')
     f.close()
 
-    template = exec_subprocess_check_output('git log v0.1 --format="  * %s%n -- %an <%ae>  %cD%n"', CLING_SRC_DIR)
+    template = subprocess.check_output('git log v0.1 --format="  * %s%n -- %an <%ae>  %cD%n"', cwd=CLING_SRC_DIR, shell=True).decode("utf-8")
 
     f = open(os.path.join(prefix, 'debian', 'changelog'), 'a+')
-    f.write(template.encode('utf-8'))
+    f.write(template)
     f.close()
 
     box_draw("Run debuild to create Debian package")

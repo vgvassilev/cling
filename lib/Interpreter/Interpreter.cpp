@@ -684,7 +684,7 @@ namespace cling {
     CodeGenerator* CG = m_IncrParser->getCodeGenerator();
     ClangInternalState* state = new ClangInternalState(
         getCI()->getASTContext(), getCI()->getPreprocessor(),
-        getLastTransaction()->getModule().get(), CG, name);
+        getLastTransaction()->getModule(), CG, name);
     m_StoredStates.push_back(state);
   }
 
@@ -1485,7 +1485,7 @@ namespace cling {
     auto Module = T.getModule();
     if (Module && !m_StoredStates.empty()) {
       const auto Predicate = [&Module](const ClangInternalState* S) {
-        return S->getModule() == Module.get();
+        return S->getModule() == Module;
       };
       auto Itr =
           std::find_if(m_StoredStates.begin(), m_StoredStates.end(), Predicate);
@@ -1685,8 +1685,8 @@ namespace cling {
 
     IncrementalExecutor::ExecutionResult ExeRes
        = IncrementalExecutor::kExeSuccess;
-    if (!isPracticallyEmptyModule(T.getModule().get())) {
-      m_Executor->emitModule(T.getModule(), T.getCompilationOpts().OptLevel);
+    if (!isPracticallyEmptyModule(T.getModule())) {
+      m_Executor->emitModule(T.takeModule(), T.getCompilationOpts().OptLevel);
 
       // Forward to IncrementalExecutor; should not be called by
       // anyone except for IncrementalParser.

@@ -203,8 +203,8 @@ public:
   llvm::JITSymbol getSymbolAddressWithoutMangling(const std::string& Name,
                                                   bool AlsoInProcess);
 
-  void addModule(const std::shared_ptr<llvm::Module>& module);
-  llvm::Error removeModule(const std::shared_ptr<llvm::Module>& module);
+  void addModule(std::unique_ptr<llvm::Module> module);
+  llvm::Error removeModule(const llvm::Module* module);
 
   IncrementalExecutor& getParent() const { return m_Parent; }
 

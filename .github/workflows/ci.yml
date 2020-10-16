@@ -107,6 +107,14 @@ jobs:
             compiler: gcc
             version: "7"
 
+          - name: windows-2019-ninja
+            os: windows-2019
+            generator: Ninja
+
+          - name: windows-2019-visual-studio
+            os: windows-2019
+            generator: Visual Studio 16 2019
+
     steps:
     - uses: actions/checkout@v2
     - name: Setup compiler on Linux
@@ -136,7 +144,10 @@ jobs:
           echo "CXX=clang++" >> $GITHUB_ENV
         fi
       if: runner.os == 'macOS'
-    - name: Execute cpt
+    - name: Setup ninja for Windows
+      uses: seanmiddleditch/gha-setup-ninja@master
+      if: runner.os == 'Windows' && matrix.generator == 'Ninja'
+    - name: Execute cpt on Linux/OS X
       run: |
         if [[ "${{ matrix.compiler }}" = "gcc" && "${{ matrix.version }}" = "7" ]]; then
           export CLING_BUILD_FLAGS="-DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON"
@@ -153,3 +164,10 @@ jobs:
           ./cpt.py -y --check-requirements --current-dev=tar --with-cmake-flags="$CLING_BUILD_FLAGS" --with-cling-url=https://github.com/$GITHUB_REPOSITORY --cling-branch=${{ github.head_ref }} --with-binary-llvm --with-llvm-tar
         fi
       working-directory: tools/packaging/
+      if: runner.os != 'Windows'
+    - name: Execute cpt on Windows
+      run: |
+        python cpt.py --current-dev=tar --with-cmake-flags="-DLLVM_OPTIMIZED_TABLEGEN=ON -DCLING_BUILD_PLUGINS=Off -G \"${{ matrix.generator}}\"" --with-cling-url=https://github.com/$GITHUB_REPOSITORY --cling-branch=${{ github.head_ref }} --skip-cleanup
+      working-directory: tools/packaging/
+      shell: bash
+      if: runner.os == 'Windows'

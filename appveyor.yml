@@ -53,8 +53,7 @@ build_script:
   - tools\packaging\cpt.py ^
         --current-dev=tar ^
         --with-cling-url=https://github.com/%APPVEYOR_REPO_NAME% ^
-        --with-clang-url=http://root.cern.ch/git/clang.git ^
-        --with-llvm-url=http://root.cern.ch/git/llvm.git ^
+        --cling-branch=%APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH% ^
         --with-cmake-flags="-DLLVM_OPTIMIZED_TABLEGEN=ON -G\"%CMAKE_GEN%\"" ^
         --skip-cleanup
 

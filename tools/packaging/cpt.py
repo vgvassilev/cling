@@ -1113,7 +1113,7 @@ cling (%s-1) unstable; urgency=low
     f.close()
 
     box_draw("Run debuild to create Debian package")
-    exec_subprocess_call('debuild', prefix)
+    exec_subprocess_call('debuild -us -uc', prefix)
 
 
 ###############################################################################

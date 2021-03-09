@@ -422,6 +422,10 @@ def fetch_cling(arg):
     else:
         get_fresh_cling()
 
+    # Only till we need the LLVM 9 patches
+    if tar_required:
+        apply_llvm_patches()
+
 def set_version():
     global VERSION
     global REVISION
@@ -507,16 +511,25 @@ def allow_clang_tool():
     with open(os.path.join(workdir, 'clang', 'tools', 'CMakeLists.txt'), 'a') as file:
         file.writelines('add_llvm_external_project(cling)')
 
-'''
+
+# Only for LLVM 9
 def apply_llvm_patches():
+    assert llvm_revision == "release_90"
+    # Get llvm path
     llvm_dir = exec_subprocess_check_output("llvm-config --src-root", ".").strip()
     if llvm_dir == "":
         if tar_required:
             llvm_dir = copy.copy(srcdir)
         else:
             llvm_dir = os.path.join("/usr", "lib", "llvm-" + llvm_vers, "build")
-    subprocess.
-'''
+    # Move patches to correct location
+    for f in os.listdir(os.path.join(CLING_SRC_DIR, "patches", "llvm90")):
+        if f.endswith(".diff"):
+            shutil.move(os.path.join(CLING_SRC_DIR, "patches", "llvm90", f), llvm_dir)
+    # Apply patches
+    for f in os.listdir(llvm_dir):
+        if f.endswith(".diff"):
+            subprocess.run("patch -p1 < {0}".format(f), cwd=llvm_dir, shell=True)
 
 class Build(object):
     def __init__(self, target=None):
@@ -1827,7 +1840,8 @@ parser.add_argument('--with-cling-url', action='store', help='Specify an alterna
 parser.add_argument('--cling-branch', help='Specify a particular Cling branch')
 
 parser.add_argument('--with-binary-llvm', help='Download LLVM binary and use it to build Cling in dev mode', action='store_true')
-parser.add_argument('--with-llvm-tar', help='Download and use LLVM binary release tar to build Cling for debugging', action='store_true')
+# FIXME: Marked as inactive till we want to build using system installed LLVM
+parser.add_argument('--with-llvm-tar', help='[INACTIVE] Download and use LLVM binary release tar to build Cling for debugging', action='store_true')
 parser.add_argument('--no-test', help='Do not run test suite of Cling', action='store_true')
 parser.add_argument('--skip-cleanup', help='Do not clean up after a build', action='store_true')
 parser.add_argument('--use-wget', help='Do not use Git to fetch sources', action='store_true')
@@ -1876,7 +1890,7 @@ tar_required = False
 llvm_revision = urlopen(
                 "https://raw.githubusercontent.com/root-project/cling/master/LastKnownGoodLLVMSVNRevision.txt").readline().strip().decode(
                 'utf-8')
-llvm_vers = "{0}.{1}".format(llvm_revision[-2], llvm_revision[-1])
+llvm_vers = llvm_revision[-2]
 LLVM_GIT_URL = ""
 CLANG_GIT_URL = args['with_clang_url']
 CLING_GIT_URL = args['with_cling_url']
@@ -1999,7 +2013,8 @@ elif args['with_binary_llvm'] is False and args['with_llvm_url']:
 else:
     LLVM_GIT_URL = "http://root.cern.ch/git/llvm.git"
 
-if args['with_llvm_tar']:
+# FIXME: Remove with_binary_llvm check when we want to build using system installed LLVM
+if args['with_llvm_tar'] or args["with_binary_llvm"]:
     tar_required = True
 
 if args['check_requirements']:
@@ -2010,9 +2025,12 @@ if args['check_requirements']:
         prerequisite = ['git', 'cmake', 'gcc', 'g++', 'debhelper', 'devscripts', 'gnupg', 'zlib1g-dev']
         if args["with_binary_llvm"] or args["with_llvm_tar"]:
             prerequisite.extend(['subversion'])
+        # FIXME: Uncomment when we want to build using system installed LLVM
+        '''
         if args["with_binary_llvm"] and not args["with_llvm_tar"]:
             if check_ubuntu('llvm-'+llvm_vers+'-dev') is False:
                 llvm_binary_name = 'llvm-{0}-dev'.format(llvm_vers)
+        '''
         for pkg in prerequisite:
             if check_ubuntu(pkg) is False:
                 install_line += pkg + ' '

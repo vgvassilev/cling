@@ -619,7 +619,7 @@ def compile_for_binary(arg):
     cmake_config_flags = (clangdir + ' -DCMAKE_BUILD_TYPE={0} -DCMAKE_INSTALL_PREFIX={1} '
                           .format(build.buildType, TMP_PREFIX) + llvm_flags +
                           ' -DLLVM_TARGETS_TO_BUILD=host;NVPTX -DCLING_CXX_HEADERS=ON -DCLING_INCLUDE_TESTS=ON' +
-                          ' -DCMAKE_CXX_FLAGS=-isystem {0} -DCMAKE_C_FLAGS=-isystem {0}'.format(patch_path) +
+                          ' -DCMAKE_CXX_FLAGS="-isystem {0}" -DCMAKE_C_FLAGS="-isystem {0}"'.format(patch_path) +
                           EXTRA_CMAKE_FLAGS)
     box_draw('Configure Cling with CMake ' + cmake_config_flags)
     exec_subprocess_call('%s %s' % (CMAKE, cmake_config_flags), LLVM_OBJ_ROOT, True)
@@ -910,13 +910,6 @@ def check_ubuntu(pkg):
             return True
     elif pkg == "lit":
         if exec_subprocess_check_output('which lit', workdir) != '':
-            print(pkg.ljust(20) + '[OK]'.ljust(30))
-            return True
-        else:
-            print(pkg.ljust(20) + '[NOT INSTALLED]'.ljust(30))
-            return False
-    elif pkg == 'llvm-'+llvm_vers+'-dev':
-        if exec_subprocess_check_output('which llvm-config-{0}'.format(llvm_vers), workdir) != '':
             print(pkg.ljust(20) + '[OK]'.ljust(30))
             return True
         else:
@@ -1828,7 +1821,7 @@ parser.add_argument('--cling-branch', help='Specify a particular Cling branch')
 
 parser.add_argument('--with-binary-llvm', help='Download LLVM binary and use it to build Cling in dev mode', action='store_true')
 # Inactive till we want to build using system installed LLVM
-# parser.add_argument('--with-llvm-tar', help='[INACTIVE] Download and use LLVM binary release tar to build Cling for debugging', action='store_true')
+parser.add_argument('--with-llvm-tar', help='[INACTIVE] Download and use LLVM binary release tar to build Cling for debugging', action='store_true')
 parser.add_argument('--no-test', help='Do not run test suite of Cling', action='store_true')
 parser.add_argument('--skip-cleanup', help='Do not clean up after a build', action='store_true')
 parser.add_argument('--use-wget', help='Do not use Git to fetch sources', action='store_true')
@@ -2009,11 +2002,8 @@ if args['check_requirements']:
     if DIST == 'Ubuntu':
         install_line = ""
         prerequisite = ['git', 'cmake', 'gcc', 'g++', 'debhelper', 'devscripts', 'gnupg', 'zlib1g-dev']
-        if args["with_binary_llvm"] or args["with_llvm_tar"]:
-            prerequisite.extend(['subversion'])
         if args["with_binary_llvm"] and not args["with_llvm_tar"]:
-            if check_ubuntu('llvm-'+llvm_vers+'-dev') is False:
-                llvm_binary_name = 'llvm-{0}-dev'.format(llvm_vers)
+            llvm_binary_name = 'llvm-{0}-dev'.format(llvm_vers)
         for pkg in prerequisite:
             if check_ubuntu(pkg) is False:
                 install_line += pkg + ' '

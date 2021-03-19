@@ -245,6 +245,8 @@ def download_llvm_binary():
                            os.path.join(llvm_dir, 'lib'), os.path.join(llvm_dir, 'include'), os.path.join(llvm_dir, 'bin', 'llvm-tblgen'),
                            os.path.join(llvm_dir, 'bin'))
         else:
+            # Only while we use LLVM 9
+            raise Exception("Building clang using LLVM binary not possible. Please invoke cpt without --with-binary-llvm and --with-llvm-tar flags")
             tar_required = True
     elif DIST == 'MacOSX':
         subprocess.call(
@@ -259,9 +261,15 @@ def download_llvm_binary():
                           -DLLVM_TOOLS_BINARY_DIR={5} -DLLVM_TOOL_CLING_BUILD=ON".format(llvm_dir, llvm_config_path,
                           os.path.join(llvm_dir, 'lib'), os.path.join(llvm_dir, 'include'), os.path.join(llvm_dir, 'bin', 'llvm-tblgen'),
                           os.path.join(llvm_dir, 'bin'))
+        else:
+            # Only while we use LLVM 9
+            raise Exception("Building clang using LLVM binary not possible. Please invoke cpt without --with-binary-llvm and --with-llvm-tar flags")
+            tar_required = True
     else:
         raise Exception("Building clang using LLVM binary not possible. Please invoke cpt without --with-binary-llvm and --with-llvm-tar flags")
     if tar_required:
+        # Only while we use LLVM 9
+        raise Exception("--with-llvm-tar flag not supported currently")
         llvm_flags = "-DLLVM_BINARY_DIR={0} -DLLVM_CONFIG={1} -DLLVM_LIBRARY_DIR={2} -DLLVM_MAIN_INCLUDE_DIR={3} -DLLVM_TABLEGEN_EXE={4} \
                       -DLLVM_TOOLS_BINARY_DIR={5} -DLLVM_TOOL_CLING_BUILD=ON".format(srcdir, os.path.join(srcdir, 'bin', 'llvm-config'),
                        os.path.join(srcdir, 'lib'), os.path.join(srcdir, 'include'), os.path.join(srcdir, 'bin', 'llvm-tblgen'),
@@ -422,9 +430,6 @@ def fetch_cling(arg):
     else:
         get_fresh_cling()
 
-    # Only till we need the LLVM 9 patches
-    if tar_required:
-        apply_llvm_patches()
 
 def set_version():
     global VERSION
@@ -510,26 +515,6 @@ def set_vars_for_lit():
 def allow_clang_tool():
     with open(os.path.join(workdir, 'clang', 'tools', 'CMakeLists.txt'), 'a') as file:
         file.writelines('add_llvm_external_project(cling)')
-
-
-# Only for LLVM 9
-def apply_llvm_patches():
-    assert llvm_revision == "release_90"
-    # Get llvm path
-    llvm_dir = exec_subprocess_check_output("llvm-config --src-root", ".").strip()
-    if llvm_dir == "":
-        if tar_required:
-            llvm_dir = copy.copy(srcdir)
-        else:
-            llvm_dir = os.path.join("/usr", "lib", "llvm-" + llvm_vers, "build")
-    # Move patches to correct location
-    for f in os.listdir(os.path.join(CLING_SRC_DIR, "patches", "llvm90")):
-        if f.endswith(".diff"):
-            shutil.move(os.path.join(CLING_SRC_DIR, "patches", "llvm90", f), llvm_dir)
-    # Apply patches
-    for f in os.listdir(llvm_dir):
-        if f.endswith(".diff"):
-            subprocess.run("patch -p1 < {0}".format(f), cwd=llvm_dir, shell=True)
 
 class Build(object):
     def __init__(self, target=None):
@@ -629,10 +614,12 @@ def compile_for_binary(arg):
         print("Creating build directory: " + LLVM_OBJ_ROOT)
         os.makedirs(LLVM_OBJ_ROOT)
 
+    patch_path = os.path.join(CLING_SRC_DIR, "patches", "llvm90-headers")
     build = Build()
     cmake_config_flags = (clangdir + ' -DCMAKE_BUILD_TYPE={0} -DCMAKE_INSTALL_PREFIX={1} '
                           .format(build.buildType, TMP_PREFIX) + llvm_flags +
                           ' -DLLVM_TARGETS_TO_BUILD=host;NVPTX -DCLING_CXX_HEADERS=ON -DCLING_INCLUDE_TESTS=ON' +
+                          ' -DCMAKE_CXX_FLAGS=-isystem {0} -DCMAKE_C_FLAGS=-isystem {0}'.format(patch_path) +
                           EXTRA_CMAKE_FLAGS)
     box_draw('Configure Cling with CMake ' + cmake_config_flags)
     exec_subprocess_call('%s %s' % (CMAKE, cmake_config_flags), LLVM_OBJ_ROOT, True)
@@ -1840,8 +1827,8 @@ parser.add_argument('--with-cling-url', action='store', help='Specify an alterna
 parser.add_argument('--cling-branch', help='Specify a particular Cling branch')
 
 parser.add_argument('--with-binary-llvm', help='Download LLVM binary and use it to build Cling in dev mode', action='store_true')
-# FIXME: Marked as inactive till we want to build using system installed LLVM
-parser.add_argument('--with-llvm-tar', help='[INACTIVE] Download and use LLVM binary release tar to build Cling for debugging', action='store_true')
+# Inactive till we want to build using system installed LLVM
+# parser.add_argument('--with-llvm-tar', help='[INACTIVE] Download and use LLVM binary release tar to build Cling for debugging', action='store_true')
 parser.add_argument('--no-test', help='Do not run test suite of Cling', action='store_true')
 parser.add_argument('--skip-cleanup', help='Do not clean up after a build', action='store_true')
 parser.add_argument('--use-wget', help='Do not use Git to fetch sources', action='store_true')
@@ -2013,8 +2000,7 @@ elif args['with_binary_llvm'] is False and args['with_llvm_url']:
 else:
     LLVM_GIT_URL = "http://root.cern.ch/git/llvm.git"
 
-# FIXME: Remove with_binary_llvm check when we want to build using system installed LLVM
-if args['with_llvm_tar'] or args["with_binary_llvm"]:
+if args['with_llvm_tar']:
     tar_required = True
 
 if args['check_requirements']:
@@ -2025,12 +2011,9 @@ if args['check_requirements']:
         prerequisite = ['git', 'cmake', 'gcc', 'g++', 'debhelper', 'devscripts', 'gnupg', 'zlib1g-dev']
         if args["with_binary_llvm"] or args["with_llvm_tar"]:
             prerequisite.extend(['subversion'])
-        # FIXME: Uncomment when we want to build using system installed LLVM
-        '''
         if args["with_binary_llvm"] and not args["with_llvm_tar"]:
             if check_ubuntu('llvm-'+llvm_vers+'-dev') is False:
                 llvm_binary_name = 'llvm-{0}-dev'.format(llvm_vers)
-        '''
         for pkg in prerequisite:
             if check_ubuntu(pkg) is False:
                 install_line += pkg + ' '
@@ -2075,6 +2058,8 @@ if args['check_requirements']:
                                  stdout=None,
                                  stderr=subprocess.STDOUT).communicate('yes'.encode('utf-8'))
             except:
+                # Only while we use LLVM 9
+                raise Exception("--with-llvm-tar flag currently not supported")
                 tar_required = True
 
     elif OS == 'Windows':

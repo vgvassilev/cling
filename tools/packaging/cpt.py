@@ -2042,7 +2042,7 @@ if args['check_requirements']:
                     continue
         if no_install is False and llvm_binary_name != "" and tar_required is False:
             try:
-                subprocess.Popen(['sudo apt-get install llvm-{0}-dev'.format(llvm_vers)],
+                subprocess.Popen(['sudo apt-get install llvm-{0}-dev libclang-common-{0}-dev'.format(llvm_vers)],
                                  shell=True,
                                  stdin=subprocess.PIPE,
                                  stdout=None,

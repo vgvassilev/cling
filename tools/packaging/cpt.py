@@ -253,7 +253,7 @@ def download_llvm_binary():
             "sudo -H {0} -m pip install lit".format(sys.executable), shell=True
             )
         if tar_required is False:
-            llvm_dir = os.path.join("/opt", "local", "libexec", "llvm-"+llvm_vers)
+            llvm_dir = os.path.join("/opt", "local", "libexec", "llvm-"+llvm_vers+".0")
             llvm_config_path = os.path.join(llvm_dir, "bin", "llvm-config")
             if llvm_config_path[-1:] == "\n":
                 llvm_config_path = llvm_config_path[:-1]
@@ -502,7 +502,7 @@ def set_vars_for_lit():
         with open(os.path.join(CLING_SRC_DIR, "test", "lit.site.cfg.in"), "w") as file:
             file.writelines(lines)
     elif DIST == 'MacOSX' and tar_required is False:
-        llvm_dir = os.path.join("/opt", "local", "libexec", "llvm-" + llvm_vers)
+        llvm_dir = os.path.join("/opt", "local", "libexec", "llvm-" + llvm_vers + ".0")
         with open(os.path.join(CLING_SRC_DIR, "test", "lit.site.cfg.in"), "r") as file:
             lines = file.readlines()
         for i in range(len(lines)):
@@ -2098,7 +2098,7 @@ Refer to the documentation of CPT for information on setting up your Windows env
         if args['with_llvm_tar']:
             tar_required = True
         else:
-            llvm_binary_name = 'llvm-' + llvm_vers
+            llvm_binary_name = 'llvm-' + llvm_vers + ".0"
         for pkg in prerequisite:
             if check_mac(pkg) is False:
                 install_line += pkg + ' '

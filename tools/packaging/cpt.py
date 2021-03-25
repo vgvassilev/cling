@@ -616,7 +616,7 @@ def compile_for_binary(arg):
 
     patch_path = os.path.join(CLING_SRC_DIR, "patches", "llvm90-headers")
     build = Build()
-    cmake_config_flags = (clangdir + ' -DCMAKE_CXX_FLAGS="-isystem {2}" -DCMAKE_C_FLAGS="-isystem {2}" -DCMAKE_BUILD_TYPE={0} -DCMAKE_INSTALL_PREFIX={1} -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON '
+    cmake_config_flags = (clangdir + ' -DCMAKE_CXX_FLAGS="-isystem {2} $CMAKE_CXX_FLAGS" -DCMAKE_C_FLAGS="-isystem {2} $CMAKE_C_FLAGS" -DCMAKE_BUILD_TYPE={0} -DCMAKE_INSTALL_PREFIX={1} -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON '
                           .format(build.buildType, TMP_PREFIX, patch_path) + llvm_flags +
                           ' -DLLVM_TARGETS_TO_BUILD=host;NVPTX -DCLING_CXX_HEADERS=ON -DCLING_INCLUDE_TESTS=ON' +
                           EXTRA_CMAKE_FLAGS)

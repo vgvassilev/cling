@@ -22,6 +22,7 @@
 
 import sys
 
+# FIXME: Check doesn't work?
 if sys.version_info < (3, 0):
     raise Exception("cpt needs Python 3")
 

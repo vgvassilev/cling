@@ -83,7 +83,7 @@ jobs:
       run: $CC --version
     - name: Set Python 3 as default
       run: |
-        echo "python=python3" >> $GITHUB_ENV
+        sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 10
     - name: Execute cpt
       run: |
         if [ ${{ github.event_name }} = 'pull_request' ]; then

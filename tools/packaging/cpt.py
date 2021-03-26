@@ -620,6 +620,10 @@ def compile_for_binary(arg):
                           .format(build.buildType, TMP_PREFIX, patch_path) + llvm_flags +
                           ' -DLLVM_TARGETS_TO_BUILD=host;NVPTX -DCLING_CXX_HEADERS=ON -DCLING_INCLUDE_TESTS=ON' +
                           EXTRA_CMAKE_FLAGS)
+
+    if os.path.exists(exec_subprocess_check_output("which lit", "/").strip()):
+        cmake_config_flags += "-DLLVM_EXTERNAL_LIT=" + exec_subprocess_check_output("which lit", "/").strip()
+
     box_draw('Configure Cling with CMake ' + cmake_config_flags)
     exec_subprocess_call('%s %s' % (CMAKE, cmake_config_flags), LLVM_OBJ_ROOT, True)
     box_draw('Building %s (using %d cores)' % ("cling", multiprocessing.cpu_count()))
@@ -762,7 +766,7 @@ def setup_tests():
     exec_subprocess_call("cmake {0}".format(LLVM_OBJ_ROOT), CLING_SRC_DIR)
     exec_subprocess_call("cmake --build . --target FileCheck -- -j{0}".format(multiprocessing.cpu_count()), LLVM_OBJ_ROOT)
     '''
-    if not os.path.exists(os.path.join(CLING_SRC_DIR, "..", "clang", "test")) and os.path.exists(exec_subprocess_check_output("which lit").split()):
+    if not os.path.exists(os.path.join(CLING_SRC_DIR, "..", "clang", "test")) and os.path.exists(exec_subprocess_check_output("which lit", "/").split()):
         llvm_dir = exec_subprocess_check_output("llvm-config --src-root", ".").strip()
         if llvm_dir == "":
             if tar_required:

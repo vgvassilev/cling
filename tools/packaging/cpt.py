@@ -622,7 +622,7 @@ def compile_for_binary(arg):
                           EXTRA_CMAKE_FLAGS)
 
     if os.path.exists(exec_subprocess_check_output("which lit", "/").strip()):
-        cmake_config_flags += "-DLLVM_EXTERNAL_LIT=" + exec_subprocess_check_output("which lit", "/").strip()
+        cmake_config_flags += " -DLLVM_EXTERNAL_LIT=" + exec_subprocess_check_output("which lit", "/").strip()
 
     box_draw('Configure Cling with CMake ' + cmake_config_flags)
     exec_subprocess_call('%s %s' % (CMAKE, cmake_config_flags), LLVM_OBJ_ROOT, True)

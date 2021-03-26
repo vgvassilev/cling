@@ -2199,7 +2199,7 @@ if args['current_dev']:
             else:
                 compile(os.path.join(workdir,
                                      'cling-' + DIST + '-' + REV + '-' + platform.machine().lower() + '-' + VERSION))
-        install_prefix()
+        #install_prefix()
         if not args['no_test']:
             if args['with_binary_llvm']:
                 setup_tests()

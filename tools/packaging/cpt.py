@@ -753,7 +753,6 @@ def setup_tests():
         stdout=None,
         stderr=subprocess.STDOUT,
     ).communicate("yes".encode("utf-8"))
-    '''
     subprocess.Popen(
         ["sudo cp -r llvm-project-{0}/llvm/utils/FileCheck FileCheck".format(commit)],
         cwd=os.path.join(CLING_SRC_DIR, "tools"),
@@ -766,7 +765,6 @@ def setup_tests():
         file.writelines('add_subdirectory(\"FileCheck\")')
     exec_subprocess_call("cmake {0}".format(LLVM_OBJ_ROOT), CLING_SRC_DIR)
     exec_subprocess_call("cmake --build . --target FileCheck -- -j{0}".format(multiprocessing.cpu_count()), LLVM_OBJ_ROOT)
-    '''
     if not os.path.exists(os.path.join(CLING_SRC_DIR, "..", "clang", "test")) and os.path.exists(exec_subprocess_check_output("which lit", "/").split()):
         llvm_dir = exec_subprocess_check_output("llvm-config --src-root", ".").strip()
         if llvm_dir == "":
@@ -2206,8 +2204,8 @@ if args['current_dev']:
                                      'cling-' + DIST + '-' + REV + '-' + platform.machine().lower() + '-' + VERSION))
         install_prefix()
         if not args['no_test']:
-            #if args['with_binary_llvm']:
-                #setup_tests()
+            if args['with_binary_llvm'] and tar_required:
+                setup_tests()
             test_cling()
         tarball()
         cleanup()

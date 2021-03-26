@@ -2205,8 +2205,8 @@ if args['current_dev']:
                                      'cling-' + DIST + '-' + REV + '-' + platform.machine().lower() + '-' + VERSION))
         #install_prefix()
         if not args['no_test']:
-            if args['with_binary_llvm']:
-                setup_tests()
+            #if args['with_binary_llvm']:
+                #setup_tests()
             test_cling()
         tarball()
         cleanup()

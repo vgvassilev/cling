@@ -719,7 +719,6 @@ def runSingleTest(test, Idx = 2, Recurse = True):
         pass
 
 def setup_tests():
-    '''
     global tar_required
     llvm_revision = urlopen(
         "https://raw.githubusercontent.com/root-project/cling/master/LastKnownGoodLLVMSVNRevision.txt").readline().strip().decode(
@@ -749,6 +748,7 @@ def setup_tests():
         stdout=None,
         stderr=subprocess.STDOUT,
     ).communicate("yes".encode("utf-8"))
+    '''
     subprocess.Popen(
         ["sudo cp -r llvm-project-{0}/llvm/utils/FileCheck FileCheck".format(commit)],
         cwd=os.path.join(CLING_SRC_DIR, "tools"),

@@ -103,3 +103,7 @@ jobs:
           python3 cpt.py -y --check-requirements --current-dev=tar --with-cmake-flags="$CLING_BUILD_FLAGS" --with-cling-url=https://github.com/$REPO --cling-branch=${{ github.head_ref }} --with-binary-llvm --verbose
         fi
       working-directory: tools/packaging/
+    - name: Setup tmate session
+      if: ${{ failure() }}
+      uses: mxschmitt/action-tmate@v3
+      # timeout-minutes: 1 # When debugging increase to a suitable value!

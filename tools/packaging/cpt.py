@@ -719,6 +719,7 @@ def runSingleTest(test, Idx = 2, Recurse = True):
         pass
 
 def setup_tests():
+    '''
     global tar_required
     llvm_revision = urlopen(
         "https://raw.githubusercontent.com/root-project/cling/master/LastKnownGoodLLVMSVNRevision.txt").readline().strip().decode(
@@ -758,6 +759,7 @@ def setup_tests():
     ).communicate("yes".encode("utf-8"))
     with open(os.path.join(CLING_SRC_DIR, 'tools', 'CMakeLists.txt'), 'a') as file:
         file.writelines('add_subdirectory(\"FileCheck\")')
+    '''
     exec_subprocess_call("cmake {0}".format(LLVM_OBJ_ROOT), CLING_SRC_DIR)
     exec_subprocess_call("cmake --build . --target FileCheck -- -j{0}".format(multiprocessing.cpu_count()), LLVM_OBJ_ROOT)
     if not os.path.exists(os.path.join(CLING_SRC_DIR, "..", "clang", "test")) and os.path.exists(exec_subprocess_check_output("which lit").split()):

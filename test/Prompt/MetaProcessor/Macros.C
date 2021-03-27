@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling | FileCheck %s
+// RUN: cat %s | %cling | %filecheck %s
 //XFAIL: *
 // This test should test the unnamed macro support once it is moved in cling.
 .x Commands.macro

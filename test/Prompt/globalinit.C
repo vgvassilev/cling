@@ -6,8 +6,8 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: %cling %s -DTEST_PATH="\"%/p/\"" -Xclang -verify 2>&1 | FileCheck %s
-// RUN: %cling %s -I%p -Xclang -verify 2>&1 | FileCheck %s
+// RUN: %cling %s -DTEST_PATH="\"%/p/\"" -Xclang -verify 2>&1 | %filecheck %s
+// RUN: %cling %s -I%p -Xclang -verify 2>&1 | %filecheck %s
 
 #include "cling/Interpreter/Interpreter.h"
 

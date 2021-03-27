@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -Xclang -verify | FileCheck %s
+// RUN: cat %s | %cling -Xclang -verify | %filecheck %s
 // XFAIL: powerpc64
 //This file checks a call instruction. The called function has arguments with nonnull attribute.
 extern "C" int printf(const char* fmt, ...);

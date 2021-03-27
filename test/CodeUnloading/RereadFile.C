@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -I%p 2>&1 | FileCheck %s
+// RUN: cat %s | %cling -I%p 2>&1 | %filecheck %s
 // Test that we re-read file, e.g. that we uncache symbols and file content.
 
 extern "C" int printf(const char*,...);

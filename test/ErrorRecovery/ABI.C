@@ -6,11 +6,11 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: %cling -C -E -P  %s | %cling -nostdinc++ -Xclang -verify 2>&1 | FileCheck %s
-// RUN: %cling -C -E -P -DCLING_VALEXTRACT_ERR %s | %cling -nostdinc++ -nobuiltininc -Xclang -verify 2>&1 | FileCheck %s
-// RUN: %cling -C -E -P -DCLING_VALEXTRACT_ERR2 %s | %cling -nostdinc++ -nobuiltininc -Xclang -verify 2>&1 | FileCheck %s
-// RUN: %cling -C -E -P -DCLING_VALEXTRACT_ERR3 %s | %cling -nostdinc++ -nobuiltininc -Xclang -verify 2>&1 | FileCheck %s
-// RUN: %cling -C -E -P -DCLING_VALEXTRACT_ERR4 %s | %cling -nostdinc++ -nobuiltininc -Xclang -verify 2>&1 | FileCheck %s
+// RUN: %cling -C -E -P  %s | %cling -nostdinc++ -Xclang -verify 2>&1 | %filecheck %s
+// RUN: %cling -C -E -P -DCLING_VALEXTRACT_ERR %s | %cling -nostdinc++ -nobuiltininc -Xclang -verify 2>&1 | %filecheck %s
+// RUN: %cling -C -E -P -DCLING_VALEXTRACT_ERR2 %s | %cling -nostdinc++ -nobuiltininc -Xclang -verify 2>&1 | %filecheck %s
+// RUN: %cling -C -E -P -DCLING_VALEXTRACT_ERR3 %s | %cling -nostdinc++ -nobuiltininc -Xclang -verify 2>&1 | %filecheck %s
+// RUN: %cling -C -E -P -DCLING_VALEXTRACT_ERR4 %s | %cling -nostdinc++ -nobuiltininc -Xclang -verify 2>&1 | %filecheck %s
 
 // expected-error@input_line_1:1 {{'new' file not found}}
 

@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling 2>&1 | FileCheck %s
+// RUN: cat %s | %cling 2>&1 | %filecheck %s
 // Test that input is not discarded if the last line has no newline.
 
 extern "C" int printf(const char*, ...);

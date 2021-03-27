@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling --metastr=//. | FileCheck %s
+// RUN: cat %s | %cling --metastr=//. | %filecheck %s
 
 // Test setting of meta escape
 //.help // CHECK: Cling (C/C++ interpreter) meta commands usage

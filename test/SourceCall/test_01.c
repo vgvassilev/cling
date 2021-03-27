@@ -6,11 +6,11 @@
 // LICENSE.TXT for details.
 //----------------------------------------------------------------------------*/
 
-// RUN: %cling %s | FileCheck %s
+// RUN: %cling %s | %filecheck %s
 
 // Ensure the .c file to be processed
 // is in the working directory (issue ROOT-6244)
-// RUN: cd `dirname %s` ; %cling %s | FileCheck %s
+// RUN: cd `dirname %s` ; %cling %s | %filecheck %s
 
 
 #ifdef __clang__

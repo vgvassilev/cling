@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -Xclang -verify 2>&1 | FileCheck %s
+// RUN: cat %s | %cling -Xclang -verify 2>&1 | %filecheck %s
 // Tests continuation of a line with , or \
 // Be careful saving this file: some editors strip the trailing spaces at bottom
 

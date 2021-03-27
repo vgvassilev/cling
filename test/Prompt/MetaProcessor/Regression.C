@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -I%p | FileCheck %s
+// RUN: cat %s | %cling -I%p | %filecheck %s
 
 // This file should be used as regression test for the meta processing subsystem
 // Reproducers of fixed bugs should be put here

@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: %cling %s | FileCheck %s
+// RUN: %cling %s | %filecheck %s
 
 extern "C" int printf(const char*, ...);
 void _42_X_Non_Id_Chars() {

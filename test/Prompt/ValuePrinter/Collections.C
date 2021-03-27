@@ -7,7 +7,7 @@
 
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -Xclang -verify 2>&1 | FileCheck %s
+// RUN: cat %s | %cling -Xclang -verify 2>&1 | %filecheck %s
 
 #include <string>
 #include <tuple>

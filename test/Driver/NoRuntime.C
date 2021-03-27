@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -noruntime -Xclang -verify 2>&1 | FileCheck %s
+// RUN: cat %s | %cling -noruntime -Xclang -verify 2>&1 | %filecheck %s
 // Test noruntimeTest
 
 extern "C" int printf(const char*,...);

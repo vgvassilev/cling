@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: %cling %s -Xclang -verify 2>&1 | FileCheck %s
+// RUN: %cling %s -Xclang -verify 2>&1 | %filecheck %s
 
 // This test assures that extern "C" declarations are usable via .x
 

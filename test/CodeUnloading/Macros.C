@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -I%S -Xclang -verify 2>&1 | FileCheck %s
+// RUN: cat %s | %cling -I%S -Xclang -verify 2>&1 | %filecheck %s
 // Tests undoing of macro definitions
 
 // Invoke the printer to get it in the undo queue early

@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -Xclang -verify 2>&1 | FileCheck %s
+// RUN: cat %s | %cling -Xclang -verify 2>&1 | %filecheck %s
 // Make sure we are correctly parsing the arguments for CIFactory::createCI
 
 #include "cling/Interpreter/InvocationOptions.h"

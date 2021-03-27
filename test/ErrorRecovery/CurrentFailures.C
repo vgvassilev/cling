@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -I%p 2>&1 | FileCheck %s
+// RUN: cat %s | %cling -I%p 2>&1 | %filecheck %s
 // XFAIL: *
 
 .storeState "testCurrentFailures"

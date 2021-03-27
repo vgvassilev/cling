@@ -7,7 +7,7 @@
 //------------------------------------------------------------------------------
 
 // RUN: clang -shared -DCLING_EXPORT=%dllexport %S/call_lib.c -o%T/libcall_lib%shlibext
-// RUN: cat %s | %cling -L%T | FileCheck %s
+// RUN: cat %s | %cling -L%T | %filecheck %s
 
 .L libcall_lib
 extern "C" int cling_testlibrary_function();

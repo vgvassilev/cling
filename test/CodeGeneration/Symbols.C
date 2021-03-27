@@ -7,7 +7,7 @@
 //------------------------------------------------------------------------------
 
 // RUN: clang -shared %fPIC -DCLING_EXPORT=%dllexport -DBUILD_SHARED %s -o%T/libSymbols%shlibext
-// RUN: %cling --nologo -L%T -lSymbols  %s | FileCheck %s
+// RUN: %cling --nologo -L%T -lSymbols  %s | %filecheck %s
 
 // Check that weak symbols do not get re-emitted (ROOT-6124)
 extern "C" int printf(const char*,...);

@@ -7,7 +7,7 @@
 //------------------------------------------------------------------------------
 
 // RUN: cat %s | %cling
-// RUN: cat %s | %cling 2>&1 | FileCheck %s
+// RUN: cat %s | %cling 2>&1 | %filecheck %s
 // Test handling and recovery from calling an unresolved symbol.
 
 extern int foo(); // extern C++

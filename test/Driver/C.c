@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -x c -Xclang -verify 2>&1 | FileCheck %s
+// RUN: cat %s | %cling -x c -Xclang -verify 2>&1 | %filecheck %s
 // RUN: cat %s | %cling -x c -fsyntax-only -Xclang -verify 2>&1
 
 // Validate cling C mode.

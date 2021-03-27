@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: %cling -Xclang -verify %s | FileCheck %s
+// RUN: %cling -Xclang -verify %s | %filecheck %s
 extern "C" int printf(const char*,...);
 
 class Foo {

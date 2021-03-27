@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: %cling %s | FileCheck %s
+// RUN: %cling %s | %filecheck %s
 #include <cmath>
 #include <stdio.h>
 

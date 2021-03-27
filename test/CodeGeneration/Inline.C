@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN:cat %s |  %cling -I %S -Xclang -verify 2>&1 | FileCheck -allow-empty %s
+// RUN:cat %s |  %cling -I %S -Xclang -verify 2>&1 | %filecheck -allow-empty %s
 // Test testInline
 
 // ROOT-8283

@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling 2>&1 | FileCheck %s
+// RUN: cat %s | %cling 2>&1 | %filecheck %s
 // Test the ability of unloading the last transaction. Here as a matter of fact
 // we unload the wrapper as well and TODO: decrement the unique wrapper counter.
 extern "C" int printf(const char* fmt, ...);

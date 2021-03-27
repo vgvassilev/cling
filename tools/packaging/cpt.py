@@ -22,6 +22,7 @@
 
 import sys
 
+# FIXME: Check doesn't work?
 if sys.version_info < (3, 0):
     raise Exception("cpt needs Python 3")
 
@@ -245,13 +246,15 @@ def download_llvm_binary():
                            os.path.join(llvm_dir, 'lib'), os.path.join(llvm_dir, 'include'), os.path.join(llvm_dir, 'bin', 'llvm-tblgen'),
                            os.path.join(llvm_dir, 'bin'))
         else:
+            # Only while we use LLVM 9
+            raise Exception("Building clang using LLVM binary not possible. Please invoke cpt without --with-binary-llvm and --with-llvm-tar flags")
             tar_required = True
     elif DIST == 'MacOSX':
         subprocess.call(
             "sudo -H {0} -m pip install lit".format(sys.executable), shell=True
             )
         if tar_required is False:
-            llvm_dir = os.path.join("/opt", "local", "libexec", "llvm-"+llvm_vers)
+            llvm_dir = os.path.join("/opt", "local", "libexec", "llvm-"+llvm_vers+".0")
             llvm_config_path = os.path.join(llvm_dir, "bin", "llvm-config")
             if llvm_config_path[-1:] == "\n":
                 llvm_config_path = llvm_config_path[:-1]
@@ -259,28 +262,49 @@ def download_llvm_binary():
                           -DLLVM_TOOLS_BINARY_DIR={5} -DLLVM_TOOL_CLING_BUILD=ON".format(llvm_dir, llvm_config_path,
                           os.path.join(llvm_dir, 'lib'), os.path.join(llvm_dir, 'include'), os.path.join(llvm_dir, 'bin', 'llvm-tblgen'),
                           os.path.join(llvm_dir, 'bin'))
+        else:
+            # Only while we use LLVM 9
+            raise Exception("Building clang using LLVM binary not possible. Please invoke cpt without --with-binary-llvm and --with-llvm-tar flags")
+            tar_required = True
     else:
         raise Exception("Building clang using LLVM binary not possible. Please invoke cpt without --with-binary-llvm and --with-llvm-tar flags")
     if tar_required:
+        # Only while we use LLVM 9
+        raise Exception("--with-llvm-tar flag not supported currently")
         llvm_flags = "-DLLVM_BINARY_DIR={0} -DLLVM_CONFIG={1} -DLLVM_LIBRARY_DIR={2} -DLLVM_MAIN_INCLUDE_DIR={3} -DLLVM_TABLEGEN_EXE={4} \
                       -DLLVM_TOOLS_BINARY_DIR={5} -DLLVM_TOOL_CLING_BUILD=ON".format(srcdir, os.path.join(srcdir, 'bin', 'llvm-config'),
                        os.path.join(srcdir, 'lib'), os.path.join(srcdir, 'include'), os.path.join(srcdir, 'bin', 'llvm-tblgen'),
                        os.path.join(srcdir, 'bin'))
-        if DIST=="Ubuntu" and REV=='16.04' and is_os_64bit():
-            download_link = 'http://releases.llvm.org/5.0.2/clang+llvm-5.0.2-x86_64-linux-gnu-ubuntu-16.04.tar.xz'
+        if DIST=="Ubuntu" and REV=='14.04' and is_os_64bit():
+            assert llvm_revision == "release_90"
+            download_link = 'https://releases.llvm.org/9.0.0/clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-14.04.tar.xz'
             exec_subprocess_call('wget %s' % download_link, workdir)
-            exec_subprocess_call('tar xvf clang+llvm-5.0.2-x86_64-linux-gnu-ubuntu-16.04.tar.xz', workdir)
-            exec_subprocess_call('mv clang+llvm-5.0.2-x86_64-linux-gnu-ubuntu-16.04 %s' % srcdir, workdir)
-        elif DIST=="Ubuntu" and REV=='14.04' and is_os_64bit():
-            download_link = 'http://releases.llvm.org/5.0.2/clang+llvm-5.0.2-x86_64-linux-gnu-ubuntu-14.04.tar.xz'
+            exec_subprocess_call('tar xvf clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-14.04.tar.xz', workdir)
+            exec_subprocess_call('mv clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-14.04 %s' % srcdir, workdir)
+        elif DIST=="Ubuntu" and REV=='16.04' and is_os_64bit():
+            assert llvm_revision == "release_90"
+            download_link = 'https://releases.llvm.org/9.0.0/clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz'
             exec_subprocess_call('wget %s' % download_link, workdir)
-            exec_subprocess_call('tar xvf clang+llvm-5.0.2-x86_64-linux-gnu-ubuntu-14.04.tar.xz', workdir)
-            exec_subprocess_call('mv clang+llvm-5.0.2-x86_64-linux-gnu-ubuntu-14.04 %s' % srcdir, workdir)
+            exec_subprocess_call('tar xvf clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz', workdir)
+            exec_subprocess_call('mv clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-16.04 %s' % srcdir, workdir)
+        elif DIST=="Ubuntu" and REV=='18.04' and is_os_64bit():
+            assert llvm_revision == "release_90"
+            download_link = 'https://releases.llvm.org/9.0.0/clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz'
+            exec_subprocess_call('wget %s' % download_link, workdir)
+            exec_subprocess_call('tar xvf clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz', workdir)
+            exec_subprocess_call('mv clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-18.04 %s' % srcdir, workdir)
+        elif DIST=="Ubuntu" and REV=='19.04' and is_os_64bit():
+            assert llvm_revision == "release_90"
+            download_link = 'https://releases.llvm.org/9.0.0/clang+llvm-9.0.0-x86_64-pc-linux-gnu.tar.xz'
+            exec_subprocess_call('wget %s' % download_link, workdir)
+            exec_subprocess_call('tar xvf clang+llvm-9.0.0-x86_64-pc-linux-gnu.tar.xz', workdir)
+            exec_subprocess_call('mv clang+llvm-9.0.0-x86_64-pc-linux-gnu %s' % srcdir, workdir)
         elif DIST=='MacOSX' and is_os_64bit():
-            download_link = 'http://releases.llvm.org/5.0.2/clang+llvm-5.0.2-x86_64-apple-darwin.tar.xz'
+            assert llvm_revision == "release_90"
+            download_link = 'https://releases.llvm.org/9.0.0/clang+llvm-9.0.0-x86_64-darwin-apple.tar.xz'
             exec_subprocess_call('wget %s' % download_link, workdir)
-            exec_subprocess_call('tar xvf clang+llvm-5.0.2-x86_64-apple-darwin.tar.xz', workdir)
-            exec_subprocess_call('sudo mv clang+llvm-5.0.2-x86_64-apple-darwin %s' % srcdir, workdir)
+            exec_subprocess_call('tar xvf clang+llvm-9.0.0-x86_64-darwin-apple.tar.xz', workdir)
+            exec_subprocess_call('sudo mv clang+llvm-9.0.0-x86_64-darwin-apple %s' % srcdir, workdir)
         else:
             raise Exception("Building clang using LLVM binary not possible. Please invoke cpt without --with-binary-llvm and --with-llvm-tar flags")
     # FIXME: Add Fedora and SUSE support
@@ -407,6 +431,7 @@ def fetch_cling(arg):
     else:
         get_fresh_cling()
 
+
 def set_version():
     global VERSION
     global REVISION
@@ -431,14 +456,16 @@ def set_vars():
     if not os.path.isfile(os.path.join(LLVM_OBJ_ROOT, 'test', 'lit.site.cfg')):
         if not os.path.exists(os.path.join(LLVM_OBJ_ROOT, 'test')):
             os.mkdir(os.path.join(LLVM_OBJ_ROOT, 'test'))
-        exec_subprocess_call('make lit.site.cfg', os.path.join(LLVM_OBJ_ROOT, 'test'))
+        #exec_subprocess_call('make lit.site.cfg', os.path.join(LLVM_OBJ_ROOT, 'test'))
 
+    '''
     with open(os.path.join(LLVM_OBJ_ROOT, 'test', 'lit.site.cfg'), 'r') as lit_site_cfg:
         for line in lit_site_cfg:
             if re.match('^config.llvm_shlib_ext = ', line):
                 SHLIBEXT = re.sub('^config.llvm_shlib_ext = ', '', line).replace('"', '').strip()
             elif re.match('^config.llvm_exe_ext = ', line):
                 EXEEXT = re.sub('^config.llvm_exe_ext = ', '', line).replace('"', '').strip()
+    '''
 
     if not os.path.isfile(os.path.join(LLVM_OBJ_ROOT, 'tools', 'clang', 'include', 'clang', 'Basic', 'Version.inc')):
         exec_subprocess_call('make Version.inc',
@@ -476,7 +503,7 @@ def set_vars_for_lit():
         with open(os.path.join(CLING_SRC_DIR, "test", "lit.site.cfg.in"), "w") as file:
             file.writelines(lines)
     elif DIST == 'MacOSX' and tar_required is False:
-        llvm_dir = os.path.join("/opt", "local", "libexec", "llvm-" + llvm_vers)
+        llvm_dir = os.path.join("/opt", "local", "libexec", "llvm-" + llvm_vers + ".0")
         with open(os.path.join(CLING_SRC_DIR, "test", "lit.site.cfg.in"), "r") as file:
             lines = file.readlines()
         for i in range(len(lines)):
@@ -586,11 +613,13 @@ def compile_for_binary(arg):
         print("Creating build directory: " + LLVM_OBJ_ROOT)
         os.makedirs(LLVM_OBJ_ROOT)
 
+    patch_path = os.path.join(CLING_SRC_DIR, "patches", "llvm90-headers")
     build = Build()
-    cmake_config_flags = (clangdir + ' -DCMAKE_BUILD_TYPE={0} -DCMAKE_INSTALL_PREFIX={1} '
-                          .format(build.buildType, TMP_PREFIX) + llvm_flags +
+    cmake_config_flags = (clangdir + ' -DCMAKE_BUILD_TYPE={0} -DCMAKE_INSTALL_PREFIX={1} -DPYTHON_EXECUTABLE={2} -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON '
+                          .format(build.buildType, TMP_PREFIX, patch_path, sys.executable) + llvm_flags +
                           ' -DLLVM_TARGETS_TO_BUILD=host;NVPTX -DCLING_CXX_HEADERS=ON -DCLING_INCLUDE_TESTS=ON' +
                           EXTRA_CMAKE_FLAGS)
+
     box_draw('Configure Cling with CMake ' + cmake_config_flags)
     exec_subprocess_call('%s %s' % (CMAKE, cmake_config_flags), LLVM_OBJ_ROOT, True)
     box_draw('Building %s (using %d cores)' % ("cling", multiprocessing.cpu_count()))
@@ -690,6 +719,10 @@ def runSingleTest(test, Idx = 2, Recurse = True):
         pass
 
 def setup_tests():
+    filecheck_path = exec_subprocess_check_output("which FileCheck-9", "/")
+    symlink_path = os.path.join(LLVM_OBJ_ROOT, "FileCheck")
+    exec_subprocess_call("sudo ln -s {0} {1}".format(filecheck_path, symlink_path), "/")
+    '''
     global tar_required
     llvm_revision = urlopen(
         "https://raw.githubusercontent.com/root-project/cling/master/LastKnownGoodLLVMSVNRevision.txt").readline().strip().decode(
@@ -731,7 +764,7 @@ def setup_tests():
         file.writelines('add_subdirectory(\"FileCheck\")')
     exec_subprocess_call("cmake {0}".format(LLVM_OBJ_ROOT), CLING_SRC_DIR)
     exec_subprocess_call("cmake --build . --target FileCheck -- -j{0}".format(multiprocessing.cpu_count()), LLVM_OBJ_ROOT)
-    if not os.path.exists(os.path.join(CLING_SRC_DIR, "..", "clang", "test")):
+    if not os.path.exists(os.path.join(CLING_SRC_DIR, "..", "clang", "test")) and os.path.exists(exec_subprocess_check_output("which lit", "/").split()):
         llvm_dir = exec_subprocess_check_output("llvm-config --src-root", ".").strip()
         if llvm_dir == "":
             if tar_required:
@@ -758,6 +791,7 @@ def setup_tests():
             stdout=None,
             stderr=subprocess.STDOUT,
         ).communicate("yes".encode("utf-8"))
+    '''
 
 
 def test_cling():
@@ -880,13 +914,6 @@ def check_ubuntu(pkg):
             return True
     elif pkg == "lit":
         if exec_subprocess_check_output('which lit', workdir) != '':
-            print(pkg.ljust(20) + '[OK]'.ljust(30))
-            return True
-        else:
-            print(pkg.ljust(20) + '[NOT INSTALLED]'.ljust(30))
-            return False
-    elif pkg == 'llvm-'+llvm_vers+'-dev':
-        if exec_subprocess_check_output('which llvm-config-{0}'.format(llvm_vers), workdir) != '':
             print(pkg.ljust(20) + '[OK]'.ljust(30))
             return True
         else:
@@ -1797,7 +1824,8 @@ parser.add_argument('--with-cling-url', action='store', help='Specify an alterna
 parser.add_argument('--cling-branch', help='Specify a particular Cling branch')
 
 parser.add_argument('--with-binary-llvm', help='Download LLVM binary and use it to build Cling in dev mode', action='store_true')
-parser.add_argument('--with-llvm-tar', help='Download and use LLVM binary release tar to build Cling for debugging', action='store_true')
+# Inactive till we want to build using system installed LLVM
+parser.add_argument('--with-llvm-tar', help='[INACTIVE] Download and use LLVM binary release tar to build Cling for debugging', action='store_true')
 parser.add_argument('--no-test', help='Do not run test suite of Cling', action='store_true')
 parser.add_argument('--skip-cleanup', help='Do not clean up after a build', action='store_true')
 parser.add_argument('--use-wget', help='Do not use Git to fetch sources', action='store_true')
@@ -1846,16 +1874,13 @@ tar_required = False
 llvm_revision = urlopen(
                 "https://raw.githubusercontent.com/root-project/cling/master/LastKnownGoodLLVMSVNRevision.txt").readline().strip().decode(
                 'utf-8')
-llvm_vers = "{0}.{1}".format(llvm_revision[-2], llvm_revision[-1])
+llvm_vers = llvm_revision[-2]
 LLVM_GIT_URL = ""
 CLANG_GIT_URL = args['with_clang_url']
 CLING_GIT_URL = args['with_cling_url']
 EXTRA_CMAKE_FLAGS = args.get('with_cmake_flags')
 CMAKE = os.environ.get('CMAKE', None)
 
-# llvm_revision = urlopen(
-#    "https://raw.githubusercontent.com/root-project/cling/master/LastKnownGoodLLVMSVNRevision.txt").readline().strip().decode(
-#   'utf-8')
 VERSION = ''
 REVISION = ''
 # Travis needs some special behaviour
@@ -1981,11 +2006,8 @@ if args['check_requirements']:
     if DIST == 'Ubuntu':
         install_line = ""
         prerequisite = ['git', 'cmake', 'gcc', 'g++', 'debhelper', 'devscripts', 'gnupg', 'zlib1g-dev']
-        if args["with_binary_llvm"] or args["with_llvm_tar"]:
-            prerequisite.extend(['subversion'])
         if args["with_binary_llvm"] and not args["with_llvm_tar"]:
-            if check_ubuntu('llvm-'+llvm_vers+'-dev') is False:
-                llvm_binary_name = 'llvm-{0}-dev'.format(llvm_vers)
+            llvm_binary_name = 'llvm-{0}-dev'.format(llvm_vers)
         for pkg in prerequisite:
             if check_ubuntu(pkg) is False:
                 install_line += pkg + ' '
@@ -2024,12 +2046,14 @@ if args['check_requirements']:
                     continue
         if no_install is False and llvm_binary_name != "" and tar_required is False:
             try:
-                subprocess.Popen(['sudo apt-get install llvm-{0}-dev'.format(llvm_vers)],
+                subprocess.Popen(['sudo apt-get install llvm-{0}-dev libclang-common-{0}-dev'.format(llvm_vers)],
                                  shell=True,
                                  stdin=subprocess.PIPE,
                                  stdout=None,
                                  stderr=subprocess.STDOUT).communicate('yes'.encode('utf-8'))
             except:
+                # Only while we use LLVM 9
+                raise Exception("--with-llvm-tar flag currently not supported")
                 tar_required = True
 
     elif OS == 'Windows':
@@ -2078,7 +2102,7 @@ Refer to the documentation of CPT for information on setting up your Windows env
         if args['with_llvm_tar']:
             tar_required = True
         else:
-            llvm_binary_name = 'llvm-' + llvm_vers
+            llvm_binary_name = 'llvm-' + llvm_vers + ".0"
         for pkg in prerequisite:
             if check_mac(pkg) is False:
                 install_line += pkg + ' '

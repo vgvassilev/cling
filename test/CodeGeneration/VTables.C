@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -Xclang -verify | FileCheck %s
+// RUN: cat %s | %cling -Xclang -verify | %filecheck %s
 // XFAIL:*
 
 // Test whether the interpreter is able to generate properly the symbols

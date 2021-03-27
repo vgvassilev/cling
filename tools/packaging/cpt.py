@@ -578,8 +578,6 @@ def compile(arg):
     cmake_config_flags = (srcdir + ' -DLLVM_BUILD_TOOLS=Off -DCMAKE_BUILD_TYPE={0} -DCMAKE_INSTALL_PREFIX={1} '
                           .format(build.buildType, TMP_PREFIX) + ' -DLLVM_TARGETS_TO_BUILD="host;NVPTX" ' +
                           EXTRA_CMAKE_FLAGS)
-    if os.path.exists(exec_subprocess_check_output("which lit", "/").strip()):
-        cmake_config_flags += "-DLLVM_EXTERNAL_LIT=" + exec_subprocess_check_output("which lit", "/").strip()
 
     # configure cling
     build.config(cmake_config_flags)
@@ -621,9 +619,6 @@ def compile_for_binary(arg):
                           .format(build.buildType, TMP_PREFIX, patch_path) + llvm_flags +
                           ' -DLLVM_TARGETS_TO_BUILD=host;NVPTX -DCLING_CXX_HEADERS=ON -DCLING_INCLUDE_TESTS=ON' +
                           EXTRA_CMAKE_FLAGS)
-
-    if os.path.exists(exec_subprocess_check_output("which lit", "/").strip()):
-        cmake_config_flags += " -DLLVM_EXTERNAL_LIT=" + exec_subprocess_check_output("which lit", "/").strip()
 
     box_draw('Configure Cling with CMake ' + cmake_config_flags)
     exec_subprocess_call('%s %s' % (CMAKE, cmake_config_flags), LLVM_OBJ_ROOT, True)
@@ -2204,7 +2199,7 @@ if args['current_dev']:
                                      'cling-' + DIST + '-' + REV + '-' + platform.machine().lower() + '-' + VERSION))
         install_prefix()
         if not args['no_test']:
-            if args['with_binary_llvm'] and tar_required:
+            if args['with_binary_llvm']:
                 setup_tests()
             test_cling()
         tarball()

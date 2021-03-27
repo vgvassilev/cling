@@ -720,7 +720,8 @@ def runSingleTest(test, Idx = 2, Recurse = True):
 
 def setup_tests():
     filecheck_path = exec_subprocess_check_output("which FileCheck-9", "/")
-    exec_subprocess_call("sudo ln -s {0} {1}".format(filecheck_path, LLVM_OBJ_ROOT), "/")
+    symlink_path = os.path.join(LLVM_OBJ_ROOT, "FileCheck")
+    exec_subprocess_call("sudo ln -s {0} {1}".format(filecheck_path, symlink_path), "/")
     '''
     global tar_required
     llvm_revision = urlopen(

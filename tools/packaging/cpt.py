@@ -719,6 +719,9 @@ def runSingleTest(test, Idx = 2, Recurse = True):
         pass
 
 def setup_tests():
+    filecheck_path = exec_subprocess_check_output("which FileCheck-9", "/")
+    exec_subprocess_call("sudo ln -s {0} {1}".format(filecheck_path, LLVM_OBJ_ROOT))
+    '''
     global tar_required
     llvm_revision = urlopen(
         "https://raw.githubusercontent.com/root-project/cling/master/LastKnownGoodLLVMSVNRevision.txt").readline().strip().decode(
@@ -787,6 +790,7 @@ def setup_tests():
             stdout=None,
             stderr=subprocess.STDOUT,
         ).communicate("yes".encode("utf-8"))
+    '''
 
 
 def test_cling():

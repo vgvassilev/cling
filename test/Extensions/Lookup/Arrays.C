@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -I%p | FileCheck %s
+// RUN: cat %s | %cling -I%p | %filecheck %s
 
 #include "cling/Interpreter/Interpreter.h"
 #include "cling/Interpreter/InterpreterCallbacks.h"

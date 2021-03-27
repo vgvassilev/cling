@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling | FileCheck %s
+// RUN: cat %s | %cling | %filecheck %s
 extern "C" int printf(const char*,...);
 extern "C" void exit(int);
 

@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling | FileCheck %s
+// RUN: cat %s | %cling | %filecheck %s
 template<int n> struct F{
   enum {RET=F<n-1>::RET*n} ;
 };

@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling | FileCheck %s
+// RUN: cat %s | %cling | %filecheck %s
 
 // Checks for infinite recursion when we combine nested calls of process line
 // with global initializers.

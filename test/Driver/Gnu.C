@@ -6,10 +6,10 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -std=gnu99 -x c -Xclang -verify 2>&1 | FileCheck %s
-// RUN: cat %s | %cling -D__STRICT_ANSI__ -std=gnu++11 -Xclang -verify 2>&1 | FileCheck %s
-// RUN: cat %s | %cling -D__STRICT_ANSI__ -std=gnu++14 -Xclang -verify 2>&1 | FileCheck %s
-// RUN: cat %s | %cling -D__STRICT_ANSI__ -std=gnu++1z -Xclang -verify 2>&1 | FileCheck %s
+// RUN: cat %s | %cling -std=gnu99 -x c -Xclang -verify 2>&1 | %filecheck %s
+// RUN: cat %s | %cling -D__STRICT_ANSI__ -std=gnu++11 -Xclang -verify 2>&1 | %filecheck %s
+// RUN: cat %s | %cling -D__STRICT_ANSI__ -std=gnu++14 -Xclang -verify 2>&1 | %filecheck %s
+// RUN: cat %s | %cling -D__STRICT_ANSI__ -std=gnu++1z -Xclang -verify 2>&1 | %filecheck %s
 // REQUIRES: not_system-windows
 
 #ifdef __cplusplus

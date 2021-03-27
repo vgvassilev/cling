@@ -10,7 +10,7 @@
 // RUN: %mkdir "%T/Remove"
 // RUN: cd "%T/Remove"
 // RUN: %rmdir "%T/Remove"
-// RUN: %cling %s -Xclang -verify 2>&1 | FileCheck %s
+// RUN: %cling %s -Xclang -verify 2>&1 | %filecheck %s
 // REQUIRES: not_system-windows
 
 extern "C" {

@@ -1,11 +1,11 @@
-// RUN: cat %s | %cling -DCLING_TMP="\"%/T\"" | FileCheck --check-prefix=CHECKOUT %s
-// RUN: cat %T/outfile.txt | FileCheck --check-prefix=CHECK-REDIRECTOUT %s
-// RUN: cat %T/errfile.txt | FileCheck --check-prefix=CHECK-REDIRECTERR %s
-// RUN: cat %T/bothfile.txt | FileCheck --check-prefix=CHECK-REDIRECTBOTH %s
-// RUN: cat %T/anotheroutfile.txt | FileCheck --check-prefix=CHECK-REDIRECTANOTHER %s
-// RUN: cat %T/nospace.txt | FileCheck --check-prefix=CHECK-NOSPACE %s
-// RUN: cat %s | %cling -DCLING_TMP="\"%/T\"" 2> %T/stderr.txt && cat %T/stderr.txt | FileCheck --check-prefix=CHECKERR %s
-// RUN: cat %s | %cling -DCLING_TMP="\"%/T\"" 2>&1 | FileCheck --check-prefix=CHECKERR --check-prefix=CHECKOUT %s
+// RUN: cat %s | %cling -DCLING_TMP="\"%/T\"" | %filecheck --check-prefix=CHECKOUT %s
+// RUN: cat %T/outfile.txt | %filecheck --check-prefix=CHECK-REDIRECTOUT %s
+// RUN: cat %T/errfile.txt | %filecheck --check-prefix=CHECK-REDIRECTERR %s
+// RUN: cat %T/bothfile.txt | %filecheck --check-prefix=CHECK-REDIRECTBOTH %s
+// RUN: cat %T/anotheroutfile.txt | %filecheck --check-prefix=CHECK-REDIRECTANOTHER %s
+// RUN: cat %T/nospace.txt | %filecheck --check-prefix=CHECK-NOSPACE %s
+// RUN: cat %s | %cling -DCLING_TMP="\"%/T\"" 2> %T/stderr.txt && cat %T/stderr.txt | %filecheck --check-prefix=CHECKERR %s
+// RUN: cat %s | %cling -DCLING_TMP="\"%/T\"" 2>&1 | %filecheck --check-prefix=CHECKERR --check-prefix=CHECKOUT %s
 
 #include <iostream>
 

@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling --enable-implicit-auto-keyword | FileCheck %s
+// RUN: cat %s | %cling --enable-implicit-auto-keyword | %filecheck %s
 // XFAIL: *
 
 class MyClass {

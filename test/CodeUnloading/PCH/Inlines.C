@@ -1,6 +1,6 @@
 // RUN: %rm "Inlines.h.pch"
 // RUN: %cling -x c++-header %S/Inputs/Inlines.h -o Inlines.h.pch
-// RUN: cat %s | %cling -I%p -Xclang -trigraphs -Xclang -include-pch -Xclang Inlines.h.pch  2>&1 | FileCheck %s
+// RUN: cat %s | %cling -I%p -Xclang -trigraphs -Xclang -include-pch -Xclang Inlines.h.pch  2>&1 | %filecheck %s
 
 //XFAIL:*
 #include "Inputs/Inlines.h"

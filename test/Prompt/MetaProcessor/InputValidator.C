@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling | FileCheck %s
+// RUN: cat %s | %cling | %filecheck %s
 "simple"
 //CHECK: (const char [7]) "simple"
 "It's me"

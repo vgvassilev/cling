@@ -7,7 +7,7 @@
 //------------------------------------------------------------------------------
 
 // RUN: clang -shared -DCLING_EXPORT=%dllexport %S/call_lib.c -o%T/libcall_lib%shlibext
-// RUN: cat %s | %cling -L %T -Xclang -verify 2>&1 | FileCheck %s
+// RUN: cat %s | %cling -L %T -Xclang -verify 2>&1 | %filecheck %s
 
 #pragma cling load("DoesNotExistPleaseRecover")
 // expected-error@input_line_12:1{{'DoesNotExistPleaseRecover' file not found}}

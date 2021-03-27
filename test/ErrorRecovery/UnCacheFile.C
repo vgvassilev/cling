@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -Xclang -verify 2>&1 | FileCheck %s
+// RUN: cat %s | %cling -Xclang -verify 2>&1 | %filecheck %s
 // XFAIL: *
 
 // Test the ability of including a wrong file see diagnostics and remove the

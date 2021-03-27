@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -I%p 2>&1 | FileCheck %s
+// RUN: cat %s | %cling -I%p 2>&1 | %filecheck %s
 
 // Tests the ability of cling to host itself. We can have cling instances in
 // cling's runtime. This is important for people, who use cling embedded in

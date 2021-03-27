@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling 2>&1 | FileCheck %s
+// RUN: cat %s | %cling 2>&1 | %filecheck %s
 
 extern "C" int printf(const char*,...);
 #include "cling/Interpreter/Interpreter.h"

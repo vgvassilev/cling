@@ -7,7 +7,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: %cling %s 2>&1 | FileCheck %s
+// RUN: %cling %s 2>&1 | %filecheck %s
 
 //CHECK-NOT: {{.*error|warning|note:.*}}
 float shebang = 1.0 //CHECK: (float) 1

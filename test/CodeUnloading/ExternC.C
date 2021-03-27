@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -I%S -Xclang -verify  | FileCheck %s
+// RUN: cat %s | %cling -I%S -Xclang -verify  | %filecheck %s
 // Test externCUndo
 
 .storeState "A"

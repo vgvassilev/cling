@@ -8,7 +8,7 @@
 
 // Test runing a file in the same directory `cling CurrentDir.C`
 // More info in CIFactory.cpp createCIImpl (line ~850)
-// RUN: cd %S && %cling -Xclang -verify CurrentDir.C 2>&1 | FileCheck %s
+// RUN: cd %S && %cling -Xclang -verify CurrentDir.C 2>&1 | %filecheck %s
 
 extern "C" {
   int printf(const char*, ...);

@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -I%p 2>&1 | FileCheck %s
+// RUN: cat %s | %cling -I%p 2>&1 | %filecheck %s
 
 // The main issue is that expected - error is not propagated to the source file and
 // the expected diagnostics get misplaced.

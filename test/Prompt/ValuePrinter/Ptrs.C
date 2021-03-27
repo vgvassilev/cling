@@ -7,7 +7,7 @@
 
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling | FileCheck %s
+// RUN: cat %s | %cling | %filecheck %s
 
 #include <utility>
 #include <memory>

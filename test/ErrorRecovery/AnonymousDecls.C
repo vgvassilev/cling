@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -Xclang -verify 2>&1 | FileCheck %s
+// RUN: cat %s | %cling -Xclang -verify 2>&1 | %filecheck %s
 
 // Actually test clang::DeclContext::removeDecl(). This function in clang is
 // the main method that is used for the error recovery. This means when there

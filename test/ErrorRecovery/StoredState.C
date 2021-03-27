@@ -6,7 +6,7 @@
 // LICENSE.TXT for details.
 //------------------------------------------------------------------------------
 
-// RUN: cat %s | %cling -v -Xclang -verify 2>&1 | FileCheck %s
+// RUN: cat %s | %cling -v -Xclang -verify 2>&1 | %filecheck %s
 
 int i = 0;
 .storeState "A"

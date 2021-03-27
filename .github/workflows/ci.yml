@@ -81,9 +81,6 @@ jobs:
       if: runner.os == 'macOS'
     - name: Display compiler version
       run: $CC --version
-    - name: Set Python 3 as default
-      run: |
-        sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 10
     - name: Execute cpt
       run: |
         if [ ${{ github.event_name }} = 'pull_request' ]; then
@@ -99,11 +96,11 @@ jobs:
         fi
         export CLING_BUILD_FLAGS="$CLING_BUILD_FLAGS -DCLANG_ENABLE_ARCMT=OFF -DCLANG_ENABLE_STATIC_ANALYZER=OFF -DLLVM_ENABLE_WARNINGS=OFF -DCLING_ENABLE_WARNINGS=ON"
         if [[ ${{ matrix.name }} == *"compile"* ]]; then
-          python cpt.py -y --check-requirements --current-dev=tar --with-cmake-flags="$CLING_BUILD_FLAGS" --with-cling-url=https://github.com/$REPO --cling-branch=${{ github.head_ref }} --verbose
+          python3 cpt.py -y --check-requirements --current-dev=tar --with-cmake-flags="$CLING_BUILD_FLAGS" --with-cling-url=https://github.com/$REPO --cling-branch=${{ github.head_ref }} --verbose
         # elif [[ ${{ matrix.name }} == *"fromtar"* ]]; then
-          # python cpt.py -y --check-requirements --current-dev=tar --with-cmake-flags="$CLING_BUILD_FLAGS" --with-cling-url=https://github.com/$REPO --cling-branch=${{ github.head_ref }} --with-binary-llvm --with-llvm-tar --verbose
+          # python3 cpt.py -y --check-requirements --current-dev=tar --with-cmake-flags="$CLING_BUILD_FLAGS" --with-cling-url=https://github.com/$REPO --cling-branch=${{ github.head_ref }} --with-binary-llvm --with-llvm-tar --verbose
         else
-          python cpt.py -y --check-requirements --current-dev=tar --with-cmake-flags="$CLING_BUILD_FLAGS" --with-cling-url=https://github.com/$REPO --cling-branch=${{ github.head_ref }} --with-binary-llvm --verbose
+          python3 cpt.py -y --check-requirements --current-dev=tar --with-cmake-flags="$CLING_BUILD_FLAGS" --with-cling-url=https://github.com/$REPO --cling-branch=${{ github.head_ref }} --with-binary-llvm --verbose
         fi
       working-directory: tools/packaging/
     - name: Setup tmate session

@@ -40,7 +40,7 @@ namespace cling {
       llvm::SmallString<N> m_Buf;
       llvm::raw_svector_ostream m_Strm;
     public:
-      outstring() : m_Strm(m_Buf) {}
+      outstring() : m_Strm(m_Buf) { m_Strm.tie(&utils::outs()); }
       template <typename T> llvm::raw_ostream& operator << (const T& V) {
         m_Strm << V;
         return m_Strm;
@@ -54,7 +54,7 @@ namespace cling {
       std::string m_Str;
       llvm::raw_string_ostream m_Strm;
     public:
-      outstring() : m_Strm(m_Str) {}
+      outstring() : m_Strm(m_Str) { m_Strm.tie(&utils::outs());}
       template <typename T> llvm::raw_ostream& operator << (const T& V) {
         m_Strm << V;
         return m_Strm;

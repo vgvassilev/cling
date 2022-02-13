@@ -20,6 +20,9 @@ namespace cling {
 
     llvm::raw_ostream& outs() {
       static llvm::raw_os_ostream sOut(std::cout);
+      // FIXME: We really should make sure that we sync std::cerr and std::cout.
+      // Comment out the next line and run cling's testsuite.
+      sOut.SetUnbuffered();
       if (llvm::sys::Process::StandardErrIsDisplayed())
         sOut.enable_colors(true);
       return sOut;
@@ -27,6 +30,7 @@ namespace cling {
 
     llvm::raw_ostream& errs() {
       static llvm::raw_os_ostream sErr(std::cerr);
+      sErr.SetUnbuffered();
       if (llvm::sys::Process::StandardErrIsDisplayed())
         sErr.enable_colors(true);
       return sErr;

@@ -917,7 +917,8 @@ namespace cling {
     FilteringDiagConsumer::RAAI RAAITmp(*m_DiagConsumer, CO.IgnorePromptDiags);
 
     DiagnosticErrorTrap Trap(Diags);
-    Sema::SavePendingInstantiationsRAII SavedPendingInstantiations(S);
+    // FIXME: executeWrapper adds instantiations and this asserts.
+    //Sema::SavePendingInstantiationsRAII SavedPendingInstantiations(S);
 
     Parser::DeclGroupPtrTy ADecl;
     while (!m_Parser->ParseTopLevelDecl(ADecl)) {

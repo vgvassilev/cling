@@ -543,6 +543,14 @@ endif()
 add_subdirectory(lib)
 
 if( CLING_INCLUDE_TESTS )
+  if(EXISTS ${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include/gtest/gtest.h)
+    add_subdirectory(unittests)
+    list(APPEND CLANG_TEST_DEPS ClangUnitTests)
+    list(APPEND CLANG_TEST_PARAMS
+      clang_unit_site_config=${CMAKE_CURRENT_BINARY_DIR}/test/Unit/lit.site.cfg
+      )
+  endif()
+
   add_subdirectory(test)
 
   if(CLING_BUILT_STANDALONE)

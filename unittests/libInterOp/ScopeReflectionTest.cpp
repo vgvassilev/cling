@@ -3,6 +3,7 @@
 #include "cling/Interpreter/Transaction.h"
 
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/Basic/Version.h"
 #include "clang/Config/config.h"
 
@@ -11,19 +12,36 @@
 
 #include "gtest/gtest.h"
 
+using namespace clang;
+using namespace llvm;
 namespace libInterOp {
 using TCppScope_t = void*;
 bool IsNamespace(TCppScope_t scope) {
-  clang::Decl *D = static_cast<clang::Decl*>(scope);
-  return llvm::isa<clang::NamespaceDecl>(D);
+  Decl *D = static_cast<Decl*>(scope);
+  return isa<NamespaceDecl>(D);
+}
+// See TClingClassInfo::IsLoaded
+bool IsComplete(TCppScope_t scope) {
+  if (!scope)
+    return false;
+  Decl *D = static_cast<Decl*>(scope);
+  if (auto *CXXRD = dyn_cast<CXXRecordDecl>(D))
+    return CXXRD->hasDefinition();
+  else if (auto *TD = dyn_cast<TagDecl>(D))
+    return TD->getDefinition();
+
+  // Everything else is considered complete.
+  return true;
 }
 }
 
-static clang::Decl* GetDeclN(cling::Transaction &T, unsigned N) {
-  cling::Transaction::DelayCallInfo DCI = *(T.decls_begin() + N);
-  assert(DCI.m_DGR.isSingleDecl());
-  return DCI.m_DGR.getSingleDecl();
-
+static void GetTopLevelDecls(cling::Transaction &T, std::vector<Decl*>& Decls) {
+  for (auto DCI = T.decls_begin(), E = T.decls_end(); DCI != E; ++DCI) {
+    if (DCI->m_Call != cling::Transaction::kCCIHandleTopLevelDecl)
+      continue;
+    assert(DCI->m_DGR.isSingleDecl());
+    Decls.push_back(DCI->m_DGR.getSingleDecl());
+  }
 }
 
 // This function isn't referenced outside its translation unit, but it
@@ -71,7 +89,23 @@ TEST(ScopeReflectionTest, IsNamespace) {
   auto Interp = createInterpreter();
   cling::Transaction *T = nullptr;
   Interp->declare("namespace N {} class C{}; int I;", &T);
-  EXPECT_TRUE(libInterOp::IsNamespace(GetDeclN(*T, 0)));
-  EXPECT_FALSE(libInterOp::IsNamespace(GetDeclN(*T, 1)));
-  EXPECT_FALSE(libInterOp::IsNamespace(GetDeclN(*T, 2)));
+  std::vector<Decl*> Decls;
+  GetTopLevelDecls(*T, Decls);
+  EXPECT_TRUE(libInterOp::IsNamespace(Decls[0]));
+  EXPECT_FALSE(libInterOp::IsNamespace(Decls[1]));
+  EXPECT_FALSE(libInterOp::IsNamespace(Decls[2]));
+}
+
+TEST(ScopeReflectionTest, IsComplete) {
+  auto Interp = createInterpreter();
+  cling::Transaction *T = nullptr;
+  Interp->declare("namespace N {} class C{}; int I; struct S; enum E : int; union U{};", &T);
+  std::vector<Decl*> Decls;
+  GetTopLevelDecls(*T, Decls);
+  EXPECT_TRUE(libInterOp::IsComplete(Decls[0]));
+  EXPECT_TRUE(libInterOp::IsComplete(Decls[1]));
+  EXPECT_TRUE(libInterOp::IsComplete(Decls[2]));
+  EXPECT_FALSE(libInterOp::IsComplete(Decls[3]));
+  EXPECT_FALSE(libInterOp::IsComplete(Decls[4]));
+  EXPECT_TRUE(libInterOp::IsComplete(Decls[5]));
 }

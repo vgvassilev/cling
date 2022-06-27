@@ -7,6 +7,8 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/Version.h"
 #include "clang/Config/config.h"
+#include "clang/Frontend/CompilerInstance.h"
+#include "clang/Sema/Sema.h"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
@@ -17,6 +19,8 @@ using namespace clang;
 using namespace llvm;
 namespace libInterOp {
 using TCppScope_t = void*;
+using TCppType_t = void*;
+
 bool IsNamespace(TCppScope_t scope) {
   Decl *D = static_cast<Decl*>(scope);
   return isa<NamespaceDecl>(D);
@@ -48,6 +52,14 @@ size_t SizeOf(TCppScope_t scope) {
 
   return 0;
 }
+
+bool IsBuiltin(TCppType_t type) {
+  QualType Ty = QualType::getFromOpaquePtr(type);
+  if (Ty->isBuiltinType() || Ty->isAnyComplexType())
+    return true;
+  // FIXME: Figure out how to avoid the string comparison.
+  return llvm::StringRef(Ty.getAsString()).contains("complex");
+}
 }
 
 // This function isn't referenced outside its translation unit, but it
@@ -71,7 +83,7 @@ static std::string MakeResourcesPath() {
   Dir = llvm::sys::path::parent_path(Dir);
   Dir = llvm::sys::path::parent_path(Dir);
   Dir = llvm::sys::path::parent_path(Dir);
-  Dir = llvm::sys::path::parent_path(Dir);
+  //Dir = llvm::sys::path::parent_path(Dir);
   llvm::SmallString<128> P(Dir);
   llvm::sys::path::append(P, llvm::Twine("lib") + CLANG_LIBDIR_SUFFIX, "clang",
                           CLANG_VERSION_STRING);
@@ -87,7 +99,9 @@ static std::unique_ptr<cling::Interpreter> createInterpreter() {
   ClingArgv.insert(ClingArgv.begin(), MainExecutableName.c_str());
   return llvm::make_unique<cling::Interpreter>(ClingArgv.size(), &ClingArgv[0]);
 }
-std:: unique_ptr<cling::Interpreter> Interp;
+
+std::unique_ptr<cling::Interpreter> Interp;
+
 static void GetAllTopLevelDecls(const std::string& code, std::vector<Decl*>& Decls) {
   Interp = createInterpreter();
   cling::Transaction *T = nullptr;
@@ -99,7 +113,6 @@ static void GetAllTopLevelDecls(const std::string& code, std::vector<Decl*>& Dec
     Decls.push_back(DCI->m_DGR.getSingleDecl());
   }
 }
-
 
 // Check that the CharInfo table has been constructed reasonably.
 TEST(ScopeReflectionTest, IsNamespace) {
@@ -137,4 +150,33 @@ TEST(ScopeReflectionTest, SizeOf) {
   EXPECT_EQ(libInterOp::SizeOf(Decls[5]), (size_t)1);
   EXPECT_EQ(libInterOp::SizeOf(Decls[6]), (size_t)4);
   EXPECT_EQ(libInterOp::SizeOf(Decls[7]), (size_t)16);
+}
+
+TEST(ScopeReflectionTest, IsBuiltin) {
+  // static std::set<std::string> g_builtins =
+  // {"bool", "char", "signed char", "unsigned char", "wchar_t", "short", "unsigned short",
+  //  "int", "unsigned int", "long", "unsigned long", "long long", "unsigned long long",
+  //  "float", "double", "long double", "void"}
+
+  ASTContext &C = Interp->getCI()->getASTContext();
+  EXPECT_TRUE(libInterOp::IsBuiltin(C.BoolTy.getAsOpaquePtr()));
+  EXPECT_TRUE(libInterOp::IsBuiltin(C.CharTy.getAsOpaquePtr()));
+  EXPECT_TRUE(libInterOp::IsBuiltin(C.SignedCharTy.getAsOpaquePtr()));
+  EXPECT_TRUE(libInterOp::IsBuiltin(C.VoidTy.getAsOpaquePtr()));
+  // ...
+
+  // complex
+  EXPECT_TRUE(libInterOp::IsBuiltin(C.getComplexType(C.FloatTy).getAsOpaquePtr()));
+  EXPECT_TRUE(libInterOp::IsBuiltin(C.getComplexType(C.DoubleTy).getAsOpaquePtr()));
+  EXPECT_TRUE(libInterOp::IsBuiltin(C.getComplexType(C.LongDoubleTy).getAsOpaquePtr()));
+  EXPECT_TRUE(libInterOp::IsBuiltin(C.getComplexType(C.Float128Ty).getAsOpaquePtr()));
+
+  // std::complex
+  std::vector<Decl*> Decls;
+  Interp->declare("#include <complex>");
+  Sema &S = Interp->getCI()->getSema();
+  auto lookup = S.getStdNamespace()->lookup(&C.Idents.get("complex"));
+  auto *CTD = cast<ClassTemplateDecl>(lookup.front());
+  for (ClassTemplateSpecializationDecl *CTSD : CTD->specializations())
+    EXPECT_TRUE(libInterOp::IsBuiltin(C.getTypeDeclType(CTSD).getAsOpaquePtr()));
 }

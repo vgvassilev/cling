@@ -81,6 +81,12 @@ bool IsEnum(TCppScope_t handle)
     auto *D = (clang::Decl *)handle;
     return llvm::isa_and_nonnull<clang::EnumDecl>(D);
 }
+
+bool IsVariable(TCppScope_t scope)
+{
+    auto *D = (clang::Decl *)scope;
+    return llvm::isa_and_nonnull<clang::VarDecl>(D);
+}
 }
 
 // This function isn't referenced outside its translation unit, but it
@@ -132,6 +138,13 @@ static void GetAllTopLevelDecls(const std::string& code, std::vector<Decl*>& Dec
       continue;
     assert(DCI->m_DGR.isSingleDecl());
     Decls.push_back(DCI->m_DGR.getSingleDecl());
+  }
+}
+
+static void GetAllSubDecls(Decl *D, std::vector<Decl*>& SubDecls) {
+  DeclContext *DC = Decl::castToDeclContext(D);
+  for (auto DCI = DC->decls_begin(), E = DC->decls_end(); DCI != E; ++DCI) {
+    SubDecls.push_back(*DCI);
   }
 }
 
@@ -260,4 +273,28 @@ TEST(ScopeReflectionTest, IsEnum) {
   EXPECT_TRUE(libInterOp::IsEnum(Decls[0]));
   EXPECT_FALSE(libInterOp::IsEnum(Decls[1]));
   EXPECT_FALSE(libInterOp::IsEnum(Decls[2]));
+}
+
+TEST(ScopeReflectionTest, IsVariable) {
+  std::vector<Decl *> Decls;
+  std::string code = R"(
+    int i;
+
+    class C {
+    public:
+      int a;
+      static int b;
+    };
+  )";
+
+  GetAllTopLevelDecls(code, Decls);
+  EXPECT_TRUE(libInterOp::IsVariable(Decls[0]));
+  EXPECT_FALSE(libInterOp::IsVariable(Decls[1]));
+
+  std::vector<Decl *> SubDecls;
+  GetAllSubDecls(Decls[1], SubDecls);
+  EXPECT_FALSE(libInterOp::IsVariable(SubDecls[0]));
+  EXPECT_FALSE(libInterOp::IsVariable(SubDecls[1]));
+  EXPECT_FALSE(libInterOp::IsVariable(SubDecls[2]));
+  EXPECT_TRUE(libInterOp::IsVariable(SubDecls[3]));
 }

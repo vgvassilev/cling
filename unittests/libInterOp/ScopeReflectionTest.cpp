@@ -66,6 +66,15 @@ bool IsTemplate(TCppScope_t handle)
     auto *D = (clang::Decl *)handle;
     return llvm::isa_and_nonnull<clang::TemplateDecl>(D);
 }
+
+bool IsAbstract(TCppType_t klass)
+{
+    auto *D = (clang::Decl *)klass;
+    if (auto *CXXRD = llvm::dyn_cast_or_null<clang::CXXRecordDecl>(D))
+      return CXXRD->isAbstract();
+
+    return false;
+}
 }
 
 // This function isn't referenced outside its translation unit, but it
@@ -211,4 +220,19 @@ TEST(ScopeReflectionTest, IsTemplate) {
   EXPECT_FALSE(libInterOp::IsTemplate(Decls[1]));
   EXPECT_TRUE(libInterOp::IsTemplate(Decls[2]));
   EXPECT_FALSE(libInterOp::IsTemplate(Decls[3]));
+}
+
+TEST(ScopeReflectionTest, IsAbstract) {
+  std::vector<Decl *> Decls;
+  std::string code = R"(
+    class A {};
+
+    class B {
+      virtual int f() = 0;
+    };
+  )";
+
+  GetAllTopLevelDecls(code, Decls);
+  EXPECT_FALSE(libInterOp::IsAbstract(Decls[0]));
+  EXPECT_TRUE(libInterOp::IsAbstract(Decls[1]));
 }

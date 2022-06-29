@@ -341,3 +341,35 @@ TEST(ScopeReflectionTest, GetScopefromCompleteName) {
   EXPECT_EQ(InterOp::GetCompleteName(InterOp::GetScopeFromCompleteName(S, "N1::N2::C")), "N1::N2::C");
   EXPECT_EQ(InterOp::GetCompleteName(InterOp::GetScopeFromCompleteName(S, "N1::N2::C::S")), "N1::N2::C::S");
 }
+
+TEST(ScopeReflectionTest, GetNamed) {
+  std::vector<Decl*> Decls;
+  std::string code = R"(namespace N1 {
+                        namespace N2 {
+                          class C {
+                            int i;
+                            enum E { A, B };
+                            struct S {};
+                          };
+                        }
+                        }
+                       )";
+
+  Interp = createInterpreter();
+  Interp->declare(code);
+  Sema *S = &Interp->getCI()->getSema();
+  cling::InterOp::TCppScope_t ns_N1 = InterOp::GetNamed(S, "N1", 0);
+  cling::InterOp::TCppScope_t ns_N2 = InterOp::GetNamed(S, "N2", ns_N1);
+  cling::InterOp::TCppScope_t cl_C = InterOp::GetNamed(S, "C", ns_N2);
+  cling::InterOp::TCppScope_t en_E = InterOp::GetNamed(S, "E", cl_C);
+  EXPECT_EQ(InterOp::GetCompleteName(ns_N1), "N1");
+  EXPECT_EQ(InterOp::GetCompleteName(ns_N2), "N1::N2");
+  EXPECT_EQ(InterOp::GetCompleteName(cl_C), "N1::N2::C");
+  EXPECT_EQ(InterOp::GetCompleteName(InterOp::GetNamed(S, "i", cl_C)), "N1::N2::C::i");
+  EXPECT_EQ(InterOp::GetCompleteName(en_E), "N1::N2::C::E");
+  EXPECT_EQ(InterOp::GetCompleteName(InterOp::GetNamed(S, "A", en_E)), "N1::N2::C::A");
+  EXPECT_EQ(InterOp::GetCompleteName(InterOp::GetNamed(S, "B", en_E)), "N1::N2::C::B");
+  EXPECT_EQ(InterOp::GetCompleteName(InterOp::GetNamed(S, "A", cl_C)), "N1::N2::C::A");
+  EXPECT_EQ(InterOp::GetCompleteName(InterOp::GetNamed(S, "B", cl_C)), "N1::N2::C::B");
+  EXPECT_EQ(InterOp::GetCompleteName(InterOp::GetNamed(S, "S", cl_C)), "N1::N2::C::S");
+}

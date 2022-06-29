@@ -150,6 +150,22 @@ namespace InterOp {
 
     return 0;
   }
+
+  TCppScope_t GetScopeFromCompleteName(TCppSema_t sema, const std::string &name)
+  {
+    std::string delim = "::";
+    size_t start = 0;
+    size_t end = name.find(delim);
+    TCppScope_t curr_scope = 0;
+    auto *S = (Sema *) sema;
+    while (end != std::string::npos)
+    {
+      curr_scope = GetScope(S, name.substr(start, end - start), curr_scope);
+      start = end + delim.length();
+      end = name.find(delim, start);
+    }
+    return GetScope(S, name.substr(start, end), curr_scope);
+  }
 } // end namespace InterOp
 
 } // end namespace cling

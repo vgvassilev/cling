@@ -199,6 +199,17 @@ namespace InterOp {
     return (TCppScope_t) clang::Decl::castFromDeclContext(
             ParentDC)->getCanonicalDecl();
   }
+
+  TCppScope_t GetScopeFromType(TCppType_t type)
+  {
+    if (!type) return 0;
+
+    auto *QT = (clang::QualType *) type;
+    if (auto *RD = QT->getTypePtr()->getAsRecordDecl())
+      return (TCppScope_t) (RD->getCanonicalDecl());
+
+    return 0;
+  }
 } // end namespace InterOp
 
 } // end namespace cling

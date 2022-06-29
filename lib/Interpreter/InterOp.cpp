@@ -183,6 +183,22 @@ namespace InterOp {
 
     return 0;
   }
+
+  TCppScope_t GetParentScope(TCppScope_t scope)
+  {
+    auto *D = (clang::Decl *) scope;
+
+    if (llvm::isa_and_nonnull<TranslationUnitDecl>(D)) {
+      return 0;
+    }
+    auto *ParentDC = D->getDeclContext();
+
+    if (!ParentDC)
+      return 0;
+
+    return (TCppScope_t) clang::Decl::castFromDeclContext(
+            ParentDC)->getCanonicalDecl();
+  }
 } // end namespace InterOp
 
 } // end namespace cling

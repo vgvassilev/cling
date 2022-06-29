@@ -299,3 +299,25 @@ TEST(ScopeReflectionTest, GetGlobalScope) {
 
   EXPECT_EQ(InterOp::GetCompleteName(InterOp::GetGlobalScope(S)), "");
 }
+
+TEST(ScopeReflectionTest, GetScope) {
+  std::vector<Decl*> Decls;
+  std::string code = R"(namespace N {
+                        class C {
+                          int i;
+                          enum E { A, B };
+                        };
+                        }
+                       )";
+
+  Interp = createInterpreter();
+  Interp->declare(code);
+  Sema *S = &Interp->getCI()->getSema();
+  cling::InterOp::TCppScope_t tu = InterOp::GetScope(S, "", 0);
+  cling::InterOp::TCppScope_t ns_N = InterOp::GetScope(S, "N", 0);
+  cling::InterOp::TCppScope_t cl_C = InterOp::GetScope(S, "C", ns_N);
+
+  EXPECT_EQ(InterOp::GetCompleteName(tu), "");
+  EXPECT_EQ(InterOp::GetCompleteName(ns_N), "N");
+  EXPECT_EQ(InterOp::GetCompleteName(cl_C), "N::C");
+}

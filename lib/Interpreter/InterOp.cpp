@@ -13,6 +13,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Sema/Sema.h"
+#include "clang/Sema/Lookup.h"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
@@ -120,6 +121,12 @@ namespace InterOp {
     }
 
     return {};
+  }
+
+  TCppScope_t GetGlobalScope(TCppSema_t sema)
+  {
+    auto *S = (Sema *) sema;
+    return S->getASTContext().getTranslationUnitDecl();
   }
 } // end namespace InterOp
 

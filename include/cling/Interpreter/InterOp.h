@@ -17,6 +17,7 @@ namespace cling {
 namespace InterOp {
   using TCppScope_t = void*;
   using TCppType_t = void*;
+  using TCppSema_t = void*;
 
   bool IsNamespace(TCppScope_t scope);
   // See TClingClassInfo::IsLoaded
@@ -39,6 +40,7 @@ namespace InterOp {
 
   std::vector<TCppScope_t> GetUsingNamespaces(TCppScope_t scope);
 
+  TCppScope_t GetGlobalScope(TCppSema_t sema);
 } // end namespace InterOp
 
 } // end namespace cling

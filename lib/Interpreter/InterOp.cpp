@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 
 #include "cling/Interpreter/InterOp.h"
+#include "cling/Utils/AST.h"
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
@@ -127,6 +128,27 @@ namespace InterOp {
   {
     auto *S = (Sema *) sema;
     return S->getASTContext().getTranslationUnitDecl();
+  }
+
+  TCppScope_t GetScope(TCppSema_t sema, const std::string &name, TCppScope_t parent)
+  {
+    if (name == "")
+        return GetGlobalScope(sema);
+
+    DeclContext *Within = 0;
+    if (parent) {
+      auto *D = (Decl *)parent;
+      Within = llvm::dyn_cast<DeclContext>(D);
+    }
+
+    auto *S = (Sema *) sema;
+    auto *ND = cling::utils::Lookup::Named(S, name, Within);
+    if (!(ND == (NamedDecl *) -1) &&
+            (llvm::isa_and_nonnull<NamespaceDecl>(ND) ||
+             llvm::isa_and_nonnull<RecordDecl>(ND)))
+      return (TCppScope_t)(ND->getCanonicalDecl());
+
+    return 0;
   }
 } // end namespace InterOp
 

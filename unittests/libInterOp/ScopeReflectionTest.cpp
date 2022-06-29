@@ -292,3 +292,10 @@ TEST(ScopeReflectionTest, GetUsingNamespaces) {
   EXPECT_EQ(InterOp::GetName(usingNamespaces[1]), "std");
   EXPECT_EQ(InterOp::GetName(usingNamespaces[2]), "abc");
 }
+
+TEST(ScopeReflectionTest, GetGlobalScope) {
+  Interp = createInterpreter();
+  Sema *S = &Interp->getCI()->getSema();
+
+  EXPECT_EQ(InterOp::GetCompleteName(InterOp::GetGlobalScope(S)), "");
+}

@@ -166,6 +166,23 @@ namespace InterOp {
     }
     return GetScope(S, name.substr(start, end), curr_scope);
   }
+
+  TCppScope_t GetNamed(TCppSema_t sema, const std::string &name, TCppScope_t parent)
+  {
+    clang::DeclContext *Within = 0;
+    if (parent) {
+      auto *D = (clang::Decl *)parent;
+      Within = llvm::dyn_cast<clang::DeclContext>(D);
+    }
+
+    auto *S = (Sema *) sema;
+    auto *ND = cling::utils::Lookup::Named(S, name, Within);
+    if (ND && ND != (clang::NamedDecl*) -1) {
+      return (TCppScope_t)(ND->getCanonicalDecl());
+    }
+
+    return 0;
+  }
 } // end namespace InterOp
 
 } // end namespace cling

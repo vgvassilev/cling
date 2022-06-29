@@ -47,6 +47,8 @@ namespace InterOp {
   TCppScope_t GetScopeFromCompleteName(TCppSema_t sema, const std::string &name);
 
   TCppScope_t GetNamed(TCppSema_t sema, const std::string &name, TCppScope_t parent);
+
+  TCppScope_t GetParentScope(TCppScope_t scope);
 } // end namespace InterOp
 
 } // end namespace cling

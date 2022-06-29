@@ -34,6 +34,8 @@ namespace InterOp {
 
   std::string GetName(TCppType_t klass);
 
+  std::string GetCompleteName(TCppType_t klass);
+
   std::vector<TCppScope_t> GetUsingNamespaces(TCppScope_t scope);
 
 } // end namespace InterOp

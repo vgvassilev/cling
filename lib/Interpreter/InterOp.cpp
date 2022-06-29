@@ -94,6 +94,20 @@ namespace InterOp {
     return D->getNameAsString();
   }
 
+  std::string GetCompleteName(TCppType_t klass)
+  {
+    auto *D = (Decl *) klass;
+    if (auto *ND = llvm::dyn_cast_or_null<NamedDecl>(D)) {
+      return ND->getQualifiedNameAsString();
+    }
+
+    if (llvm::isa_and_nonnull<TranslationUnitDecl>(D)) {
+      return "";
+    }
+
+    return "<unnamed>";
+  }
+
   std::vector<TCppScope_t> GetUsingNamespaces(TCppScope_t scope) {
     auto *D = (clang::Decl *) scope;
 

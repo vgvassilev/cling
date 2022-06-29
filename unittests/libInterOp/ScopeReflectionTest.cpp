@@ -247,6 +247,26 @@ TEST(ScopeReflectionTest, GetName) {
   EXPECT_EQ(InterOp::GetName(Decls[7]), "Size16");
 }
 
+TEST(ScopeReflectionTest, GetCompleteName) {
+  std::vector<Decl*> Decls;
+  std::string code = R"(namespace N {
+                        class C {
+                          int i;
+                          enum E { A, B };
+                        };
+                        }
+                       )";
+  GetAllTopLevelDecls(code, Decls);
+  GetAllSubDecls(Decls[0], Decls);
+  GetAllSubDecls(Decls[1], Decls);
+
+  EXPECT_EQ(InterOp::GetCompleteName(0), "<unnamed>");
+  EXPECT_EQ(InterOp::GetCompleteName(Decls[0]), "N");
+  EXPECT_EQ(InterOp::GetCompleteName(Decls[1]), "N::C");
+  EXPECT_EQ(InterOp::GetCompleteName(Decls[3]), "N::C::i");
+  EXPECT_EQ(InterOp::GetCompleteName(Decls[4]), "N::C::E");
+}
+
 TEST(ScopeReflectionTest, GetUsingNamespaces) {
   std::vector<Decl *> Decls;
   std::string code = R"(

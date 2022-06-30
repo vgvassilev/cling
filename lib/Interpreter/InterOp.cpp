@@ -210,6 +210,23 @@ namespace InterOp {
 
     return 0;
   }
+
+  TCppScope_t GetBaseClass(TCppScope_t klass, TCppIndex_t ibase)
+  {
+    auto *D = (Decl *) klass;
+    auto *CXXRD = llvm::dyn_cast_or_null<CXXRecordDecl>(D);
+    if (!CXXRD || CXXRD->getNumBases() <= ibase) return 0;
+
+    auto type = (CXXRD->bases_begin() + ibase)->getType();
+    if (auto RT = llvm::dyn_cast<RecordType>(type)) {
+      return (TCppScope_t) RT->getDecl()->getCanonicalDecl();
+    } else if (auto TST = llvm::dyn_cast<clang::TemplateSpecializationType>(type)) {
+      return (TCppScope_t) TST->getTemplateName()
+          .getAsTemplateDecl()->getCanonicalDecl();
+    }
+
+    return 0;
+  }
 } // end namespace InterOp
 
 } // end namespace cling

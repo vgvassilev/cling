@@ -312,6 +312,15 @@ namespace InterOp {
     }
     return 0;
   }
+
+  TCppIndex_t GetFunctionRequiredArgs(TCppFunction_t func)
+  {
+    auto *D = (clang::Decl *) func;
+    if (auto *FD = llvm::dyn_cast_or_null<FunctionDecl> (D)) {
+      return FD->getMinRequiredArguments();
+    }
+    return 0;
+  }
 } // end namespace InterOp
 
 } // end namespace cling

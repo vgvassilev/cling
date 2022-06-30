@@ -433,3 +433,26 @@ TEST(ScopeReflectionTest, GetScopeFromType) {
   EXPECT_EQ(InterOp::GetScopeFromType(&QT3),
           (cling::InterOp::TCppScope_t) 0);
 }
+
+TEST(ScopeReflectionTest, GetBaseClass) {
+  std::vector<Decl *> Decls;
+  std::string code = R"(
+    class A {};
+    class B : virtual public A {};
+    class C : virtual public A {};
+    class D : public B, public C {};
+    class E : public D {};
+  )";
+
+  GetAllTopLevelDecls(code, Decls);
+
+  auto get_base_class_name = [](Decl *D, int i) {
+      return InterOp::GetCompleteName(InterOp::GetBaseClass(D, i));
+  };
+
+  EXPECT_EQ(get_base_class_name(Decls[1], 0), "A");
+  EXPECT_EQ(get_base_class_name(Decls[2], 0), "A");
+  EXPECT_EQ(get_base_class_name(Decls[3], 0), "B");
+  EXPECT_EQ(get_base_class_name(Decls[3], 1), "C");
+  EXPECT_EQ(get_base_class_name(Decls[4], 0), "D");
+}

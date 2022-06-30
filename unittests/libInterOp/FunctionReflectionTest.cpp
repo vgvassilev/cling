@@ -117,3 +117,19 @@ TEST(FunctionReflectionTest, GetFunctionReturnTypeAsString) {
   EXPECT_EQ(InterOp::GetFunctionReturnTypeAsString(SubDecls[1]), "void");
   EXPECT_EQ(InterOp::GetFunctionReturnTypeAsString(SubDecls[2]), "int");
 }
+
+TEST(FunctionReflectionTest, GetFunctionNumArgs) {
+  std::vector<Decl*> Decls, SubDecls;
+  std::string code = R"(
+    void f1() {}
+    void f2(int i, double d, long l, char ch) {}
+    void f3(int i, double d, long l = 0, char ch = 'a') {}
+    void f4(int i = 0, double d = 0.0, long l = 0, char ch = 'a') {}
+    )";
+
+  GetAllTopLevelDecls(code, Decls);
+  EXPECT_EQ(InterOp::GetFunctionNumArgs(Decls[0]), (size_t) 0);
+  EXPECT_EQ(InterOp::GetFunctionNumArgs(Decls[1]), (size_t) 4);
+  EXPECT_EQ(InterOp::GetFunctionNumArgs(Decls[2]), (size_t) 4);
+  EXPECT_EQ(InterOp::GetFunctionNumArgs(Decls[3]), (size_t) 4);
+}

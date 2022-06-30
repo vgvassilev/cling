@@ -262,6 +262,38 @@ namespace InterOp {
     }
     return {};
   }
+
+  std::vector<TCppFunction_t> GetFunctionsUsingName(
+        TCppSema_t sema, TCppScope_t scope, const std::string& name)
+  {
+    auto *D = (Decl *) scope;
+    std::vector<TCppFunction_t> funcs;
+    llvm::StringRef Name(name);
+    auto *S = (Sema *) sema;
+    DeclarationName DName = &S->Context.Idents.get(name);
+    clang::LookupResult R(*S,
+                          DName,
+                          SourceLocation(),
+                          Sema::LookupOrdinaryName,
+                          Sema::ForVisibleRedeclaration);
+
+    cling::utils::Lookup::Named(S, R, Decl::castToDeclContext(D));
+
+    if (R.empty())
+      return funcs;
+
+    R.resolveKind();
+
+    for (LookupResult::iterator Res = R.begin(), ResEnd = R.end();
+         Res != ResEnd;
+         ++Res) {
+      if (llvm::isa<FunctionDecl>(*Res)) {
+        funcs.push_back((TCppFunction_t) *Res);
+      }
+    }
+
+    return funcs;
+  }
 } // end namespace InterOp
 
 } // end namespace cling

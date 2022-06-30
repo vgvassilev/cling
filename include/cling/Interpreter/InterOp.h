@@ -59,6 +59,9 @@ namespace InterOp {
   bool IsSubclass(TCppScope_t derived, TCppScope_t base);
 
   std::vector<TCppFunction_t> GetClassMethods(TCppScope_t klass);
+
+  std::vector<TCppFunction_t> GetFunctionsUsingName(
+        TCppSema_t sema, TCppScope_t scope, const std::string& name);
 } // end namespace InterOp
 
 } // end namespace cling

@@ -247,6 +247,21 @@ namespace InterOp {
         return derived_CXXRD->isDerivedFrom(base_CXXRD);
     return false;
   }
+
+  std::vector<TCppFunction_t> GetClassMethods(TCppScope_t klass)
+  {
+    auto *D = (clang::Decl *) klass;
+
+    if (auto *CXXRD = llvm::dyn_cast_or_null<CXXRecordDecl>(D)) {
+      std::vector<TCppFunction_t> methods;
+      for (auto it = CXXRD->method_begin(), end = CXXRD->method_end();
+              it != end; it++) {
+        methods.push_back((TCppFunction_t) *it);
+      }
+      return methods;
+    }
+    return {};
+  }
 } // end namespace InterOp
 
 } // end namespace cling

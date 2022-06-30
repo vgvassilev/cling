@@ -4,6 +4,7 @@ set(LLVM_LINK_COMPONENTS
 
 add_cling_unittest(libInterOpTests
   ScopeReflectionTest.cpp
+  FunctionReflectionTest.cpp
   )
 
 clang_target_link_libraries(libInterOpTests

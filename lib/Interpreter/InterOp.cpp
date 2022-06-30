@@ -227,6 +227,26 @@ namespace InterOp {
 
     return 0;
   }
+
+  bool IsSubclass(TCppScope_t derived, TCppScope_t base)
+  {
+    if (derived == base)
+      return true;
+
+    auto *derived_D = (clang::Decl *) derived;
+    auto *base_D = (clang::Decl *) base;
+
+    if (!derived_D ||
+        !base_D    ||
+        llvm::isa<TranslationUnitDecl>(derived_D) ||
+        llvm::isa<TranslationUnitDecl>(base_D))
+        return false;
+
+    if (auto derived_CXXRD = llvm::dyn_cast_or_null<CXXRecordDecl>(derived_D))
+      if (auto base_CXXRD = llvm::dyn_cast_or_null<CXXRecordDecl>(base_D))
+        return derived_CXXRD->isDerivedFrom(base_CXXRD);
+    return false;
+  }
 } // end namespace InterOp
 
 } // end namespace cling

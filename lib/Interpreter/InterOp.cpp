@@ -294,6 +294,15 @@ namespace InterOp {
 
     return funcs;
   }
+
+  std::string GetFunctionReturnTypeAsString(TCppFunction_t func)
+  {
+    auto *D = (clang::Decl *) func;
+    if (auto *FD = llvm::dyn_cast_or_null<clang::FunctionDecl>(D)) {
+        return FD->getReturnType().getAsString();
+    }
+    return "";
+  }
 } // end namespace InterOp
 
 } // end namespace cling

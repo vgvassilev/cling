@@ -456,3 +456,46 @@ TEST(ScopeReflectionTest, GetBaseClass) {
   EXPECT_EQ(get_base_class_name(Decls[3], 1), "C");
   EXPECT_EQ(get_base_class_name(Decls[4], 0), "D");
 }
+
+TEST(ScopeReflectionTest, IsSubclass) {
+  std::vector<Decl *> Decls;
+  std::string code = R"(
+    class A {};
+    class B : virtual public A {};
+    class C : virtual public A {};
+    class D : public B, public C {};
+    class E : public D {};
+  )";
+
+  GetAllTopLevelDecls(code, Decls);
+
+  auto check_subclass = [](Decl *derived_D, Decl *base_D) {
+      return InterOp::IsSubclass(derived_D, base_D);
+  };
+
+  EXPECT_TRUE(check_subclass(Decls[0], Decls[0]));
+  EXPECT_TRUE(check_subclass(Decls[1], Decls[0]));
+  EXPECT_TRUE(check_subclass(Decls[2], Decls[0]));
+  EXPECT_TRUE(check_subclass(Decls[3], Decls[0]));
+  EXPECT_TRUE(check_subclass(Decls[4], Decls[0]));
+  EXPECT_FALSE(check_subclass(Decls[0], Decls[1]));
+  EXPECT_TRUE(check_subclass(Decls[1], Decls[1]));
+  EXPECT_FALSE(check_subclass(Decls[2], Decls[1]));
+  EXPECT_TRUE(check_subclass(Decls[3], Decls[1]));
+  EXPECT_TRUE(check_subclass(Decls[4], Decls[1]));
+  EXPECT_FALSE(check_subclass(Decls[0], Decls[2]));
+  EXPECT_FALSE(check_subclass(Decls[1], Decls[2]));
+  EXPECT_TRUE(check_subclass(Decls[2], Decls[2]));
+  EXPECT_TRUE(check_subclass(Decls[3], Decls[2]));
+  EXPECT_TRUE(check_subclass(Decls[4], Decls[2]));
+  EXPECT_FALSE(check_subclass(Decls[0], Decls[3]));
+  EXPECT_FALSE(check_subclass(Decls[1], Decls[3]));
+  EXPECT_FALSE(check_subclass(Decls[2], Decls[3]));
+  EXPECT_TRUE(check_subclass(Decls[3], Decls[3]));
+  EXPECT_TRUE(check_subclass(Decls[4], Decls[3]));
+  EXPECT_FALSE(check_subclass(Decls[0], Decls[4]));
+  EXPECT_FALSE(check_subclass(Decls[1], Decls[4]));
+  EXPECT_FALSE(check_subclass(Decls[2], Decls[4]));
+  EXPECT_FALSE(check_subclass(Decls[3], Decls[4]));
+  EXPECT_TRUE(check_subclass(Decls[4], Decls[4]));
+}

@@ -73,6 +73,8 @@ namespace InterOp {
           TCppFunction_t func,
           bool show_formal_args = false,
           TCppIndex_t max_args = -1);
+
+  std::string GetFunctionPrototype(TCppFunction_t func, bool show_formal_args = false);
 } // end namespace InterOp
 
 } // end namespace cling

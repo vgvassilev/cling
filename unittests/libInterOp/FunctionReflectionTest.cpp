@@ -213,3 +213,53 @@ TEST(FunctionReflectionTest, GetFunctionSignature) {
   test_func_sig(Decls[12], true, -1,
           "void (int i, double d, long l = 0, char ch = 'a')"); // N::f
 }
+
+TEST(FunctionReflectionTest, GetFunctionPrototype) {
+  std::vector<Decl*> Decls, SubDecls;
+  std::string code = R"(
+    class C {
+      void f(int i, double d, long l = 0, char ch = 'a') {}
+    };
+
+    namespace N
+    {
+      void f(int i, double d, long l = 0, char ch = 'a') {}
+    }
+
+    void f1() {}
+    C f2(int i, double d, long l = 0, char ch = 'a') { return C(); }
+    C *f3(int i, double d, long l = 0, char ch = 'a') { return new C(); }
+    void f4(int i = 0, double d = 0.0, long l = 0, char ch = 'a') {}
+    )";
+
+  GetAllTopLevelDecls(code, Decls);
+  GetAllSubDecls(Decls[0], Decls);
+  GetAllSubDecls(Decls[1], Decls);
+
+  auto test_func_proto = [](Decl *D, bool formal_args, std::string proto) {
+      EXPECT_EQ(InterOp::GetFunctionPrototype(D, formal_args), proto);
+  };
+
+  test_func_proto(Decls[2], false, "void f1()"); // f1
+  test_func_proto(Decls[2], true, "void f1()"); // f1
+  test_func_proto(Decls[3], false,
+          "class C f2(int, double, long, char)"); // f2
+  test_func_proto(Decls[3], true,
+          "class C f2(int i, double d, long l = 0, char ch = 'a')"); // f2
+  test_func_proto(Decls[4], false,
+          "class C *f3(int, double, long, char)"); // f3
+  test_func_proto(Decls[4], true,
+          "class C *f3(int i, double d, long l = 0, char ch = 'a')"); // f3
+  test_func_proto(Decls[5], false,
+          "void f4(int, double, long, char)"); // f4
+  test_func_proto(Decls[5], true,
+          "void f4(int i = 0, double d = 0., long l = 0, char ch = 'a')"); // f4
+  test_func_proto(Decls[7], false,
+          "void C::f(int, double, long, char)"); // C::f
+  test_func_proto(Decls[7], true,
+          "void C::f(int i, double d, long l = 0, char ch = 'a')"); // C::f
+  test_func_proto(Decls[12], false,
+          "void N::f(int, double, long, char)"); // N::f
+  test_func_proto(Decls[12], true,
+          "void N::f(int i, double d, long l = 0, char ch = 'a')"); // N::f
+}

@@ -368,6 +368,21 @@ namespace InterOp {
     }
     return "<unknown>";
   }
+
+  std::string GetFunctionPrototype(TCppFunction_t func, bool show_formal_args)
+  {
+    auto *D = (clang::Decl *) func;
+    if (auto *FD = llvm::dyn_cast_or_null<FunctionDecl>(D)) {
+      std::stringstream proto;
+
+      proto << FD->getReturnType().getAsString()
+            << (FD->getReturnType()->isPointerType() ? "" : " ");
+      proto << FD->getQualifiedNameAsString();
+      get_function_params(proto, FD, show_formal_args);
+      return proto.str();
+    }
+    return "<unknown>";
+  }
 } // end namespace InterOp
 
 } // end namespace cling

@@ -383,6 +383,25 @@ namespace InterOp {
     }
     return "<unknown>";
   }
+
+  bool IsTemplatedFunction(TCppFunction_t func)
+  {
+    auto *D = (Decl *) func;
+    if (llvm::isa_and_nonnull<FunctionTemplateDecl>(D)) {
+      return true;
+    }
+
+    if (auto *FD = llvm::dyn_cast_or_null<FunctionDecl>(D)) {
+      auto TK = FD->getTemplatedKind();
+      return TK == FunctionDecl::TemplatedKind::
+                   TK_FunctionTemplateSpecialization
+            || TK == FunctionDecl::TemplatedKind::
+                     TK_DependentFunctionTemplateSpecialization
+            || TK == FunctionDecl::TemplatedKind::TK_FunctionTemplate;
+    }
+
+    return false;
+  }
 } // end namespace InterOp
 
 } // end namespace cling

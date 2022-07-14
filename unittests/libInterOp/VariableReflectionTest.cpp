@@ -136,3 +136,24 @@ TEST(VariableReflectionTest, IsProtectedVariable) {
   EXPECT_FALSE(InterOp::IsProtectedVariable(SubDecls[4]));
   EXPECT_TRUE(InterOp::IsProtectedVariable(SubDecls[6]));
 }
+
+TEST(VariableReflectionTest, IsPrivateVariable) {
+  std::vector<Decl *> Decls, SubDecls;
+  std::string code = R"(
+    class C {
+    public:
+      int a;
+    private:
+      int b;
+    protected:
+      int c;
+    };
+    )";
+
+  GetAllTopLevelDecls(code, Decls);
+  GetAllSubDecls(Decls[0], SubDecls);
+
+  EXPECT_FALSE(InterOp::IsPrivateVariable(SubDecls[2]));
+  EXPECT_TRUE(InterOp::IsPrivateVariable(SubDecls[4]));
+  EXPECT_FALSE(InterOp::IsPrivateVariable(SubDecls[6]));
+}

@@ -559,6 +559,16 @@ namespace InterOp {
   {
     return CheckVariableAccess(var, AccessSpecifier::AS_private);
   }
+
+  bool IsStaticVariable(TCppScope_t var)
+  {
+    auto *D = (Decl *) var;
+    if (llvm::isa_and_nonnull<VarDecl>(D)) {
+      return true;
+    }
+
+    return false;
+  }
 } // end namespace InterOp
 
 } // end namespace cling

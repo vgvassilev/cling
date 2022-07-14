@@ -8,11 +8,14 @@
 //------------------------------------------------------------------------------
 
 #include "cling/Interpreter/InterOp.h"
+#include "cling/Interpreter/Interpreter.h"
 #include "cling/Utils/AST.h"
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/GlobalDecl.h"
 #include "clang/AST/RecordLayout.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/Lookup.h"
 
@@ -20,6 +23,7 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_os_ostream.h"
 
+#include <dlfcn.h>
 #include <sstream>
 
 namespace cling {
@@ -494,6 +498,41 @@ namespace InterOp {
     }
 
     return "";
+  }
+
+  intptr_t GetVariableOffset(TInterp_t interp, TCppScope_t var)
+  {
+    auto *D = (Decl *) var;
+    auto *P = (Decl *) GetParentScope(var);
+    auto *I = (cling::Interpreter *) interp;
+    auto *S = &I->getCI()->getSema();
+
+    if (P == GetGlobalScope(S) || IsNamespace(P)) {
+      if (auto *VD = llvm::dyn_cast_or_null<VarDecl>(D)) {
+        auto GD = GlobalDecl(VD);
+        std::string mangledName;
+        cling::utils::Analyze::maybeMangleDeclName(GD, mangledName);
+        auto address = dlsym(/*whole_process=*/0, mangledName.c_str());
+        if (!address)
+          address = I->getAddressOfGlobal(GD);
+        return (intptr_t) address;
+      }
+    }
+
+    if (auto *CXXRD = llvm::dyn_cast_or_null<CXXRecordDecl>(P)) {
+      if (llvm::isa_and_nonnull<VarDecl>(D)) {
+        return (intptr_t) I->process(
+               (std::string("&") + GetCompleteName(D) + ";").c_str());
+      }
+
+      if (auto *FD = llvm::dyn_cast_or_null<FieldDecl>(D)) {
+        auto &Cxt = S->getASTContext();
+        return (intptr_t) Cxt.toCharUnitsFromBits(Cxt.getASTRecordLayout(CXXRD)
+               .getFieldOffset(FD->getFieldIndex())).getQuantity();
+      }
+    }
+
+    return 0;
   }
 } // end namespace InterOp
 

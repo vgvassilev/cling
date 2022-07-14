@@ -457,6 +457,16 @@ namespace InterOp {
     auto *D = (Decl *) method;
     return llvm::isa_and_nonnull<CXXDestructorDecl>(D);
   }
+
+  bool IsStaticMethod(TCppFunction_t method)
+  {
+    auto *D = (Decl *) method;
+    if (auto *CXXMD = llvm::dyn_cast_or_null<CXXMethodDecl>(D)) {
+      return CXXMD->isStatic();
+    }
+
+    return false;
+  }
 } // end namespace InterOp
 
 } // end namespace cling

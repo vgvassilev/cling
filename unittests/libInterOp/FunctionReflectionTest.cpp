@@ -307,3 +307,28 @@ TEST(FunctionReflectionTest, ExistsFunctionTemplate) {
   EXPECT_TRUE(InterOp::ExistsFunctionTemplate(S, "f", 0));
   EXPECT_TRUE(InterOp::ExistsFunctionTemplate(S, "f", Decls[1]));
 }
+
+TEST(FunctionReflectionTest, IsPublicMethod) {
+  std::vector<Decl *> Decls, SubDecls;
+  std::string code = R"(
+    class C {
+    public:
+      C() {}
+      void pub_f() {}
+      ~C() {}
+    private:
+      void pri_f() {}
+    protected:
+      void pro_f() {}
+    };
+    )";
+
+  GetAllTopLevelDecls(code, Decls);
+  GetAllSubDecls(Decls[0], SubDecls);
+
+  EXPECT_TRUE(InterOp::IsPublicMethod(SubDecls[2]));
+  EXPECT_TRUE(InterOp::IsPublicMethod(SubDecls[3]));
+  EXPECT_TRUE(InterOp::IsPublicMethod(SubDecls[4]));
+  EXPECT_FALSE(InterOp::IsPublicMethod(SubDecls[6]));
+  EXPECT_FALSE(InterOp::IsPublicMethod(SubDecls[8]));
+}

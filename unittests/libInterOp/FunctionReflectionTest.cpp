@@ -407,3 +407,28 @@ TEST(FunctionReflectionTest, IsConstructor) {
   EXPECT_FALSE(InterOp::IsConstructor(SubDecls[6]));
   EXPECT_FALSE(InterOp::IsConstructor(SubDecls[8]));
 }
+
+TEST(FunctionReflectionTest, IsDestructor) {
+  std::vector<Decl *> Decls, SubDecls;
+  std::string code = R"(
+    class C {
+    public:
+      C() {}
+      void pub_f() {}
+      ~C() {}
+    private:
+      void pri_f() {}
+    protected:
+      void pro_f() {}
+    };
+    )";
+
+  GetAllTopLevelDecls(code, Decls);
+  GetAllSubDecls(Decls[0], SubDecls);
+
+  EXPECT_FALSE(InterOp::IsDestructor(SubDecls[2]));
+  EXPECT_FALSE(InterOp::IsDestructor(SubDecls[3]));
+  EXPECT_TRUE(InterOp::IsDestructor(SubDecls[4]));
+  EXPECT_FALSE(InterOp::IsDestructor(SubDecls[6]));
+  EXPECT_FALSE(InterOp::IsDestructor(SubDecls[8]));
+}

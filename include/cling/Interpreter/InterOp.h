@@ -94,6 +94,8 @@ namespace InterOp {
   bool IsStaticMethod(TCppFunction_t method);
 
   std::vector<TCppScope_t> GetDatamembers(TCppScope_t scope);
+
+  std::string GetVariableTypeAsString(TCppScope_t var);
 } // end namespace InterOp
 
 } // end namespace cling

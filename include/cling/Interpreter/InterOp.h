@@ -92,6 +92,8 @@ namespace InterOp {
   bool IsDestructor(TCppFunction_t method);
 
   bool IsStaticMethod(TCppFunction_t method);
+
+  std::vector<TCppScope_t> GetDatamembers(TCppScope_t scope);
 } // end namespace InterOp
 
 } // end namespace cling

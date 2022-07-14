@@ -467,6 +467,23 @@ namespace InterOp {
 
     return false;
   }
+
+  std::vector<TCppScope_t> GetDatamembers(TCppScope_t scope)
+  {
+    auto *D = (Decl *) scope;
+
+    if (auto *CXXRD = llvm::dyn_cast_or_null<CXXRecordDecl>(D)) {
+      std::vector<TCppScope_t> datamembers;
+      for (auto it = CXXRD->field_begin(), end = CXXRD->field_end();
+              it != end ; it++) {
+        datamembers.push_back((TCppScope_t) *it);
+      }
+
+      return datamembers;
+    }
+
+    return {};
+  }
 } // end namespace InterOp
 
 } // end namespace cling

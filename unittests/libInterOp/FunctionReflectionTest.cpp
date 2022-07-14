@@ -288,3 +288,22 @@ TEST(FunctionReflectionTest, IsTemplatedFunction) {
   EXPECT_FALSE(InterOp::IsTemplatedFunction(SubDeclsC1[1]));
   EXPECT_TRUE(InterOp::IsTemplatedFunction(SubDeclsC1[2]));
 }
+
+TEST(FunctionReflectionTest, ExistsFunctionTemplate) {
+  std::vector<Decl*> Decls;
+  std::string code = R"(
+    template<typename T>
+    void f(T a) {}
+
+    class C {
+      template<typename T>
+      void f(T a) {}
+    };
+    )";
+
+  GetAllTopLevelDecls(code, Decls);
+  auto *S = &Interp->getCI()->getSema();
+
+  EXPECT_TRUE(InterOp::ExistsFunctionTemplate(S, "f", 0));
+  EXPECT_TRUE(InterOp::ExistsFunctionTemplate(S, "f", Decls[1]));
+}

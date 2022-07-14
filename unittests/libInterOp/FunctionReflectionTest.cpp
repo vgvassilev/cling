@@ -332,3 +332,28 @@ TEST(FunctionReflectionTest, IsPublicMethod) {
   EXPECT_FALSE(InterOp::IsPublicMethod(SubDecls[6]));
   EXPECT_FALSE(InterOp::IsPublicMethod(SubDecls[8]));
 }
+
+TEST(FunctionReflectionTest, IsProtectedMethod) {
+  std::vector<Decl *> Decls, SubDecls;
+  std::string code = R"(
+    class C {
+    public:
+      C() {}
+      void pub_f() {}
+      ~C() {}
+    private:
+      void pri_f() {}
+    protected:
+      void pro_f() {}
+    };
+    )";
+
+  GetAllTopLevelDecls(code, Decls);
+  GetAllSubDecls(Decls[0], SubDecls);
+
+  EXPECT_FALSE(InterOp::IsProtectedMethod(SubDecls[2]));
+  EXPECT_FALSE(InterOp::IsProtectedMethod(SubDecls[3]));
+  EXPECT_FALSE(InterOp::IsProtectedMethod(SubDecls[4]));
+  EXPECT_FALSE(InterOp::IsProtectedMethod(SubDecls[6]));
+  EXPECT_TRUE(InterOp::IsProtectedMethod(SubDecls[8]));
+}

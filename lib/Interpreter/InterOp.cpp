@@ -435,6 +435,11 @@ namespace InterOp {
   {
     return CheckMethodAccess(method, AccessSpecifier::AS_public);
   }
+
+  bool IsProtectedMethod(TCppFunction_t method)
+  {
+    return CheckMethodAccess(method, AccessSpecifier::AS_protected);
+  }
 } // end namespace InterOp
 
 } // end namespace cling

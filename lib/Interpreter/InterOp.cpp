@@ -569,6 +569,17 @@ namespace InterOp {
 
     return false;
   }
+
+  bool IsConstVariable(TCppScope_t var)
+  {
+    auto *D = (clang::Decl *) var;
+
+    if (auto *VD = llvm::dyn_cast_or_null<ValueDecl>(D)) {
+      return VD->getType().isConstQualified();
+    }
+
+    return false;
+  }
 } // end namespace InterOp
 
 } // end namespace cling

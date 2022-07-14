@@ -75,6 +75,8 @@ namespace InterOp {
           TCppIndex_t max_args = -1);
 
   std::string GetFunctionPrototype(TCppFunction_t func, bool show_formal_args = false);
+
+  bool IsTemplatedFunction(TCppFunction_t func);
 } // end namespace InterOp
 
 } // end namespace cling

@@ -402,6 +402,24 @@ namespace InterOp {
 
     return false;
   }
+
+  bool ExistsFunctionTemplate(TCppSema_t sema, const std::string& name,
+          TCppScope_t parent)
+  {
+    DeclContext *Within = 0;
+    if (parent) {
+      auto *D = (Decl *)parent;
+      Within = llvm::dyn_cast<DeclContext>(D);
+    }
+
+    auto *S = (Sema *) sema;
+    auto *ND = cling::utils::Lookup::Named(S, name, Within);
+
+    if (!ND)
+      return false;
+
+    return true;
+  }
 } // end namespace InterOp
 
 } // end namespace cling

@@ -173,3 +173,19 @@ TEST(VariableReflectionTest, IsStaticVariable) {
   EXPECT_FALSE(InterOp::IsStaticVariable(SubDecls[1]));
   EXPECT_TRUE(InterOp::IsStaticVariable(SubDecls[2]));
 }
+
+TEST(VariableReflectionTest, IsConstVariable) {
+  std::vector<Decl *> Decls, SubDecls;
+  std::string code =  R"(
+    class C {
+      int a;
+      const int b = 2;
+    };
+    )";
+
+  GetAllTopLevelDecls(code, Decls);
+  GetAllSubDecls(Decls[0], SubDecls);
+
+  EXPECT_FALSE(InterOp::IsConstVariable(SubDecls[1]));
+  EXPECT_TRUE(InterOp::IsConstVariable(SubDecls[2]));
+}

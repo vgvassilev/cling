@@ -103,6 +103,8 @@ namespace InterOp {
   bool IsPublicVariable(TCppScope_t var);
 
   bool IsProtectedVariable(TCppScope_t var);
+
+  bool IsPrivateVariable(TCppScope_t var);
 } // end namespace InterOp
 
 } // end namespace cling

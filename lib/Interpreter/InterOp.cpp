@@ -549,6 +549,11 @@ namespace InterOp {
   {
     return CheckVariableAccess(var, AccessSpecifier::AS_public);
   }
+
+  bool IsProtectedVariable(TCppScope_t var)
+  {
+    return CheckVariableAccess(var, AccessSpecifier::AS_protected);
+  }
 } // end namespace InterOp
 
 } // end namespace cling

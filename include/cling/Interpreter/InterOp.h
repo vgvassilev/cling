@@ -45,7 +45,8 @@ namespace InterOp {
 
   TCppScope_t GetGlobalScope(TCppSema_t sema);
 
-  TCppScope_t GetScope(TCppSema_t sema, const std::string &name, TCppScope_t parent);
+  TCppScope_t GetScope(TCppSema_t sema, const std::string &name,
+                       TCppScope_t parent = 0);
 
   TCppScope_t GetScopeFromCompleteName(TCppSema_t sema, const std::string &name);
 

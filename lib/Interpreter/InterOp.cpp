@@ -346,6 +346,20 @@ namespace InterOp {
     return 0;
   }
 
+  TCppType_t GetFunctionArgType(TCppFunction_t func, TCppIndex_t iarg)
+  {
+    auto *D = (clang::Decl *) func;
+
+    if (auto *FD = llvm::dyn_cast_or_null<clang::FunctionDecl>(D)) {
+        if (iarg < FD->getNumParams()) {
+            auto *PVD = FD->getParamDecl(iarg);
+            return PVD->getOriginalType().getAsOpaquePtr();
+        }
+    }
+
+    return 0;
+  }
+
   void get_function_params(std::stringstream &ss, FunctionDecl *FD,
           bool show_formal_args = false, TCppIndex_t max_args = -1)
   {

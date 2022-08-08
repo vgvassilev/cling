@@ -150,6 +150,24 @@ TEST(FunctionReflectionTest, GetFunctionRequiredArgs) {
   EXPECT_EQ(InterOp::GetFunctionRequiredArgs(Decls[3]), (size_t) 0);
 }
 
+TEST(FunctionReflectionTest, GetFunctionArgType) {
+  std::vector<Decl*> Decls, SubDecls;
+  std::string code = R"(
+    void f1(int i, double d, long l, char ch) {}
+    void f2(const int i, double d[], long *l, char ch[4]) {}
+    )";
+
+  GetAllTopLevelDecls(code, Decls);
+  EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetFunctionArgType(Decls[0], 0)), "int");
+  EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetFunctionArgType(Decls[0], 1)), "double");
+  EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetFunctionArgType(Decls[0], 2)), "long");
+  EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetFunctionArgType(Decls[0], 3)), "char");
+  EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetFunctionArgType(Decls[1], 0)), "const int");
+  EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetFunctionArgType(Decls[1], 1)), "double []");
+  EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetFunctionArgType(Decls[1], 2)), "long *");
+  EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetFunctionArgType(Decls[1], 3)), "char [4]");
+}
+
 TEST(FunctionReflectionTest, GetFunctionSignature) {
   std::vector<Decl*> Decls, SubDecls;
   std::string code = R"(

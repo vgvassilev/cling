@@ -86,7 +86,8 @@ namespace InterOp {
 
   bool IsEnum(TCppScope_t handle) {
     auto *D = (clang::Decl *)handle;
-    return llvm::isa_and_nonnull<clang::EnumDecl>(D);
+    return llvm::isa_and_nonnull<clang::EnumDecl>(D)
+        || llvm::isa_and_nonnull<clang::EnumConstantDecl>(D);
   }
 
   bool IsVariable(TCppScope_t scope) {

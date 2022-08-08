@@ -96,7 +96,7 @@ namespace InterOp {
 
   std::vector<TCppScope_t> GetDatamembers(TCppScope_t scope);
 
-  std::string GetVariableTypeAsString(TCppScope_t var);
+  TCppType_t GetVariableType(TCppScope_t var);
 
   intptr_t GetVariableOffset(TInterp_t interp, TCppScope_t var);
 

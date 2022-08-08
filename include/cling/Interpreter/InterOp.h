@@ -56,6 +56,8 @@ namespace InterOp {
 
   TCppScope_t GetScopeFromType(TCppType_t type);
 
+  TCppIndex_t GetNumBases(TCppType_t klass);
+
   TCppScope_t GetBaseClass(TCppType_t klass, TCppIndex_t ibase);
 
   bool IsSubclass(TCppScope_t derived, TCppScope_t base);

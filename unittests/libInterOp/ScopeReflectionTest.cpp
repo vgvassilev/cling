@@ -353,11 +353,11 @@ TEST(ScopeReflectionTest, GetScopeFromType) {
   QualType QT1 = llvm::dyn_cast<VarDecl>(Decls[1])->getType();
   QualType QT2 = llvm::dyn_cast<VarDecl>(Decls[2])->getType();
   QualType QT3 = llvm::dyn_cast<VarDecl>(Decls[3])->getType();
-  EXPECT_EQ(InterOp::GetCompleteName(InterOp::GetScopeFromType(&QT1)),
+  EXPECT_EQ(InterOp::GetCompleteName(InterOp::GetScopeFromType(QT1.getAsOpaquePtr())),
           "N::C");
-  EXPECT_EQ(InterOp::GetCompleteName(InterOp::GetScopeFromType(&QT2)),
+  EXPECT_EQ(InterOp::GetCompleteName(InterOp::GetScopeFromType(QT2.getAsOpaquePtr())),
           "N::S");
-  EXPECT_EQ(InterOp::GetScopeFromType(&QT3),
+  EXPECT_EQ(InterOp::GetScopeFromType(QT3.getAsOpaquePtr()),
           (cling::InterOp::TCppScope_t) 0);
 }
 

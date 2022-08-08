@@ -224,6 +224,7 @@ TEST(ScopeReflectionTest, GetGlobalScope) {
   Sema *S = &Interp->getCI()->getSema();
 
   EXPECT_EQ(InterOp::GetCompleteName(InterOp::GetGlobalScope(S)), "");
+  EXPECT_EQ(InterOp::GetName(InterOp::GetGlobalScope(S)), "");
 }
 
 TEST(ScopeReflectionTest, GetScope) {

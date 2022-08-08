@@ -96,12 +96,17 @@ namespace InterOp {
   }
 
   std::string GetName(TCppType_t klass) {
-    // In cppyy GlobalScope is represented by empty string
-    // if (klass == Cppyy::NewGetGlobalScope())
-    //     return "";
-
     auto *D = (clang::NamedDecl *) klass;
-    return D->getNameAsString();
+
+    if (llvm::isa_and_nonnull<TranslationUnitDecl>(D)) {
+      return "";
+    }
+
+    if (auto *ND = llvm::dyn_cast_or_null<NamedDecl>(D)) {
+      return ND->getNameAsString();
+    }
+
+    return "<unnamed>";
   }
 
   std::string GetCompleteName(TCppType_t klass)

@@ -90,6 +90,11 @@ namespace InterOp {
         || llvm::isa_and_nonnull<clang::EnumConstantDecl>(D);
   }
 
+  bool IsEnumType(TCppType_t type) {
+    QualType QT = QualType::getFromOpaquePtr(type);
+    return QT->isEnumeralType();
+  }
+
   bool IsVariable(TCppScope_t scope) {
     auto *D = (clang::Decl *)scope;
     return llvm::isa_and_nonnull<clang::VarDecl>(D);

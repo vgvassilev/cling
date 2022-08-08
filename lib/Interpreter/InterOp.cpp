@@ -215,12 +215,12 @@ namespace InterOp {
 
   TCppScope_t GetScopeFromType(TCppType_t type)
   {
-    if (!type) return 0;
-
-    auto *QT = (clang::QualType *) type;
-    if (auto *RD = QT->getTypePtr()->getAsRecordDecl())
-      return (TCppScope_t) (RD->getCanonicalDecl());
-
+    QualType QT = QualType::getFromOpaquePtr(type);
+    if (auto* Type = QT.getTypePtrOrNull()) {
+      Type = Type->getPointeeOrArrayElementType();
+      Type = Type->getUnqualifiedDesugaredType();
+      return (TCppScope_t)Type->getAsCXXRecordDecl();
+    }
     return 0;
   }
 

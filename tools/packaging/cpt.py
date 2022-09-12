@@ -211,21 +211,30 @@ def fetch_llvm(llvm_revision):
         return
 
     def checkout():
-        exec_subprocess_call('git checkout cling-patches-r%s' % llvm_revision, srcdir)
+        if LLVM_BRANCH:
+            exec_subprocess_call('git checkout %s' % LLVM_BRANCH, srcdir)
+        else:
+            exec_subprocess_call('git checkout cling-patches-r%s' % llvm_revision, srcdir)
 
     def get_fresh_llvm():
-        exec_subprocess_call('git clone %s %s' % (LLVM_GIT_URL, srcdir), workdir)
+        if LLVM_BRANCH:
+            exec_subprocess_call('git clone --branch %s %s %s' % (LLVM_BRANCH, LLVM_GIT_URL, srcdir), workdir)
+        else:
+            exec_subprocess_call('git clone %s %s' % (LLVM_GIT_URL, srcdir), workdir)
         checkout()
 
     def update_old_llvm():
-        exec_subprocess_call('git stash', srcdir)
-
-        # exec_subprocess_call('git clean -f -x -d', srcdir)
+        if not args['allow_dirty']:
+            exec_subprocess_call('git stash', srcdir)
+            # exec_subprocess_call('git clean -f -x -d', srcdir)
 
         checkout()
         exec_subprocess_call('git fetch --tags', srcdir)
-        exec_subprocess_call('git pull origin refs/tags/cling-patches-r%s'
-                                % llvm_revision, srcdir)
+        if LLVM_BRANCH:
+            exec_subprocess_call('git merge origin/%s' % LLVM_BRANCH, srcdir)
+        else:
+            exec_subprocess_call('git pull origin refs/tags/cling-patches-r%s'
+                                    % llvm_revision, srcdir)
 
     if os.path.isdir(srcdir):
         update_old_llvm()
@@ -342,23 +351,33 @@ def fetch_clang(llvm_revision):
     global clangdir
     clangdir = os.path.join(dir, 'clang')
     def checkout():
-        exec_subprocess_call('git checkout cling-patches-r%s' % llvm_revision, clangdir)
+        if CLANG_BRANCH:
+            exec_subprocess_call('git checkout %s' % CLANG_BRANCH, clangdir)
+        else:
+            exec_subprocess_call('git checkout cling-patches-r%s' % llvm_revision, clangdir)
 
     def get_fresh_clang():
-        exec_subprocess_call('git clone %s' % CLANG_GIT_URL, dir)
+        if CLANG_BRANCH:
+            exec_subprocess_call('git clone --branch %s %s' % (CLANG_BRANCH, CLANG_GIT_URL), dir)
+        else:
+            exec_subprocess_call('git clone %s' % CLANG_GIT_URL, dir)
         checkout()
 
     def update_old_clang():
-        exec_subprocess_call('git stash', clangdir)
-
-        # exec_subprocess_call('git clean -f -x -d', clangdir)
+        if not args['allow_dirty']:
+            exec_subprocess_call('git stash', clangdir)
+            # exec_subprocess_call('git clean -f -x -d', clangdir)
 
         exec_subprocess_call('git fetch --tags', clangdir)
 
         checkout()
         exec_subprocess_call('git fetch --tags', clangdir)
-        exec_subprocess_call('git pull origin refs/tags/cling-patches-r%s' % llvm_revision,
-                                clangdir)
+
+        if CLANG_BRANCH:
+            exec_subprocess_call('git merge origin/%s' % CLANG_BRANCH, clangdir)
+        else:
+            exec_subprocess_call('git pull origin refs/tags/cling-patches-r%s' % llvm_revision,
+                                    clangdir)
 
     if os.path.isdir(clangdir):
         update_old_clang()
@@ -386,17 +405,14 @@ def fetch_cling(arg):
         #    checkout_branch = exec_subprocess_check_output('git describe --match v* --abbrev=0 --tags | head -n 1',
         #                                                   CLING_SRC_DIR)
 
-        if arg == 'master':
-            checkout_branch = 'master'
-        else:
-            checkout_branch = arg
-
-        exec_subprocess_call('git checkout %s' % checkout_branch, CLING_SRC_DIR)
+        checkout_branch = arg
+        if CLING_BRANCH is None:
+            exec_subprocess_call('git checkout %s' % checkout_branch, CLING_SRC_DIR)
 
     def update_old_cling():
-        # exec_subprocess_call('git stash', CLING_SRC_DIR)
-
-        # exec_subprocess_call('git clean -f -x -d', CLING_SRC_DIR)
+        if not args['allow_dirty']:
+            exec_subprocess_call('git stash', CLING_SRC_DIR)
+            # exec_subprocess_call('git clean -f -x -d', CLING_SRC_DIR)
 
         exec_subprocess_call('git fetch --tags', CLING_SRC_DIR)
 
@@ -404,14 +420,9 @@ def fetch_cling(arg):
         #    checkout_branch = exec_subprocess_check_output('git describe --match v* --abbrev=0 --tags | head -n 1',
         #                                                   CLING_SRC_DIR)
 
-        if arg == 'master':
-            checkout_branch = 'master'
-        else:
-            checkout_branch = arg
-
+        checkout_branch = CLING_BRANCH if CLING_BRANCH else arg
         exec_subprocess_call('git checkout %s' % checkout_branch, CLING_SRC_DIR)
-
-        exec_subprocess_call('git pull origin %s' % checkout_branch, CLING_SRC_DIR)
+        exec_subprocess_call('git merge origin/%s' % checkout_branch, CLING_SRC_DIR)
 
     if os.path.isdir(CLING_SRC_DIR):
         update_old_cling()
@@ -514,7 +525,7 @@ class Build(object):
         else:
             self.buildType = 'Release'
         self.win32 = platform.system() == 'Windows'
-        self.cores = multiprocessing.cpu_count()
+        self.cores = BUILD_CORES
         # Travis CI, GCC crashes if more than 4 cores used.
         if os.environ.get('TRAVIS_OS_NAME', None):
             self.cores = min(self.cores, 4)
@@ -1819,18 +1830,22 @@ parser.add_argument('--dmg-tag', help='Package the snapshot of a given tag in a 
 
 # Variable overrides
 parser.add_argument('--with-llvm-url', action='store', help='Specify an alternate URL of LLVM repo')
+parser.add_argument('--with-llvm-branch', action='store', help='Specify a particular LLVM branch')
 parser.add_argument('--with-clang-url', action='store', help='Specify an alternate URL of Clang repo',
                     default='http://root.cern.ch/git/clang.git')
+parser.add_argument('--with-clang-branch', action='store', help='Specify a particular Clang branch')
 parser.add_argument('--with-cling-url', action='store', help='Specify an alternate URL of Cling repo',
                     default='https://github.com/root-project/cling.git')
-parser.add_argument('--with-cling-branch', help='Specify a particular Cling branch')
+parser.add_argument('--with-cling-branch', action='store', help='Specify a particular Cling branch')
 
 parser.add_argument('--with-llvm-binary', help='Download LLVM binary and use it to build Cling in dev mode', action='store_true')
 parser.add_argument('--with-llvm-tar', help='Download and use LLVM binary release tar to build Cling for debugging', action='store_true')
 parser.add_argument('--no-test', help='Do not run test suite of Cling', action='store_true')
 parser.add_argument('--skip-cleanup', help='Do not clean up after a build', action='store_true')
+parser.add_argument('--allow-dirty', help='Do not stash and clean changes when rebuilding', action='store_true')
 parser.add_argument('--use-wget', help='Do not use Git to fetch sources', action='store_true')
 parser.add_argument('--create-dev-env', help='Set up a release/debug environment')
+parser.add_argument('-j', action='store', help='Specify number of cores to use')
 
 if platform.system() != 'Windows':
     parser.add_argument('--with-workdir', action='store', help='Specify an alternate working directory for CPT',
@@ -1971,8 +1986,20 @@ if args.get('with_stdlib') and EXTRA_CMAKE_FLAGS.find('-DLLVM_ENABLE_LIBCXX=') !
     raise SystemExit
 
 CLING_BRANCH = None
-if args['current_dev'] and args['with_cling_branch']:
+if args['with_cling_branch']:
     CLING_BRANCH = args['with_cling_branch']
+
+LLVM_BRANCH = None
+if args['with_llvm_branch']:
+    LLVM_BRANCH = args['with_llvm_branch']
+
+CLANG_BRANCH = None
+if args['with_clang_branch']:
+    CLANG_BRANCH = args['with_clang_branch']
+
+BUILD_CORES = multiprocessing.cpu_count()
+if args['j']:
+    BUILD_CORES = int(args['j'])
 
 print('Cling Packaging Tool (CPT)')
 print('Arguments vector: ' + str(sys.argv))
@@ -2003,7 +2030,7 @@ elif args['with_llvm_binary'] is False and args['with_llvm_url']:
 else:
     LLVM_GIT_URL = "http://root.cern.ch/git/llvm.git"
     
-if args['with_binary_llvm'] and args['with_llvm_tar']:
+if args.get('with_binary_llvm', None) and args.get('with_llvm_tar', None):
     raise Exception("Cannot specify flags --with-binary-llvm and --with-llvm-tar together")
 
 if args['with_llvm_tar'] and args['with_llvm_url']:

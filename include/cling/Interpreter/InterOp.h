@@ -19,6 +19,7 @@ namespace InterOp {
   using TCppScope_t = void*;
   using TCppType_t = void*;
   using TCppFunction_t = void*;
+  using TCppFuncAddr_t = void*;
   using TCppSema_t = void*;
   using TInterp_t = void*;
 
@@ -100,6 +101,8 @@ namespace InterOp {
   bool IsDestructor(TCppFunction_t method);
 
   bool IsStaticMethod(TCppFunction_t method);
+
+  TCppFuncAddr_t GetFunctionAddress(TInterp_t interp, TCppFunction_t method);
 
   std::vector<TCppScope_t> GetDatamembers(TCppScope_t scope);
 

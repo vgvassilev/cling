@@ -1,3 +1,5 @@
+#include <string>
+
 #include "Utils.h"
 
 #include "cling/Interpreter/InterOp.h"
@@ -465,4 +467,27 @@ TEST(FunctionReflectionTest, IsStaticMethod) {
 
   EXPECT_FALSE(InterOp::IsStaticMethod(SubDecls[1]));
   EXPECT_TRUE(InterOp::IsStaticMethod(SubDecls[2]));
+}
+
+TEST(FunctionReflectionTest, GetFunctionAddress) {
+  std::vector<Decl*> Decls, SubDecls;
+  std::string code = R"(
+    int f1(int i) { return i * i; }
+    )";
+
+  GetAllTopLevelDecls(code, Decls);
+
+  testing::internal::CaptureStdout();
+  Interp->declare(
+    "#include <iostream> \n"
+    );
+  Interp->process(
+    "void * address = (void *) &f1; \n"
+    "std::cout << address; \n"
+    );
+
+  std::string output = testing::internal::GetCapturedStdout();
+  std::stringstream address;
+  address << InterOp::GetFunctionAddress((InterOp::TInterp_t) Interp.get(), Decls[0]);
+  EXPECT_EQ(address.str(), output);
 }

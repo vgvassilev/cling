@@ -14,6 +14,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/GlobalDecl.h"
+#include "clang/AST/Mangle.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Sema/Sema.h"
@@ -506,6 +507,35 @@ namespace InterOp {
     }
 
     return false;
+  }
+
+  TCppFuncAddr_t GetFunctionAddress(TInterp_t interp, TCppFunction_t method)
+  {
+    auto *I = (cling::Interpreter *) interp;
+    auto *D = (Decl *) method;
+
+    const auto get_mangled_name = [](FunctionDecl* FD) {
+      auto MangleCtxt = FD->getASTContext().createMangleContext();
+
+      if (!MangleCtxt->shouldMangleDeclName(FD)) {
+        return FD->getNameInfo().getName().getAsString();
+      }
+    
+      std::string mangled_name;
+      llvm::raw_string_ostream ostream(mangled_name);
+    
+      MangleCtxt->mangleName(FD, ostream);
+    
+      ostream.flush();
+      delete MangleCtxt;
+    
+      return mangled_name;
+    };
+
+    if (auto *FD = llvm::dyn_cast_or_null<FunctionDecl>(D))
+      return (TCppFuncAddr_t)I->getAddressOfGlobal(get_mangled_name(FD));
+
+    return 0;
   }
 
   std::vector<TCppScope_t> GetDatamembers(TCppScope_t scope)

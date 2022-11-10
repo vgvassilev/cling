@@ -22,6 +22,7 @@ namespace InterOp {
   using TCppFuncAddr_t = void*;
   using TCppSema_t = void*;
   using TInterp_t = void*;
+  typedef void (*CallFuncWrapper_t)(void*, int, void**, void*);
 
   bool IsNamespace(TCppScope_t scope);
   // See TClingClassInfo::IsLoaded
@@ -125,6 +126,10 @@ namespace InterOp {
   std::string GetTypeAsString(TCppType_t type);
 
   TCppType_t GetCanonicalType(TCppType_t type);
+
+  CallFuncWrapper_t GetFunctionCallWrapper(TInterp_t interp,
+                                           TCppFunction_t func);
+
 } // end namespace InterOp
 
 } // end namespace cling

@@ -26,6 +26,7 @@
 
 #include <dlfcn.h>
 #include <sstream>
+#include <string>
 
 namespace cling {
 namespace InterOp {
@@ -673,6 +674,959 @@ namespace InterOp {
   {
       QualType QT = QualType::getFromOpaquePtr(type);
       return QT.getCanonicalType().getAsOpaquePtr();
+  }
+
+  namespace {
+    static unsigned long long gWrapperSerial = 0LL;
+    static const std::string kIndentString("   ");
+    static std::map<const FunctionDecl*, void *> gWrapperStore;
+
+    enum EReferenceType { kNotReference, kLValueReference, kRValueReference };
+
+    void *compile_wrapper(cling::Interpreter* I,
+                          const std::string& wrapper_name,
+                          const std::string& wrapper,
+                          bool withAccessControl = true) {
+      printf("%s\n", wrapper.c_str());
+      return I->compileFunction(wrapper_name, wrapper, false /*ifUnique*/,
+                                withAccessControl);
+    }
+
+    void get_type_as_string(QualType QT, std::string& type_name, ASTContext& C,
+                            PrintingPolicy Policy) {
+      // FIXME: Take the code here
+      // https://github.com/root-project/root/blob/550fb2644f3c07d1db72b9b4ddc4eba5a99ddc12/interpreter/cling/lib/Utils/AST.cpp#L316-L350
+      // to make hist/histdrawv7/test/histhistdrawv7testUnit work into
+      // QualTypeNames.h in clang
+      // type_name = clang::TypeName::getFullyQualifiedName(QT, C, Policy);
+      cling::utils::Transform::Config Config;
+      QT = cling::utils::Transform::GetPartiallyDesugaredType(
+          C, QT, Config, /*fullyQualify=*/true);
+      QT.getAsStringInternal(type_name, Policy);
+    }
+
+    void collect_type_info(const FunctionDecl* FD, QualType& QT,
+                           std::ostringstream& typedefbuf,
+                           std::ostringstream& callbuf, std::string& type_name,
+                           EReferenceType& refType, bool& isPointer,
+                           int indent_level, bool forArgument) {
+      //
+      //  Collect information about type type of a function parameter
+      //  needed for building the wrapper function.
+      //
+      ASTContext& C = FD->getASTContext();
+      PrintingPolicy Policy(C.getPrintingPolicy());
+      refType = kNotReference;
+      if (QT->isRecordType() && forArgument) {
+        get_type_as_string(QT, type_name, C, Policy);
+        return;
+      }
+      if (QT->isFunctionPointerType()) {
+        std::string fp_typedef_name;
+        {
+          std::ostringstream nm;
+          nm << "FP" << gWrapperSerial++;
+          type_name = nm.str();
+          raw_string_ostream OS(fp_typedef_name);
+          QT.print(OS, Policy, type_name);
+          OS.flush();
+        }
+        for (int i = 0; i < indent_level; ++i) {
+          typedefbuf << kIndentString;
+        }
+        typedefbuf << "typedef " << fp_typedef_name << ";\n";
+        return;
+      } else if (QT->isMemberPointerType()) {
+        std::string mp_typedef_name;
+        {
+          std::ostringstream nm;
+          nm << "MP" << gWrapperSerial++;
+          type_name = nm.str();
+          raw_string_ostream OS(mp_typedef_name);
+          QT.print(OS, Policy, type_name);
+          OS.flush();
+        }
+        for (int i = 0; i < indent_level; ++i) {
+          typedefbuf << kIndentString;
+        }
+        typedefbuf << "typedef " << mp_typedef_name << ";\n";
+        return;
+      } else if (QT->isPointerType()) {
+        isPointer = true;
+        QT = cast<clang::PointerType>(QT)->getPointeeType();
+      } else if (QT->isReferenceType()) {
+        if (QT->isRValueReferenceType())
+          refType = kRValueReference;
+        else
+          refType = kLValueReference;
+        QT = cast<ReferenceType>(QT)->getPointeeType();
+      }
+      // Fall through for the array type to deal with reference/pointer ro array
+      // type.
+      if (QT->isArrayType()) {
+        std::string ar_typedef_name;
+        {
+          std::ostringstream ar;
+          ar << "AR" << gWrapperSerial++;
+          type_name = ar.str();
+          raw_string_ostream OS(ar_typedef_name);
+          QT.print(OS, Policy, type_name);
+          OS.flush();
+        }
+        for (int i = 0; i < indent_level; ++i) {
+          typedefbuf << kIndentString;
+        }
+        typedefbuf << "typedef " << ar_typedef_name << ";\n";
+        return;
+      }
+      get_type_as_string(QT, type_name, C, Policy);
+    }
+
+    void make_narg_ctor(const FunctionDecl* FD, const unsigned N,
+                        std::ostringstream& typedefbuf,
+                        std::ostringstream& callbuf,
+                        const std::string& class_name, int indent_level) {
+      // Make a code string that follows this pattern:
+      //
+      // new ClassName(args...)
+      //
+
+      callbuf << "new " << class_name << "(";
+      for (unsigned i = 0U; i < N; ++i) {
+        const ParmVarDecl* PVD = FD->getParamDecl(i);
+        QualType Ty = PVD->getType();
+        QualType QT = Ty.getCanonicalType();
+        std::string type_name;
+        EReferenceType refType = kNotReference;
+        bool isPointer = false;
+        collect_type_info(FD, QT, typedefbuf, callbuf, type_name, refType,
+                          isPointer, indent_level, true);
+        if (i) {
+          callbuf << ',';
+          if (i % 2) {
+            callbuf << ' ';
+          } else {
+            callbuf << "\n";
+            for (int j = 0; j <= indent_level; ++j) {
+              callbuf << kIndentString;
+            }
+          }
+        }
+        if (refType != kNotReference) {
+          callbuf << "(" << type_name.c_str()
+                  << (refType == kLValueReference ? "&" : "&&") << ")*("
+                  << type_name.c_str() << "*)args[" << i << "]";
+        } else if (isPointer) {
+          callbuf << "*(" << type_name.c_str() << "**)args[" << i << "]";
+        } else {
+          callbuf << "*(" << type_name.c_str() << "*)args[" << i << "]";
+        }
+      }
+      callbuf << ")";
+    }
+
+    void make_narg_call(const FunctionDecl* FD, const std::string& return_type,
+                        const unsigned N, std::ostringstream& typedefbuf,
+                        std::ostringstream& callbuf,
+                        const std::string& class_name, int indent_level) {
+      //
+      // Make a code string that follows this pattern:
+      //
+      // ((<class>*)obj)-><method>(*(<arg-i-type>*)args[i], ...)
+      //
+
+      // Sometimes it's necessary that we cast the function we want to call
+      // first to its explicit function type before calling it. This is supposed
+      // to prevent that we accidentially ending up in a function that is not
+      // the one we're supposed to call here (e.g. because the C++ function
+      // lookup decides to take another function that better fits). This method
+      // has some problems, e.g. when we call a function with default arguments
+      // and we don't provide all arguments, we would fail with this pattern.
+      // Same applies with member methods which seem to cause parse failures
+      // even when we supply the object parameter. Therefore we only use it in
+      // cases where we know it works and set this variable to true when we do.
+      bool ShouldCastFunction =
+          !isa<CXXMethodDecl>(FD) && N == FD->getNumParams();
+      if (ShouldCastFunction) {
+        callbuf << "(";
+        callbuf << "(";
+        callbuf << return_type << " (&)";
+        {
+          callbuf << "(";
+          for (unsigned i = 0U; i < N; ++i) {
+            if (i) {
+              callbuf << ',';
+              if (i % 2) {
+                callbuf << ' ';
+              } else {
+                callbuf << "\n";
+                for (int j = 0; j <= indent_level; ++j) {
+                  callbuf << kIndentString;
+                }
+              }
+            }
+            const ParmVarDecl* PVD = FD->getParamDecl(i);
+            QualType Ty = PVD->getType();
+            QualType QT = Ty.getCanonicalType();
+            std::string arg_type;
+            ASTContext& C = FD->getASTContext();
+            get_type_as_string(QT, arg_type, C, C.getPrintingPolicy());
+            callbuf << arg_type;
+          }
+          if (FD->isVariadic())
+            callbuf << ", ...";
+          callbuf << ")";
+        }
+
+        callbuf << ")";
+      }
+
+      if (const CXXMethodDecl* MD = dyn_cast<CXXMethodDecl>(FD)) {
+        // This is a class, struct, or union member.
+        if (MD->isConst())
+          callbuf << "((const " << class_name << "*)obj)->";
+        else
+          callbuf << "((" << class_name << "*)obj)->";
+      } else if (const NamedDecl* ND =
+                     dyn_cast<NamedDecl>(FD->getDeclContext())) {
+        // This is a namespace member.
+        (void)ND;
+        callbuf << class_name << "::";
+      }
+      //   callbuf << fMethod->Name() << "(";
+      {
+        std::string name;
+        {
+          llvm::raw_string_ostream stream(name);
+          FD->getNameForDiagnostic(stream,
+                                   FD->getASTContext().getPrintingPolicy(),
+                                   /*Qualified=*/false);
+        }
+        callbuf << name;
+      }
+      if (ShouldCastFunction)
+        callbuf << ")";
+
+      callbuf << "(";
+      for (unsigned i = 0U; i < N; ++i) {
+        const ParmVarDecl* PVD = FD->getParamDecl(i);
+        QualType Ty = PVD->getType();
+        QualType QT = Ty.getCanonicalType();
+        std::string type_name;
+        EReferenceType refType = kNotReference;
+        bool isPointer = false;
+        collect_type_info(FD, QT, typedefbuf, callbuf, type_name, refType,
+                          isPointer, indent_level, true);
+
+        if (i) {
+          callbuf << ',';
+          if (i % 2) {
+            callbuf << ' ';
+          } else {
+            callbuf << "\n";
+            for (int j = 0; j <= indent_level; ++j) {
+              callbuf << kIndentString;
+            }
+          }
+        }
+
+        if (refType != kNotReference) {
+          callbuf << "(" << type_name.c_str()
+                  << (refType == kLValueReference ? "&" : "&&") << ")*("
+                  << type_name.c_str() << "*)args[" << i << "]";
+        } else if (isPointer) {
+          callbuf << "*(" << type_name.c_str() << "**)args[" << i << "]";
+        } else {
+          // pointer falls back to non-pointer case; the argument preserves
+          // the "pointerness" (i.e. doesn't reference the value).
+          callbuf << "*(" << type_name.c_str() << "*)args[" << i << "]";
+        }
+      }
+      callbuf << ")";
+    }
+
+    void make_narg_ctor_with_return(const FunctionDecl* FD, const unsigned N,
+                                    const std::string& class_name,
+                                    std::ostringstream& buf, int indent_level) {
+      // Make a code string that follows this pattern:
+      //
+      // if (ret) {
+      //    (*(ClassName**)ret) = new ClassName(args...);
+      // }
+      // else {
+      //    new ClassName(args...);
+      // }
+      //
+      for (int i = 0; i < indent_level; ++i) {
+        buf << kIndentString;
+      }
+      buf << "if (ret) {\n";
+      ++indent_level;
+      {
+        std::ostringstream typedefbuf;
+        std::ostringstream callbuf;
+        //
+        //  Write the return value assignment part.
+        //
+        for (int i = 0; i < indent_level; ++i) {
+          callbuf << kIndentString;
+        }
+        callbuf << "(*(" << class_name << "**)ret) = ";
+        //
+        //  Write the actual new expression.
+        //
+        make_narg_ctor(FD, N, typedefbuf, callbuf, class_name, indent_level);
+        //
+        //  End the new expression statement.
+        //
+        callbuf << ";\n";
+        for (int i = 0; i < indent_level; ++i) {
+          callbuf << kIndentString;
+        }
+        callbuf << "return;\n";
+        //
+        //  Output the whole new expression and return statement.
+        //
+        buf << typedefbuf.str() << callbuf.str();
+      }
+      --indent_level;
+      for (int i = 0; i < indent_level; ++i) {
+        buf << kIndentString;
+      }
+      buf << "}\n";
+      for (int i = 0; i < indent_level; ++i) {
+        buf << kIndentString;
+      }
+      buf << "else {\n";
+      ++indent_level;
+      {
+        std::ostringstream typedefbuf;
+        std::ostringstream callbuf;
+        for (int i = 0; i < indent_level; ++i) {
+          callbuf << kIndentString;
+        }
+        make_narg_ctor(FD, N, typedefbuf, callbuf, class_name, indent_level);
+        callbuf << ";\n";
+        for (int i = 0; i < indent_level; ++i) {
+          callbuf << kIndentString;
+        }
+        callbuf << "return;\n";
+        buf << typedefbuf.str() << callbuf.str();
+      }
+      --indent_level;
+      for (int i = 0; i < indent_level; ++i) {
+        buf << kIndentString;
+      }
+      buf << "}\n";
+    }
+
+    void make_narg_call_with_return(cling::Interpreter* I,
+                                    const FunctionDecl* FD, const unsigned N,
+                                    const std::string& class_name,
+                                    std::ostringstream& buf, int indent_level) {
+      // Make a code string that follows this pattern:
+      //
+      // if (ret) {
+      //    new (ret) (return_type) ((class_name*)obj)->func(args...);
+      // }
+      // else {
+      //    (void)(((class_name*)obj)->func(args...));
+      // }
+      //
+      if (const CXXConstructorDecl* CD = dyn_cast<CXXConstructorDecl>(FD)) {
+        if (N <= 1 && llvm::isa<UsingShadowDecl>(FD)) {
+          auto SpecMemKind = I->getSema().getSpecialMember(CD);
+          if ((N == 0 && SpecMemKind == clang::Sema::CXXDefaultConstructor) ||
+              (N == 1 && (SpecMemKind == clang::Sema::CXXCopyConstructor ||
+                          SpecMemKind == clang::Sema::CXXMoveConstructor))) {
+            // Using declarations cannot inject special members; do not call
+            // them as such. This might happen by using `Base(Base&, int = 12)`,
+            // which is fine to be called as `Derived d(someBase, 42)` but not
+            // as copy constructor of `Derived`.
+            return;
+          }
+        }
+        make_narg_ctor_with_return(FD, N, class_name, buf, indent_level);
+        return;
+      }
+      QualType QT = FD->getReturnType().getCanonicalType();
+      if (QT->isVoidType()) {
+        std::ostringstream typedefbuf;
+        std::ostringstream callbuf;
+        for (int i = 0; i < indent_level; ++i) {
+          callbuf << kIndentString;
+        }
+        make_narg_call(FD, "void", N, typedefbuf, callbuf, class_name,
+                       indent_level);
+        callbuf << ";\n";
+        for (int i = 0; i < indent_level; ++i) {
+          callbuf << kIndentString;
+        }
+        callbuf << "return;\n";
+        buf << typedefbuf.str() << callbuf.str();
+      } else {
+        for (int i = 0; i < indent_level; ++i) {
+          buf << kIndentString;
+        }
+
+        std::string type_name;
+        EReferenceType refType = kNotReference;
+        bool isPointer = false;
+
+        buf << "if (ret) {\n";
+        ++indent_level;
+        {
+          std::ostringstream typedefbuf;
+          std::ostringstream callbuf;
+          //
+          //  Write the placement part of the placement new.
+          //
+          for (int i = 0; i < indent_level; ++i) {
+            callbuf << kIndentString;
+          }
+          callbuf << "new (ret) ";
+          collect_type_info(FD, QT, typedefbuf, callbuf, type_name, refType,
+                            isPointer, indent_level, false);
+          //
+          //  Write the type part of the placement new.
+          //
+          callbuf << "(" << type_name.c_str();
+          if (refType != kNotReference) {
+            callbuf << "*) (&";
+            type_name += "&";
+          } else if (isPointer) {
+            callbuf << "*) (";
+            type_name += "*";
+          } else {
+            callbuf << ") (";
+          }
+          //
+          //  Write the actual function call.
+          //
+          make_narg_call(FD, type_name, N, typedefbuf, callbuf, class_name,
+                         indent_level);
+          //
+          //  End the placement new.
+          //
+          callbuf << ");\n";
+          for (int i = 0; i < indent_level; ++i) {
+            callbuf << kIndentString;
+          }
+          callbuf << "return;\n";
+          //
+          //  Output the whole placement new expression and return statement.
+          //
+          buf << typedefbuf.str() << callbuf.str();
+        }
+        --indent_level;
+        for (int i = 0; i < indent_level; ++i) {
+          buf << kIndentString;
+        }
+        buf << "}\n";
+        for (int i = 0; i < indent_level; ++i) {
+          buf << kIndentString;
+        }
+        buf << "else {\n";
+        ++indent_level;
+        {
+          std::ostringstream typedefbuf;
+          std::ostringstream callbuf;
+          for (int i = 0; i < indent_level; ++i) {
+            callbuf << kIndentString;
+          }
+          callbuf << "(void)(";
+          make_narg_call(FD, type_name, N, typedefbuf, callbuf, class_name,
+                         indent_level);
+          callbuf << ");\n";
+          for (int i = 0; i < indent_level; ++i) {
+            callbuf << kIndentString;
+          }
+          callbuf << "return;\n";
+          buf << typedefbuf.str() << callbuf.str();
+        }
+        --indent_level;
+        for (int i = 0; i < indent_level; ++i) {
+          buf << kIndentString;
+        }
+        buf << "}\n";
+      }
+    }
+
+    int get_wrapper_code(cling::Interpreter* I, const FunctionDecl* FD,
+                         std::string& wrapper_name, std::string& wrapper) {
+      assert(FD && "generate_wrapper called without a function decl!");
+      ASTContext& Context = FD->getASTContext();
+      PrintingPolicy Policy(Context.getPrintingPolicy());
+      //
+      //  Get the class or namespace name.
+      //
+      std::string class_name;
+      const clang::DeclContext* DC = FD->getDeclContext();
+      if (const TypeDecl* TD = dyn_cast<TypeDecl>(DC)) {
+        // This is a class, struct, or union member.
+        QualType QT(TD->getTypeForDecl(), 0);
+        get_type_as_string(QT, class_name, Context, Policy);
+      } else if (const NamedDecl* ND = dyn_cast<NamedDecl>(DC)) {
+        // This is a namespace member.
+        raw_string_ostream stream(class_name);
+        ND->getNameForDiagnostic(stream, Policy, /*Qualified=*/true);
+        stream.flush();
+      }
+      //
+      //  Check to make sure that we can
+      //  instantiate and codegen this function.
+      //
+      bool needInstantiation = false;
+      const FunctionDecl* Definition = 0;
+      if (!FD->isDefined(Definition)) {
+        FunctionDecl::TemplatedKind TK = FD->getTemplatedKind();
+        switch (TK) {
+          case FunctionDecl::TK_NonTemplate: {
+            // Ordinary function, not a template specialization.
+            // Note: This might be ok, the body might be defined
+            //       in a library, and all we have seen is the
+            //       header file.
+            // llvm::errs() << "TClingCallFunc::make_wrapper" << ":" <<
+            //      "Cannot make wrapper for a function which is "
+            //      "declared but not defined!";
+            // return 0;
+          } break;
+          case FunctionDecl::TK_FunctionTemplate: {
+            // This decl is actually a function template,
+            // not a function at all.
+            llvm::errs() << "TClingCallFunc::make_wrapper"
+                         << ":"
+                         << "Cannot make wrapper for a function template!";
+            return 0;
+          } break;
+          case FunctionDecl::TK_MemberSpecialization: {
+            // This function is the result of instantiating an ordinary
+            // member function of a class template, or of instantiating
+            // an ordinary member function of a class member of a class
+            // template, or of specializing a member function template
+            // of a class template, or of specializing a member function
+            // template of a class member of a class template.
+            if (!FD->isTemplateInstantiation()) {
+              // We are either TSK_Undeclared or
+              // TSK_ExplicitSpecialization.
+              // Note: This might be ok, the body might be defined
+              //       in a library, and all we have seen is the
+              //       header file.
+              // llvm::errs() << "TClingCallFunc::make_wrapper" << ":" <<
+              //      "Cannot make wrapper for a function template "
+              //      "explicit specialization which is declared "
+              //      "but not defined!";
+              // return 0;
+              break;
+            }
+            const FunctionDecl* Pattern = FD->getTemplateInstantiationPattern();
+            if (!Pattern) {
+              llvm::errs() << "TClingCallFunc::make_wrapper"
+                           << ":"
+                           << "Cannot make wrapper for a member function "
+                              "instantiation with no pattern!";
+              return 0;
+            }
+            FunctionDecl::TemplatedKind PTK = Pattern->getTemplatedKind();
+            TemplateSpecializationKind PTSK =
+                Pattern->getTemplateSpecializationKind();
+            if (
+                // The pattern is an ordinary member function.
+                (PTK == FunctionDecl::TK_NonTemplate) ||
+                // The pattern is an explicit specialization, and
+                // so is not a template.
+                ((PTK != FunctionDecl::TK_FunctionTemplate) &&
+                 ((PTSK == TSK_Undeclared) ||
+                  (PTSK == TSK_ExplicitSpecialization)))) {
+              // Note: This might be ok, the body might be defined
+              //       in a library, and all we have seen is the
+              //       header file.
+              break;
+            } else if (!Pattern->hasBody()) {
+              llvm::errs() << "TClingCallFunc::make_wrapper"
+                           << ":"
+                           << "Cannot make wrapper for a member function "
+                              "instantiation with no body!";
+              return 0;
+            }
+            if (FD->isImplicitlyInstantiable()) {
+              needInstantiation = true;
+            }
+          } break;
+          case FunctionDecl::TK_FunctionTemplateSpecialization: {
+            // This function is the result of instantiating a function
+            // template or possibly an explicit specialization of a
+            // function template.  Could be a namespace scope function or a
+            // member function.
+            if (!FD->isTemplateInstantiation()) {
+              // We are either TSK_Undeclared or
+              // TSK_ExplicitSpecialization.
+              // Note: This might be ok, the body might be defined
+              //       in a library, and all we have seen is the
+              //       header file.
+              // llvm::errs() << "TClingCallFunc::make_wrapper" << ":" <<
+              //      "Cannot make wrapper for a function template "
+              //      "explicit specialization which is declared "
+              //      "but not defined!";
+              // return 0;
+              break;
+            }
+            const FunctionDecl* Pattern = FD->getTemplateInstantiationPattern();
+            if (!Pattern) {
+              llvm::errs() << "TClingCallFunc::make_wrapper"
+                           << ":"
+                           << "Cannot make wrapper for a function template"
+                              "instantiation with no pattern!";
+              return 0;
+            }
+            FunctionDecl::TemplatedKind PTK = Pattern->getTemplatedKind();
+            TemplateSpecializationKind PTSK =
+                Pattern->getTemplateSpecializationKind();
+            if (
+                // The pattern is an ordinary member function.
+                (PTK == FunctionDecl::TK_NonTemplate) ||
+                // The pattern is an explicit specialization, and
+                // so is not a template.
+                ((PTK != FunctionDecl::TK_FunctionTemplate) &&
+                 ((PTSK == TSK_Undeclared) ||
+                  (PTSK == TSK_ExplicitSpecialization)))) {
+              // Note: This might be ok, the body might be defined
+              //       in a library, and all we have seen is the
+              //       header file.
+              break;
+            }
+            if (!Pattern->hasBody()) {
+              llvm::errs() << "TClingCallFunc::make_wrapper"
+                           << ":"
+                           << "Cannot make wrapper for a function template"
+                              "instantiation with no body!";
+              return 0;
+            }
+            if (FD->isImplicitlyInstantiable()) {
+              needInstantiation = true;
+            }
+          } break;
+          case FunctionDecl::TK_DependentFunctionTemplateSpecialization: {
+            // This function is the result of instantiating or
+            // specializing a  member function of a class template,
+            // or a member function of a class member of a class template,
+            // or a member function template of a class template, or a
+            // member function template of a class member of a class
+            // template where at least some part of the function is
+            // dependent on a template argument.
+            if (!FD->isTemplateInstantiation()) {
+              // We are either TSK_Undeclared or
+              // TSK_ExplicitSpecialization.
+              // Note: This might be ok, the body might be defined
+              //       in a library, and all we have seen is the
+              //       header file.
+              // llvm::errs() << "TClingCallFunc::make_wrapper" << ":" <<
+              //      "Cannot make wrapper for a dependent function "
+              //      "template explicit specialization which is declared "
+              //      "but not defined!";
+              // return 0;
+              break;
+            }
+            const FunctionDecl* Pattern = FD->getTemplateInstantiationPattern();
+            if (!Pattern) {
+              llvm::errs()
+                  << "TClingCallFunc::make_wrapper"
+                  << ":"
+                  << "Cannot make wrapper for a dependent function template"
+                     "instantiation with no pattern!";
+              return 0;
+            }
+            FunctionDecl::TemplatedKind PTK = Pattern->getTemplatedKind();
+            TemplateSpecializationKind PTSK =
+                Pattern->getTemplateSpecializationKind();
+            if (
+                // The pattern is an ordinary member function.
+                (PTK == FunctionDecl::TK_NonTemplate) ||
+                // The pattern is an explicit specialization, and
+                // so is not a template.
+                ((PTK != FunctionDecl::TK_FunctionTemplate) &&
+                 ((PTSK == TSK_Undeclared) ||
+                  (PTSK == TSK_ExplicitSpecialization)))) {
+              // Note: This might be ok, the body might be defined
+              //       in a library, and all we have seen is the
+              //       header file.
+              break;
+            }
+            if (!Pattern->hasBody()) {
+              llvm::errs()
+                  << "TClingCallFunc::make_wrapper"
+                  << ":"
+                  << "Cannot make wrapper for a dependent function template"
+                     "instantiation with no body!";
+              return 0;
+            }
+            if (FD->isImplicitlyInstantiable()) {
+              needInstantiation = true;
+            }
+          } break;
+          default: {
+            // Will only happen if clang implementation changes.
+            // Protect ourselves in case that happens.
+            llvm::errs() << "TClingCallFunc::make_wrapper" << ":" <<
+                           "Unhandled template kind!";
+            return 0;
+          } break;
+        }
+        // We do not set needInstantiation to true in these cases:
+        //
+        // isInvalidDecl()
+        // TSK_Undeclared
+        // TSK_ExplicitInstantiationDefinition
+        // TSK_ExplicitSpecialization && !getClassScopeSpecializationPattern()
+        // TSK_ExplicitInstantiationDeclaration &&
+        //    getTemplateInstantiationPattern() &&
+        //    PatternDecl->hasBody() &&
+        //    !PatternDecl->isInlined()
+        //
+        // Set it true in these cases:
+        //
+        // TSK_ImplicitInstantiation
+        // TSK_ExplicitInstantiationDeclaration && (!getPatternDecl() ||
+        //    !PatternDecl->hasBody() || PatternDecl->isInlined())
+        //
+      }
+      if (needInstantiation) {
+        clang::FunctionDecl* FDmod = const_cast<clang::FunctionDecl*>(FD);
+        clang::Sema& S = I->getSema();
+        // Could trigger deserialization of decls.
+        cling::Interpreter::PushTransactionRAII RAII(I);
+        S.InstantiateFunctionDefinition(SourceLocation(), FDmod,
+                                        /*Recursive=*/true,
+                                        /*DefinitionRequired=*/true);
+        if (!FD->isDefined(Definition)) {
+          llvm::errs() << "TClingCallFunc::make_wrapper"
+                       << ":"
+                       << "Failed to force template instantiation!";
+          return 0;
+        }
+      }
+      if (Definition) {
+        FunctionDecl::TemplatedKind TK = Definition->getTemplatedKind();
+        switch (TK) {
+          case FunctionDecl::TK_NonTemplate: {
+            // Ordinary function, not a template specialization.
+            if (Definition->isDeleted()) {
+              llvm::errs() << "TClingCallFunc::make_wrapper"
+                           << ":"
+                           << "Cannot make wrapper for a deleted function!";
+              return 0;
+            } else if (Definition->isLateTemplateParsed()) {
+              llvm::errs() << "TClingCallFunc::make_wrapper"
+                           << ":"
+                           << "Cannot make wrapper for a late template parsed "
+                              "function!";
+              return 0;
+            }
+            // else if (Definition->isDefaulted()) {
+            //   // Might not have a body, but we can still use it.
+            //}
+            // else {
+            //   // Has a body.
+            //}
+          } break;
+          case FunctionDecl::TK_FunctionTemplate: {
+            // This decl is actually a function template,
+            // not a function at all.
+            llvm::errs() << "TClingCallFunc::make_wrapper"
+                         << ":"
+                         << "Cannot make wrapper for a function template!";
+            return 0;
+          } break;
+          case FunctionDecl::TK_MemberSpecialization: {
+            // This function is the result of instantiating an ordinary
+            // member function of a class template or of a member class
+            // of a class template.
+            if (Definition->isDeleted()) {
+              llvm::errs()
+                  << "TClingCallFunc::make_wrapper"
+                  << ":"
+                  << "Cannot make wrapper for a deleted member function "
+                     "of a specialization!";
+              return 0;
+            } else if (Definition->isLateTemplateParsed()) {
+              llvm::errs() << "TClingCallFunc::make_wrapper"
+                           << ":"
+                           << "Cannot make wrapper for a late template parsed "
+                              "member function of a specialization!";
+              return 0;
+            }
+            // else if (Definition->isDefaulted()) {
+            //   // Might not have a body, but we can still use it.
+            //}
+            // else {
+            //   // Has a body.
+            //}
+          } break;
+          case FunctionDecl::TK_FunctionTemplateSpecialization: {
+            // This function is the result of instantiating a function
+            // template or possibly an explicit specialization of a
+            // function template.  Could be a namespace scope function or a
+            // member function.
+            if (Definition->isDeleted()) {
+              llvm::errs() << "TClingCallFunc::make_wrapper"
+                           << ":"
+                           << "Cannot make wrapper for a deleted function "
+                              "template specialization!";
+              return 0;
+            } else if (Definition->isLateTemplateParsed()) {
+              llvm::errs() << "TClingCallFunc::make_wrapper"
+                           << ":"
+                           << "Cannot make wrapper for a late template parsed "
+                              "function template specialization!";
+              return 0;
+            }
+            // else if (Definition->isDefaulted()) {
+            //   // Might not have a body, but we can still use it.
+            //}
+            // else {
+            //   // Has a body.
+            //}
+          } break;
+          case FunctionDecl::TK_DependentFunctionTemplateSpecialization: {
+            // This function is the result of instantiating or
+            // specializing a  member function of a class template,
+            // or a member function of a class member of a class template,
+            // or a member function template of a class template, or a
+            // member function template of a class member of a class
+            // template where at least some part of the function is
+            // dependent on a template argument.
+            if (Definition->isDeleted()) {
+              llvm::errs()
+                  << "TClingCallFunc::make_wrapper"
+                  << ":"
+                  << "Cannot make wrapper for a deleted dependent function "
+                     "template specialization!";
+              return 0;
+            } else if (Definition->isLateTemplateParsed()) {
+              llvm::errs() << "TClingCallFunc::make_wrapper"
+                           << ":"
+                           << "Cannot make wrapper for a late template parsed "
+                              "dependent function template specialization!";
+              return 0;
+            }
+            // else if (Definition->isDefaulted()) {
+            //   // Might not have a body, but we can still use it.
+            //}
+            // else {
+            //   // Has a body.
+            //}
+          } break;
+          default: {
+            // Will only happen if clang implementation changes.
+            // Protect ourselves in case that happens.
+            llvm::errs() << "TClingCallFunc::make_wrapper"
+                         << ":"
+                         << "Unhandled template kind!";
+            return 0;
+          } break;
+        }
+      }
+      unsigned min_args = FD->getMinRequiredArguments();
+      unsigned num_params = FD->getNumParams();
+      //
+      //  Make the wrapper name.
+      //
+      {
+        std::ostringstream buf;
+        buf << "__cf";
+        // const NamedDecl* ND = dyn_cast<NamedDecl>(FD);
+        // std::string mn;
+        // fInterp->maybeMangleDeclName(ND, mn);
+        // buf << '_' << mn;
+        buf << '_' << gWrapperSerial++;
+        wrapper_name = buf.str();
+      }
+      //
+      //  Write the wrapper code.
+      // FIXME: this should be synthesized into the AST!
+      //
+      int indent_level = 0;
+      std::ostringstream buf;
+      buf << "#pragma clang diagnostic push\n"
+             "#pragma clang diagnostic ignored \"-Wformat-security\"\n"
+             "__attribute__((used)) "
+             "__attribute__((annotate(\"__cling__ptrcheck(off)\")))\n"
+             "extern \"C\" void ";
+      buf << wrapper_name;
+      buf << "(void* obj, int nargs, void** args, void* ret)\n"
+             "{\n";
+      ++indent_level;
+      if (min_args == num_params) {
+        // No parameters with defaults.
+        make_narg_call_with_return(I, FD, num_params, class_name, buf,
+                                   indent_level);
+      } else {
+        // We need one function call clause compiled for every
+        // possible number of arguments per call.
+        for (unsigned N = min_args; N <= num_params; ++N) {
+          for (int i = 0; i < indent_level; ++i) {
+            buf << kIndentString;
+          }
+          buf << "if (nargs == " << N << ") {\n";
+          ++indent_level;
+          make_narg_call_with_return(I, FD, N, class_name, buf, indent_level);
+          --indent_level;
+          for (int i = 0; i < indent_level; ++i) {
+            buf << kIndentString;
+          }
+          buf << "}\n";
+        }
+      }
+      --indent_level;
+      buf << "}\n"
+             "#pragma clang diagnostic pop";
+      wrapper = buf.str();
+      return 1;
+    }
+
+    CallFuncWrapper_t make_wrapper(cling::Interpreter* I,
+                                   const FunctionDecl* FD) {
+      std::string wrapper_name;
+      std::string wrapper_code;
+
+      if (get_wrapper_code(I, FD, wrapper_name, wrapper_code) == 0)
+        return 0;
+
+      //
+      //   Compile the wrapper code.
+      //
+      void *wrapper = compile_wrapper(I, wrapper_name, wrapper_code);
+      if (wrapper) {
+        gWrapperStore.insert(std::make_pair(FD, wrapper));
+      } else {
+        llvm::errs() << "TClingCallFunc::make_wrapper"
+                     << ":"
+                     << "Failed to compile\n  ==== SOURCE BEGIN ====\n%s\n  "
+                        "==== SOURCE END ====",
+            wrapper_code.c_str();
+      }
+      return (CallFuncWrapper_t)wrapper;
+    }
+  } // namespace
+
+  CallFuncWrapper_t GetFunctionCallWrapper(TInterp_t interp,
+                                           TCppFunction_t func) {
+    auto* I = (cling::Interpreter*)interp;
+    auto* D = (clang::Decl*)func;
+
+    if (auto* FD = llvm::dyn_cast_or_null<clang::FunctionDecl>(D)) {
+      CallFuncWrapper_t wrapper;
+      auto R = gWrapperStore.find(FD);
+      if (R != gWrapperStore.end()) {
+        wrapper = (CallFuncWrapper_t) R->second;
+      } else {
+        wrapper = make_wrapper(I, FD);
+      }
+
+      return wrapper;
+    }
+
+    return 0;
   }
 } // end namespace InterOp
 

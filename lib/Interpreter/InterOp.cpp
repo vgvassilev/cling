@@ -229,15 +229,21 @@ namespace InterOp {
             ParentDC)->getCanonicalDecl();
   }
 
+  namespace {
+    CXXRecordDecl *GetScopeFromType(QualType QT) {
+      if (auto* Type = QT.getTypePtrOrNull()) {
+        Type = Type->getPointeeOrArrayElementType();
+        Type = Type->getUnqualifiedDesugaredType();
+        return Type->getAsCXXRecordDecl();
+      }
+      return 0;
+    }
+  }
+
   TCppScope_t GetScopeFromType(TCppType_t type)
   {
     QualType QT = QualType::getFromOpaquePtr(type);
-    if (auto* Type = QT.getTypePtrOrNull()) {
-      Type = Type->getPointeeOrArrayElementType();
-      Type = Type->getUnqualifiedDesugaredType();
-      return (TCppScope_t)Type->getAsCXXRecordDecl();
-    }
-    return 0;
+    return (TCppScope_t) GetScopeFromType(QT);
   }
 
   TCppIndex_t GetNumBases(TCppScope_t klass)

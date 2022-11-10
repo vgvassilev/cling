@@ -491,3 +491,39 @@ TEST(FunctionReflectionTest, GetFunctionAddress) {
   address << InterOp::GetFunctionAddress((InterOp::TInterp_t) Interp.get(), Decls[0]);
   EXPECT_EQ(address.str(), output);
 }
+
+TEST(FunctionReflectionTest, GetFunctionCallWrapper) {
+  std::vector<Decl*> Decls;
+  std::string code = R"(
+    int f1(int i) { return i * i; }
+    )";
+
+  GetAllTopLevelDecls(code, Decls);
+  
+  Interp->declare(R"(
+    #include <string>
+    void f2(std::string &s) { printf("%s", s.c_str()); };
+  )");
+
+  Sema *S = &Interp->getCI()->getSema();
+  
+  InterOp::CallFuncWrapper_t wrapper0 = 
+      InterOp::GetFunctionCallWrapper((InterOp::TInterp_t) Interp.get(),
+                                      Decls[0]);
+  InterOp::CallFuncWrapper_t wrapper1 = 
+      InterOp::GetFunctionCallWrapper((InterOp::TInterp_t) Interp.get(),
+                                      InterOp::GetNamed(S, "f2", 0));
+  int i = 9, ret;
+  std::string s("Hello World!\n");
+  void *args0[1] = { (void *) &i };
+  void *args1[1] = { (void *) &s };
+  
+  wrapper0(0, 1, args0, &ret);
+  
+  testing::internal::CaptureStdout();
+  wrapper1(0, 1, args1, 0);
+  std::string output = testing::internal::GetCapturedStdout();
+
+  EXPECT_EQ(ret, i * i);
+  EXPECT_EQ(output, s);
+}

@@ -96,6 +96,14 @@ namespace InterOp {
     return QT->isEnumeralType();
   }
 
+  size_t GetSizeOfType(TCppSema_t sema, TCppType_t type) {
+    auto S = (clang::Sema *) sema;
+    QualType QT = QualType::getFromOpaquePtr(type);
+    auto TI = S->getASTContext().getTypeInfo(QT);
+    size_t TypeSize = TI.Width;
+    return TypeSize/8;
+  }
+
   bool IsVariable(TCppScope_t scope) {
     auto *D = (clang::Decl *)scope;
     return llvm::isa_and_nonnull<clang::VarDecl>(D);

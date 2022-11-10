@@ -80,3 +80,25 @@ TEST(TypeReflectionTest, GetSizeOfType) {
   EXPECT_EQ(InterOp::GetSizeOfType(S, InterOp::GetVariableType(Decls[3])), 8);
   EXPECT_EQ(InterOp::GetSizeOfType(S, InterOp::GetVariableType(Decls[4])), 16);
 }
+
+TEST(TypeReflectionTest, GetCanonicalType) {
+  std::vector<Decl *> Decls, SubDecls0, SubDecls1;
+  std::string code =  R"(
+    typedef int I;
+    typedef double D;
+
+    I n;
+    D d;
+    )";
+
+  GetAllTopLevelDecls(code, Decls);
+  Sema *S = &Interp->getCI()->getSema();
+
+  auto D2 = InterOp::GetVariableType(Decls[2]);
+  auto D3 = InterOp::GetVariableType(Decls[3]);
+
+  EXPECT_EQ(InterOp::GetTypeAsString(D2), "I");
+  EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetCanonicalType(D2)), "int");
+  EXPECT_EQ(InterOp::GetTypeAsString(D3), "D");
+  EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetCanonicalType(D3)), "double");
+}

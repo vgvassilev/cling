@@ -48,6 +48,8 @@ TEST(ScopeReflectionTest, IsBuiltin) {
   //  "int", "unsigned int", "long", "unsigned long", "long long", "unsigned long long",
   //  "float", "double", "long double", "void"}
 
+  Interp.reset();
+  Interp = createInterpreter();
   ASTContext &C = Interp->getCI()->getASTContext();
   EXPECT_TRUE(InterOp::IsBuiltin(C.BoolTy.getAsOpaquePtr()));
   EXPECT_TRUE(InterOp::IsBuiltin(C.CharTy.getAsOpaquePtr()));

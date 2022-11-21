@@ -60,6 +60,7 @@ static std::unique_ptr<Interpreter> createInterpreter() {
 static std::unique_ptr<Interpreter> Interp;
 
 static void GetAllTopLevelDecls(const std::string& code, std::vector<Decl*>& Decls) {
+  Interp.reset();
   Interp = createInterpreter();
   Transaction *T = nullptr;
   Interp->declare(code, &T);

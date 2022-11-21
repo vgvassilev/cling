@@ -102,3 +102,19 @@ TEST(TypeReflectionTest, GetCanonicalType) {
   EXPECT_EQ(InterOp::GetTypeAsString(D3), "D");
   EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetCanonicalType(D3)), "double");
 }
+
+TEST(TypeReflectionTest, GetType) {
+  Interp.reset();
+  Interp = createInterpreter();
+  Sema *S = &Interp->getCI()->getSema();
+
+  std::string code =  R"(
+    #include <string>
+    )";
+  
+  Interp->declare(code);
+
+  EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetType(S, "int")), "int");
+  EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetType(S, "double")), "double");
+  EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetType(S, "std::string")), "std::string");
+}

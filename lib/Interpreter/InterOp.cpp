@@ -677,6 +677,74 @@ namespace InterOp {
   }
 
   namespace {
+    static QualType findBuiltinType(llvm::StringRef typeName, ASTContext &Context)
+    {
+      bool issigned = false;
+      bool isunsigned = false;
+      if (typeName.startswith("signed ")) {
+        issigned = true;
+        typeName = StringRef(typeName.data()+7, typeName.size()-7);
+      }
+      if (!issigned && typeName.startswith("unsigned ")) {
+        isunsigned = true;
+        typeName = StringRef(typeName.data()+9, typeName.size()-9);
+      }
+      if (typeName.equals("char")) {
+        if (isunsigned) return Context.UnsignedCharTy;
+        return Context.SignedCharTy;
+      }
+      if (typeName.equals("short")) {
+        if (isunsigned) return Context.UnsignedShortTy;
+        return Context.ShortTy;
+      }
+      if (typeName.equals("int")) {
+        if (isunsigned) return Context.UnsignedIntTy;
+        return Context.IntTy;
+      }
+      if (typeName.equals("long")) {
+        if (isunsigned) return Context.UnsignedLongTy;
+        return Context.LongTy;
+      }
+      if (typeName.equals("long long")) {
+        if (isunsigned) return Context.LongLongTy;
+        return Context.UnsignedLongLongTy;
+      }
+      if (!issigned && !isunsigned) {
+        if (typeName.equals("bool")) return Context.BoolTy;
+        if (typeName.equals("float")) return Context.FloatTy;
+        if (typeName.equals("double")) return Context.DoubleTy;
+        if (typeName.equals("long double")) return Context.LongDoubleTy;
+
+        if (typeName.equals("wchar_t")) return Context.WCharTy;
+        if (typeName.equals("char16_t")) return Context.Char16Ty;
+        if (typeName.equals("char32_t")) return Context.Char32Ty;
+      }
+      /* Missing
+     CanQualType WideCharTy; // Same as WCharTy in C++, integer type in C99.
+     CanQualType WIntTy;   // [C99 7.24.1], integer type unchanged by default promotions.
+       */
+      return QualType();
+    }
+  }
+
+  TCppType_t GetType(TCppSema_t sema, const std::string &name) {
+    auto *S = (Sema *) sema;
+    
+    auto *ND = cling::utils::Lookup::Named(S, name, 0);
+
+    QualType builtin = findBuiltinType(name, S->getASTContext());
+    if (!builtin.isNull())
+      return builtin.getAsOpaquePtr();
+    
+    auto *D = (Decl *) GetScopeFromCompleteName(S, name);
+    if (auto *TD = llvm::dyn_cast_or_null<TypeDecl>(D)) {
+      return QualType(TD->getTypeForDecl(), 0).getAsOpaquePtr();
+    }
+
+    return (TCppType_t) 0;
+  }
+
+  namespace {
     static unsigned long long gWrapperSerial = 0LL;
     static const std::string kIndentString("   ");
     static std::map<const FunctionDecl*, void *> gWrapperStore;

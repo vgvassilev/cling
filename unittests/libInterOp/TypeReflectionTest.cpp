@@ -118,3 +118,17 @@ TEST(TypeReflectionTest, GetType) {
   EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetType(S, "double")), "double");
   EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetType(S, "std::string")), "std::string");
 }
+
+TEST(TypeReflectionTest, GetTypeFromScope) {
+  std::vector<Decl *> Decls;
+
+  std::string code =  R"(
+    class C {};
+    struct S {};
+    )";
+  
+  GetAllTopLevelDecls(code, Decls);
+
+  EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetTypeFromScope(Decls[0])), "class C");
+  EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetTypeFromScope(Decls[1])), "struct S");
+}

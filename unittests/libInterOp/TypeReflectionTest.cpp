@@ -30,34 +30,6 @@ TEST(TypeReflectionTest, GetTypeAsString) {
   EXPECT_EQ(InterOp::GetTypeAsString(QT3.getAsOpaquePtr()), "int");
 }
 
-TEST(TypeReflectionTest, IsEnumType) {
-  std::vector<Decl *> Decls, SubDecls0, SubDecls1;
-  std::string code =  R"(
-    enum class E {
-      a,
-      b
-    };
-
-    enum F {
-      c,
-      d
-    };
-
-    E e;
-    F f;
-
-    auto g = E::a;
-    auto h = c;
-    )";
-
-  GetAllTopLevelDecls(code, Decls);
-
-  EXPECT_TRUE(InterOp::IsEnumType(InterOp::GetVariableType(Decls[2])));
-  EXPECT_TRUE(InterOp::IsEnumType(InterOp::GetVariableType(Decls[3])));
-  EXPECT_TRUE(InterOp::IsEnumType(InterOp::GetVariableType(Decls[4])));
-  EXPECT_TRUE(InterOp::IsEnumType(InterOp::GetVariableType(Decls[5])));
-}
-
 TEST(TypeReflectionTest, GetSizeOfType) {
   std::vector<Decl *> Decls, SubDecls0, SubDecls1;
   std::string code =  R"(

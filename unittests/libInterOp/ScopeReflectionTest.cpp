@@ -448,3 +448,22 @@ TEST(ScopeReflectionTest, IsSubclass) {
   EXPECT_FALSE(check_subclass(Decls[3], Decls[4]));
   EXPECT_TRUE(check_subclass(Decls[4], Decls[4]));
 }
+
+TEST(ScopeReflectionTest, GetBaseClassOffset) {
+  std::vector<Decl *> Decls;
+  std::string code = R"(
+    class A { int a; };
+    class B { int b; };
+    class C : public A, public B { int c; };
+    class D : public A, public B, public C { int d; };
+  )";
+
+  GetAllTopLevelDecls(code, Decls);
+  Sema *S = &Interp->getCI()->getSema();
+
+  EXPECT_EQ(InterOp::GetBaseClassOffset(S, Decls[2], Decls[0]), 0);
+  EXPECT_EQ(InterOp::GetBaseClassOffset(S, Decls[2], Decls[1]), 4);
+  EXPECT_EQ(InterOp::GetBaseClassOffset(S, Decls[3], Decls[0]), 0);
+  EXPECT_EQ(InterOp::GetBaseClassOffset(S, Decls[3], Decls[1]), 4);
+  EXPECT_EQ(InterOp::GetBaseClassOffset(S, Decls[3], Decls[2]), 8);
+}

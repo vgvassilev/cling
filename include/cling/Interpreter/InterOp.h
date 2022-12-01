@@ -39,6 +39,8 @@ namespace InterOp {
 
   bool IsEnumType(TCppType_t type);
 
+  TCppType_t GetEnumIntegerType(TCppScope_t handle);
+
   size_t GetSizeOfType(TCppSema_t sema, TCppType_t type);
 
   bool IsVariable(TCppScope_t scope);

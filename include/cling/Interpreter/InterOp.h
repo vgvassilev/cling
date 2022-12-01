@@ -68,6 +68,8 @@ namespace InterOp {
 
   bool IsSubclass(TCppScope_t derived, TCppScope_t base);
 
+  intptr_t GetBaseClassOffset(TCppSema_t sema, TCppScope_t derived, TCppScope_t base);
+
   std::vector<TCppFunction_t> GetClassMethods(TCppScope_t klass);
 
   std::vector<TCppFunction_t> GetFunctionsUsingName(

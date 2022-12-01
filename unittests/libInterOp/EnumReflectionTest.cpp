@@ -92,3 +92,40 @@ TEST(EnumReflectionTest, GetEnumIntegerType) {
   EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetEnumIntegerType(Decls[4])), "unsigned int");
 }
 
+TEST(EnumReflectionTest, GetEnumConstants) {
+  std::vector<Decl *> Decls;
+  std::string code = R"(
+    enum ZeroEnum {
+    };
+
+    enum OneEnum {
+      One_OneEnum,
+    };
+
+    enum TwoEnum {
+      One_TwoEnum,
+      Two_TwoEnum,
+    };
+
+    enum ThreeEnum {
+      One_ThreeEnum,
+      Two_ThreeEnum,
+      Three_ThreeEnum,
+    };
+
+    enum FourEnum {
+      One_FourEnum,
+      Two_FourEnum,
+      Three_FourEnum,
+      Four_FourEnum,
+    };
+  )";
+
+  GetAllTopLevelDecls(code, Decls);
+
+  EXPECT_EQ(InterOp::GetEnumConstants(Decls[0]).size(), 0);
+  EXPECT_EQ(InterOp::GetEnumConstants(Decls[1]).size(), 1);
+  EXPECT_EQ(InterOp::GetEnumConstants(Decls[2]).size(), 2);
+  EXPECT_EQ(InterOp::GetEnumConstants(Decls[3]).size(), 3);
+  EXPECT_EQ(InterOp::GetEnumConstants(Decls[4]).size(), 4);
+}

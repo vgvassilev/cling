@@ -108,6 +108,21 @@ namespace InterOp {
     return 0;
   }
 
+  std::vector<TCppScope_t> GetEnumConstants(TCppScope_t handle) {
+    auto *D = (clang::Decl *)handle;
+
+    if (auto *ED = llvm::dyn_cast_or_null<clang::EnumDecl>(D)) {
+      std::vector<TCppScope_t> enum_constants;
+      for (auto *ECD : ED->enumerators()) {
+        enum_constants.push_back((TCppScope_t) ECD);
+      }
+
+      return enum_constants;
+    }
+
+    return {};
+  }
+
   size_t GetSizeOfType(TCppSema_t sema, TCppType_t type) {
     auto S = (clang::Sema *) sema;
     QualType QT = QualType::getFromOpaquePtr(type);

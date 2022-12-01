@@ -207,9 +207,10 @@ namespace InterOp {
     auto *ND = cling::utils::Lookup::Named(S, name, Within);
 
     if (!(ND == (NamedDecl *) -1) &&
-            (llvm::isa_and_nonnull<NamespaceDecl>(ND) ||
-             llvm::isa_and_nonnull<RecordDecl>(ND)    ||
-             llvm::isa_and_nonnull<ClassTemplateDecl>(ND)))
+            (llvm::isa_and_nonnull<NamespaceDecl>(ND)     ||
+             llvm::isa_and_nonnull<RecordDecl>(ND)        ||
+             llvm::isa_and_nonnull<ClassTemplateDecl>(ND) ||
+             llvm::isa_and_nonnull<TypedefDecl>(ND)))
       return (TCppScope_t)(ND->getCanonicalDecl());
 
     return 0;

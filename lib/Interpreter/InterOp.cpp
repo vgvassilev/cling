@@ -99,6 +99,15 @@ namespace InterOp {
     return QT->isEnumeralType();
   }
 
+  TCppType_t GetEnumIntegerType(TCppScope_t handle) {
+    auto *D = (clang::Decl *)handle;
+    if (auto *ED = llvm::dyn_cast_or_null<clang::EnumDecl>(D)) {
+      return ED->getIntegerType().getAsOpaquePtr();
+    }
+
+    return 0;
+  }
+
   size_t GetSizeOfType(TCppSema_t sema, TCppType_t type) {
     auto S = (clang::Sema *) sema;
     QualType QT = QualType::getFromOpaquePtr(type);

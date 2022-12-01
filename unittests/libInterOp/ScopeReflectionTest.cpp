@@ -114,28 +114,6 @@ TEST(ScopeReflectionTest, IsAbstract) {
   EXPECT_TRUE(InterOp::IsAbstract(Decls[1]));
 }
 
-TEST(ScopeReflectionTest, IsEnum) {
-  std::vector<Decl *> Decls, SubDecls;
-  std::string code = R"(
-    enum Switch {
-      OFF,
-      ON
-    };
-
-    Switch s = Switch::OFF;
-
-    int i = Switch::ON;
-  )";
-
-  GetAllTopLevelDecls(code, Decls);
-  GetAllSubDecls(Decls[0], SubDecls);
-  EXPECT_TRUE(InterOp::IsEnum(Decls[0]));
-  EXPECT_FALSE(InterOp::IsEnum(Decls[1]));
-  EXPECT_FALSE(InterOp::IsEnum(Decls[2]));
-  EXPECT_TRUE(InterOp::IsEnum(SubDecls[0]));
-  EXPECT_TRUE(InterOp::IsEnum(SubDecls[1]));
-}
-
 TEST(ScopeReflectionTest, IsVariable) {
   std::vector<Decl *> Decls;
   std::string code = R"(

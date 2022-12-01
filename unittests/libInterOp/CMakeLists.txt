@@ -7,6 +7,7 @@ add_cling_unittest(libInterOpTests
   FunctionReflectionTest.cpp
   VariableReflectionTest.cpp
   TypeReflectionTest.cpp
+  EnumReflectionTest.cpp
   )
 
 clang_target_link_libraries(libInterOpTests

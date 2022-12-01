@@ -129,3 +129,29 @@ TEST(EnumReflectionTest, GetEnumConstants) {
   EXPECT_EQ(InterOp::GetEnumConstants(Decls[3]).size(), 3);
   EXPECT_EQ(InterOp::GetEnumConstants(Decls[4]).size(), 4);
 }
+
+TEST(EnumReflectionTest, GetEnumConstantValue) {
+  std::vector<Decl *> Decls;
+  std::string code = R"(
+    enum Counter {
+      Zero = 0,
+      One,
+      FiftyTwo = 52,
+      FiftyThree,
+      FiftyFour,
+      MinusTen = -10,
+      MinusNine
+    };
+  )";
+
+  GetAllTopLevelDecls(code, Decls);
+  auto EnumConstants = InterOp::GetEnumConstants(Decls[0]);
+
+  EXPECT_EQ(InterOp::GetEnumConstantValue(EnumConstants[0]), 0);
+  EXPECT_EQ(InterOp::GetEnumConstantValue(EnumConstants[1]), 1);
+  EXPECT_EQ(InterOp::GetEnumConstantValue(EnumConstants[2]), 52);
+  EXPECT_EQ(InterOp::GetEnumConstantValue(EnumConstants[3]), 53);
+  EXPECT_EQ(InterOp::GetEnumConstantValue(EnumConstants[4]), 54);
+  EXPECT_EQ(InterOp::GetEnumConstantValue(EnumConstants[5]), -10);
+  EXPECT_EQ(InterOp::GetEnumConstantValue(EnumConstants[6]), -9);
+}

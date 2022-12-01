@@ -123,6 +123,14 @@ namespace InterOp {
     return {};
   }
 
+  TCppIndex_t GetEnumConstantValue(TCppScope_t handle) {
+    auto *D = (clang::Decl *)handle;
+    if (auto *ECD = llvm::dyn_cast_or_null<clang::EnumConstantDecl>(D)) {
+      const llvm::APSInt& Val = ECD->getInitVal();
+      return Val.getExtValue();
+    }
+  }
+
   size_t GetSizeOfType(TCppSema_t sema, TCppType_t type) {
     auto S = (clang::Sema *) sema;
     QualType QT = QualType::getFromOpaquePtr(type);

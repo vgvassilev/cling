@@ -363,6 +363,16 @@ namespace InterOp {
     return {};
   }
 
+  bool HasDefaultConstructor(TCppScope_t scope) {
+    auto *D = (clang::Decl *) scope;
+
+    if (auto *CXXRD = llvm::dyn_cast_or_null<CXXRecordDecl>(D)) {
+      return CXXRD->hasDefaultConstructor();
+    }
+
+    return false;
+  }
+
   std::vector<TCppFunction_t> GetFunctionsUsingName(
         TCppSema_t sema, TCppScope_t scope, const std::string& name)
   {

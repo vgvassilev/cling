@@ -36,6 +36,33 @@ TEST(FunctionReflectionTest, GetClassMethods) {
   EXPECT_EQ(get_method_name(methods[4]), "A::f5");
 }
 
+TEST(FunctionReflectionTest, HasDefaultConstructor) {
+  std::vector<Decl*> Decls;
+  std::string code = R"(
+    class A {
+      private:
+        int n;
+    };
+    class B {
+      private:
+        int n;
+      public:
+      B() : n(1) {}
+    };
+    class C {
+      private:
+        int n;
+      public:
+        C() = delete;
+        C(int i) : n(i) {}
+    };
+    )";
+
+  GetAllTopLevelDecls(code, Decls);
+  EXPECT_TRUE(InterOp::HasDefaultConstructor(Decls[0]));
+  EXPECT_TRUE(InterOp::HasDefaultConstructor(Decls[1]));
+}
+
 TEST(FunctionReflectionTest, GetFunctionsUsingName) {
   std::vector<Decl*> Decls;
   std::string code = R"(

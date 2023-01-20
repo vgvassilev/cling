@@ -445,3 +445,37 @@ TEST(ScopeReflectionTest, GetBaseClassOffset) {
   EXPECT_EQ(InterOp::GetBaseClassOffset(S, Decls[3], Decls[1]), 4);
   EXPECT_EQ(InterOp::GetBaseClassOffset(S, Decls[3], Decls[2]), 8);
 }
+
+TEST(ScopeReflectionTest, GetAllCppNames) {
+  std::vector<Decl *> Decls;
+  std::string code = R"(
+    class A { int a; };
+    class B { int b; };
+    class C : public A, public B { int c; };
+    class D : public A, public B, public C { int d; };
+    namespace N {
+      class A { int a; };
+      class B { int b; };
+      class C : public A, public B { int c; };
+      class D : public A, public B, public C { int d; };
+    }
+  )";
+
+  GetAllTopLevelDecls(code, Decls);
+  Sema *S = &Interp->getCI()->getSema();
+
+  auto test_get_all_cpp_names = [](Decl *D, const std::vector<std::string> &truth_names) {
+    auto names = InterOp::GetAllCppNames(D);
+    EXPECT_EQ(names.size(), truth_names.size());
+
+    for (int i = 0; i < truth_names.size() && i < names.size(); i++) {
+      EXPECT_EQ(names[i], truth_names[i]);
+    }
+  };
+
+  test_get_all_cpp_names(Decls[0], {"a"});
+  test_get_all_cpp_names(Decls[1], {"b"});
+  test_get_all_cpp_names(Decls[2], {"c"});
+  test_get_all_cpp_names(Decls[3], {"d"});
+  test_get_all_cpp_names(Decls[4], {"A", "B", "C", "D"});
+}

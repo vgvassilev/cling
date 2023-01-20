@@ -31,6 +31,30 @@ TEST(VariableReflectionTest, GetDatamembers) {
   EXPECT_EQ(datamembers.size(), 3);
 }
 
+TEST(VariableReflectionTest, LookupDatamember) {
+  std::vector<Decl*> Decls;
+  std::string code = R"(
+    class C {
+    public:
+      int a;
+      static int b;
+    private:
+      int c;
+      static int d;
+    protected:
+      int e;
+      static int f;
+    };
+    )";
+
+  GetAllTopLevelDecls(code, Decls);
+  Sema *S = &Interp->getCI()->getSema();
+
+  EXPECT_EQ(InterOp::GetCompleteName(InterOp::LookupDatamember(S, "a", Decls[0])), "C::a");
+  EXPECT_EQ(InterOp::GetCompleteName(InterOp::LookupDatamember(S, "c", Decls[0])), "C::c");
+  EXPECT_EQ(InterOp::GetCompleteName(InterOp::LookupDatamember(S, "e", Decls[0])), "C::e");
+}
+
 TEST(VariableReflectionTest, GetVariableType) {
   std::vector<Decl*> Decls;
   std::string code = R"(

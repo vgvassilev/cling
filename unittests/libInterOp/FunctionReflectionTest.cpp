@@ -63,6 +63,26 @@ TEST(FunctionReflectionTest, HasDefaultConstructor) {
   EXPECT_TRUE(InterOp::HasDefaultConstructor(Decls[1]));
 }
 
+TEST(FunctionReflectionTest, GetDestructor) {
+  std::vector<Decl*> Decls;
+  std::string code = R"(
+    class A {
+    };
+    class B {
+      public:
+      ~B() {}
+    };
+    class C {
+      public:
+      ~C() = delete;
+    };
+    )";
+
+  GetAllTopLevelDecls(code, Decls);
+  EXPECT_FALSE(InterOp::GetDestructor(Decls[0]));
+  EXPECT_TRUE(InterOp::GetDestructor(Decls[1]));
+}
+
 TEST(FunctionReflectionTest, GetFunctionsUsingName) {
   std::vector<Decl*> Decls;
   std::string code = R"(

@@ -539,6 +539,25 @@ TEST(FunctionReflectionTest, GetFunctionAddress) {
   EXPECT_EQ(address.str(), output);
 }
 
+TEST(FunctionReflectionTest, IsVirtualMethod) {
+  std::vector<Decl*> Decls, SubDecls;
+  std::string code = R"(
+    class A {
+      public:
+      virtual void x() {}
+      void y() {}
+    };
+    )";
+
+  GetAllTopLevelDecls(code, Decls);
+  GetAllSubDecls(Decls[0], SubDecls);
+
+  EXPECT_EQ(InterOp::GetName(SubDecls[2]), "x");
+  EXPECT_TRUE(InterOp::IsVirtualMethod(SubDecls[2]));
+  EXPECT_EQ(InterOp::GetName(SubDecls[3]), "y");
+  EXPECT_FALSE(InterOp::IsVirtualMethod(SubDecls[3])); // y()
+}
+
 TEST(FunctionReflectionTest, GetFunctionCallWrapper) {
   std::vector<Decl*> Decls;
   std::string code = R"(

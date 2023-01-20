@@ -119,6 +119,8 @@ namespace InterOp {
 
   TCppFuncAddr_t GetFunctionAddress(TInterp_t interp, TCppFunction_t method);
 
+  bool IsVirtualMethod(TCppFunction_t method);
+
   std::vector<TCppScope_t> GetDatamembers(TCppScope_t scope);
 
   TCppType_t GetVariableType(TCppScope_t var);

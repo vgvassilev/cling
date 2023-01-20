@@ -639,6 +639,15 @@ namespace InterOp {
     return 0;
   }
 
+  bool IsVirtualMethod(TCppFunction_t method) {
+    auto *D = (Decl *) method;
+    if (auto *CXXMD = llvm::dyn_cast_or_null<CXXMethodDecl>(D)) {
+      return CXXMD->isVirtual();
+    }
+
+    return false;
+  }
+
   std::vector<TCppScope_t> GetDatamembers(TCppScope_t scope)
   {
     auto *D = (Decl *) scope;

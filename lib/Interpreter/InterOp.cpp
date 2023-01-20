@@ -1826,6 +1826,37 @@ namespace InterOp {
       return 0;
     }
   }
+
+  std::vector<std::string> GetAllCppNames(TCppScope_t scope) {
+    auto *D = (clang::Decl *)scope;
+    clang::DeclContext *DC;
+    clang::DeclContext::decl_iterator decl;
+    
+    if (auto *TD = dyn_cast_or_null<TagDecl>(D)) {
+      DC = clang::TagDecl::castToDeclContext(TD);
+      decl = DC->decls_begin();
+      decl++;
+    } else if (auto *ND = dyn_cast_or_null<NamespaceDecl>(D)) {
+      DC = clang::NamespaceDecl::castToDeclContext(ND);
+      decl = DC->decls_begin();
+    } else if (auto *TUD = dyn_cast_or_null<TranslationUnitDecl>(D)) {
+      DC = clang::TranslationUnitDecl::castToDeclContext(TUD);
+      decl = DC->decls_begin();
+    } else {
+      return {};
+    }
+
+    std::vector<std::string> names;
+    for (/* decl set above */; decl != DC->decls_end(); decl++) {
+      if (auto *ND = llvm::dyn_cast_or_null<NamedDecl>(*decl)) {
+        names.push_back(ND->getNameAsString());
+      }
+    }
+
+    return names;
+  }
+    return names;
+  }
 } // end namespace InterOp
 
 } // end namespace cling

@@ -123,6 +123,8 @@ namespace InterOp {
 
   std::vector<TCppScope_t> GetDatamembers(TCppScope_t scope);
 
+  TCppScope_t LookupDatamember(TCppSema_t sema, const std::string& name, TCppScope_t parent);
+
   TCppType_t GetVariableType(TCppScope_t var);
 
   intptr_t GetVariableOffset(TInterp_t interp, TCppScope_t var);

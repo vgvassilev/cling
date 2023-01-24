@@ -91,6 +91,22 @@ TEST(TypeReflectionTest, GetType) {
   EXPECT_EQ(InterOp::GetTypeAsString(InterOp::GetType(S, "std::string")), "std::string");
 }
 
+TEST(TypeReflectionTest, GetComplexType) {
+  Interp.reset();
+  Interp = createInterpreter();
+  Sema *S = &Interp->getCI()->getSema();
+
+  auto get_complex_type_as_string = [&](const std::string &element_type) {
+    auto ElementQT = InterOp::GetType(S, element_type);
+    auto ComplexQT = InterOp::GetComplexType(S, ElementQT);
+    return InterOp::GetTypeAsString(InterOp::GetCanonicalType(ComplexQT));
+  };
+
+  EXPECT_EQ(get_complex_type_as_string("int"), "_Complex int");
+  EXPECT_EQ(get_complex_type_as_string("float"), "_Complex float");
+  EXPECT_EQ(get_complex_type_as_string("double"), "_Complex double");
+}
+
 TEST(TypeReflectionTest, GetTypeFromScope) {
   std::vector<Decl *> Decls;
 

@@ -858,6 +858,14 @@ namespace InterOp {
     return (TCppType_t) 0;
   }
 
+  TCppType_t GetComplexType(TCppSema_t sema, TCppType_t type) {
+    auto *S = (Sema *) sema;
+    QualType QT = QualType::getFromOpaquePtr(type);
+    auto &Cxt = S->getASTContext();
+
+    return Cxt.getComplexType(QT).getAsOpaquePtr();
+  }
+
   TCppType_t GetTypeFromScope(TCppScope_t klass) {
     auto *D = (Decl *) klass;
     if (auto *TD = llvm::dyn_cast_or_null<TypeDecl>(D)) {
